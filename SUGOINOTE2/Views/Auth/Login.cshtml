@@ -1,0 +1,101 @@
+﻿@model SUGOINOTE2.Models.ViewModels.LoginVM
+@{
+    Layout = null;
+    ViewData["Title"] = "Iniciar Sesión";
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login - SugoiNote</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <style>
+        /* Mismos estilos que el registro */
+        :root { --bg-color: #050509; --panel-bg: #0b0c10; --primary-purple: #9d4edd; --primary-hover: #7b2cbf; --text-main: #ffffff; --text-muted: #808085; --border-color: #1a1b26; --glass-border: rgba(157, 78, 221, 0.2); }
+        body, html { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-main); height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .auth-container { display: flex; width: 90%; max-width: 1100px; height: 80vh; align-items: center; gap: 60px; }
+        .form-section { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 20px; }
+        .logo-area { display: flex; align-items: center; gap: 15px; font-size: 28px; font-weight: 700; margin-bottom: 30px; }
+        .logo-icon-bg { background-color: var(--primary-purple); padding: 10px 14px; border-radius: 12px; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+        .welcome-header h1 { font-size: 32px; margin: 0 0 10px 0; font-weight: 700; }
+        .welcome-header p { color: var(--text-muted); font-size: 16px; margin-bottom: 30px; }
+        .input-group { margin-bottom: 20px; position: relative; }
+        .input-group label { display: block; color: var(--text-main); font-size: 14px; margin-bottom: 8px; font-weight: 500; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper i { position: absolute; left: 18px; color: var(--text-muted); font-size: 16px; }
+        .input-wrapper input { width: 100%; background-color: var(--panel-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 14px 14px 14px 50px; border-radius: 14px; font-size: 15px; outline: none; transition: all 0.3s; box-sizing: border-box; }
+        .input-wrapper input:focus { border-color: var(--primary-purple); box-shadow: 0 0 10px rgba(157, 78, 221, 0.2); }
+        .btn-auth { width: 100%; background-color: var(--primary-purple); color: white; border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
+        .btn-auth:hover { background-color: var(--primary-hover); }
+        .switch-auth { text-align: center; margin-top: 25px; font-size: 14px; color: var(--text-muted); }
+        .switch-auth a { color: var(--primary-purple); text-decoration: none; font-weight: 600; }
+        .error-msg { color: #ff4d4f; font-size: 12px; margin-top: 5px; display: block; }
+        .validation-summary-errors { color: #ff4d4f; text-align: center; margin-bottom: 15px; list-style: none;}
+        .info-section { flex: 1; background: linear-gradient(135deg, rgba(20, 10, 35, 0.6) 0%, rgba(10, 5, 20, 0.4) 100%); border: 1px solid var(--glass-border); border-radius: 30px; padding: 50px; height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 25px; box-sizing: border-box; }
+        .feature-card { display: flex; align-items: center; gap: 20px; background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 18px; }
+        .feature-icon-box { background-color: rgba(157, 78, 221, 0.15); color: var(--primary-purple); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 22px; }
+        .feature-text h3 { margin: 0 0 5px 0; font-size: 16px; color: var(--text-main); }
+        .feature-text p { margin: 0; font-size: 13px; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="form-section">
+            <div class="logo-area">
+                <div class="logo-icon-bg"><i class="fa-solid fa-book-open"></i></div> SugoiNote
+            </div>
+            <div class="welcome-header">
+                <h1>Bienvenido de vuelta</h1>
+                <p>Ingresa tus datos para continuar</p>
+            </div>
+
+            <form asp-controller="Auth" asp-action="Login" method="post">
+                <div asp-validation-summary="ModelOnly" class="error-msg"></div>
+
+                <div class="input-group">
+                    <label>Email</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input asp-for="CorreoElectronico" type="email" placeholder="estudiante@ejemplo.com" />
+                    </div>
+                    <span asp-validation-for="CorreoElectronico" class="error-msg"></span>
+                </div>
+
+                <div class="input-group">
+                    <label>Contraseña</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input asp-for="ClaveAcceso" type="password" placeholder="••••••••" />
+                    </div>
+                    <span asp-validation-for="ClaveAcceso" class="error-msg"></span>
+                </div>
+
+                <button type="submit" class="btn-auth">Iniciar Sesión</button>
+            </form>
+
+            <div class="switch-auth">
+                ¿No tienes cuenta? <a href="/Auth/Register">Regístrate aquí</a>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="feature-card">
+                <div class="feature-icon-box"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                <div class="feature-text"><h3>Resúmenes con IA</h3><p>Genera resúmenes automáticamente a partir de tus notas largas.</p></div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-box"><i class="fa-solid fa-book"></i></div>
+                <div class="feature-text"><h3>Organiza tus apuntes</h3><p>Clasifica tus notas por materias, temas y fechas fácilmente.</p></div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon-box"><i class="fa-solid fa-graduation-cap"></i></div>
+                <div class="feature-text"><h3>Exámenes personalizados</h3><p>Practica con tests generados por la IA basados en tus estudios.</p></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

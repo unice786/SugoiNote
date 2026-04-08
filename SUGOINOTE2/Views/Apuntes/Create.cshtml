@@ -1,0 +1,72 @@
+@model SugoiNote.Models.Apunte
+@{
+    ViewData["Title"] = "Crear Apunte";
+    var materias = ViewBag.Materias as List<SugoiNote.Models.Materia>;
+    var matCols = ViewData["MateriasColumns"] as List<string>;
+}
+
+<style>
+    .sugoi-input { background: #0b0e14; border: 1px solid rgba(255,255,255,0.06); color: #fff; }
+    .sugoi-textarea { background: #0b0e14; border: 1px solid rgba(255,255,255,0.06); color: #fff; }
+    .sugoi-form { max-width: 900px; margin: 0 auto; }
+</style>
+
+<div class="container py-4">
+    <div class="sugoi-form glass-card p-4">
+        <h2 class="mb-3">Crear nueva nota</h2>
+
+        @if (matCols != null && matCols.Any())
+        {
+            <div class="alert alert-info">Columnas detectadas en dbo.Materias: @string.Join(", ", matCols)</div>
+        }
+
+        <form asp-controller="Apuntes" asp-action="Create" method="post">
+          @Html.AntiForgeryToken()
+
+
+          @if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}
+            <div class="mb-3">
+                <label asp-for="TituloNota" class="form-label">Título</label>
+                <input asp-for="TituloNota" class="form-control sugoi-input" />
+                <span asp-validation-for="TituloNota" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Materia</label>
+                <select name="MateriaId" class="form-select sugoi-input">
+                    <option value="">-- Selecciona una materia --</option>
+                    @if (materias != null)
+                    {
+                        foreach (var m in materias)
+                        {
+                            <option value="@m.MateriaId">@m.NombreMateria</option>
+                        }
+                    }
+                </select>
+                <div class="form-text" style="color: #9ca3af;">Si la materia no existe, escribe un nombre abajo y se creará automáticamente.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Crear nueva materia (opcional)</label>
+                <input asp-for="newMateriaName" class="form-control sugoi-input" placeholder="Nombre de la materia" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ContenidoTexto" class="form-label">Contenido</label>
+                <textarea asp-for="ContenidoTexto" class="form-control sugoi-textarea" rows="14"></textarea>
+                <span asp-validation-for="ContenidoTexto" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a asp-action="Index" asp-controller="Apuntes" class="btn btn-secondary ms-2">Cancelar</a>
+        </form>
+    </div>
+</div>

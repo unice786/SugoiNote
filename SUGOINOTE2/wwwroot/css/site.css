@@ -1,0 +1,71 @@
+:root {
+    --bg-dark: #0f101a;
+    --card-bg: #161824;
+    --neon-purple: #8b5cf6;
+    --purple-hover: #7c3aed;
+    --text-main: #ffffff;
+    --text-muted: #94a3b8;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Botones Premium */
+.btn-primary-sugoi {
+    background-color: var(--neon-purple);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 24px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+    .btn-primary-sugoi:hover {
+        background-color: var(--purple-hover);
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        transform: translateY(-2px);
+    }
+
+/* Inputs de texto */
+.form-control-sugoi {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+    .form-control-sugoi:focus {
+        background-color: rgba(255, 255, 255, 0.08);
+        border-color: var(--neon-purple);
+        box-shadow: none;
+        color: white;
+    }
+
+.sugoi-input {
+  background: #0b0e14 !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  color: #ffffff !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+}
+
+.sugoi-textarea {
+  background: #0b0e14 !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  color: #ffffff !important;
+  border-radius: 10px !important;
+  padding: 12px !important;
+}
+
+.glass-card {
+  background: rgba(23, 28, 41, 0.6);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 14px;
+}

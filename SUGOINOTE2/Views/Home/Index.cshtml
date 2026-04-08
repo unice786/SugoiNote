@@ -1,0 +1,103 @@
+﻿@model IEnumerable<SugoiNote.Models.Apunte>
+@{
+    ViewData["Title"] = "Dashboard Sugoi";
+}
+
+<style>
+    body { background-color: #0b0e14; color: #e2e8f0; font-family: 'Poppins', sans-serif; }
+    .glass-card {
+        background: rgba(23, 28, 41, 0.8);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        transition: 0.3s;
+        padding: 24px;
+    }
+    .glass-card:hover {
+        border-color: #8b5cf6;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+    }
+    .btn-neon {
+        background: linear-gradient(135deg, #8b5cf6, #d946ef);
+        border: none; color: white; border-radius: 12px; font-weight: 600;
+        padding: 12px 24px; box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+    }
+    .text-gradient {
+        background: linear-gradient(to right, #a78bfa, #f472b6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="fw-bold text-gradient">Mis Apuntes Sugoi 👋</h1>
+            <p class="text-muted">Gestiona tus notas con elegancia e inteligencia.</p>
+        </div>
+        <a asp-controller="Apuntes" asp-action="Create" class="btn-neon">+ Nueva Nota</a>
+    </div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger">@string.Join(" ", ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))</div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["SavedExists"] != null)
+    {
+        <div class="alert alert-secondary">Verificación guardado (exists): @TempData["SavedExists"]</div>
+    }
+
+    @if (TempData["DbConnection"] != null)
+    {
+        <div class="alert alert-warning">Conexión BD: @TempData["DbConnection"]</div>
+    }
+
+    @if (ViewData["ApuntesColumns"] != null)
+    {
+        var cols = ViewData["ApuntesColumns"] as List<string>;
+        if (cols != null && cols.Any())
+        {
+            <div class="alert alert-info">Columnas detectadas en dbo.Apuntes: @string.Join(", ", cols)</div>
+        }
+    }
+
+    @if (TempData["ApuntesCount"] != null)
+    {
+        <div class="alert alert-info">Apuntes cargados: @TempData["ApuntesCount"]</div>
+    }
+
+    <div class="row g-4">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var apunte in Model)
+            {
+                <div class="col-md-4">
+                    <div class="glass-card h-100">
+                        <div class="d-flex justify-content-between mb-3">
+                            <span class="badge bg-dark text-info border border-info">Apunte</span>
+                            <small class="text-muted">@(apunte.FechaRegistro.HasValue ? apunte.FechaRegistro.Value.ToString("dd MMM") : "")</small>
+                        </div>
+                        <h5 class="fw-bold text-white">@apunte.TituloNota</h5>
+                        <p class="text-muted small">@apunte.ContenidoTexto</p>
+                        <div class="mt-4">
+                            <button class="btn btn-sm btn-outline-light w-100">✨ Resumen IA</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12 text-center py-5 glass-card">
+                <p class="text-muted">No hay apuntes todavía. ¡Crea el primero!</p>
+            </div>
+        }
+    </div>
+</div>
