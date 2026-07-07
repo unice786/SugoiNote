@@ -23,23 +23,17 @@ namespace SugoiNote.Controllers
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null) return RedirectToAction("Login", "Auth");
-            if (!Guid.TryParse(userIdClaim.Value, out var userId))
-                return RedirectToAction("Login", "Auth");
+            Guid userId = Guid.Parse(userIdClaim.Value);
 
             var apuntes = new List<Apunte>();
+            var conn = _context.Database.GetDbConnection();
             try
             {
-                var conn = _context.Database.GetDbConnection();
                 if (conn.State != ConnectionState.Open) await conn.OpenAsync();
-
                 using var cmd = conn.CreateCommand();
-                cmd.CommandText = @"
-                    SELECT ApunteID, TituloNota, ContenidoTexto, FechaRegistro, EstudianteID
-                    FROM Apuntes
-                    WHERE EstudianteID = @uid
-                    ORDER BY FechaRegistro DESC";
-                var p = cmd.CreateParameter();
-                p.ParameterName = "@uid"; p.Value = userId;
+                cmd.CommandText = @"SELECT ApunteID, TituloNota, ContenidoTexto, FechaRegistro, EstudianteID 
+                                  FROM Apuntes WHERE EstudianteID = @uid ORDER BY FechaRegistro DESC";
+                var p = cmd.CreateParameter(); p.ParameterName = "@uid"; p.Value = userId;
                 cmd.Parameters.Add(p);
 
                 using var reader = await cmd.ExecuteReaderAsync();
@@ -55,11 +49,7 @@ namespace SugoiNote.Controllers
                     });
                 }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading apuntes for user {UserId}", userId);
-                ModelState.AddModelError(string.Empty, "Error al cargar apuntes: " + ex.Message);
-            }
+            finally { await conn.CloseAsync(); }
 
             return View("~/Views/Home/Index.cshtml", apuntes);
         }
@@ -68,127 +58,243 @@ namespace SugoiNote.Controllers
         public async Task<IActionResult> Create()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null) return RedirectToAction("Login", "Auth");
-            if (!Guid.TryParse(userIdClaim.Value, out var userId))
-                return RedirectToAction("Login", "Auth");
-
+            Guid userId = Guid.Parse(userIdClaim.Value);
             var materias = new List<Materia>();
+
+            var conn = _context.Database.GetDbConnection();
             try
             {
-                var conn = _context.Database.GetDbConnection();
                 if (conn.State != ConnectionState.Open) await conn.OpenAsync();
-
                 using var cmd = conn.CreateCommand();
-                cmd.CommandText = @"
-                    SELECT MaterialID, NombreMateria, EstudianteID
-                    FROM Materias
-                    WHERE EstudianteID = @uid
-                    ORDER BY NombreMateria";
-                var p = cmd.CreateParameter();
-                p.ParameterName = "@uid"; p.Value = userId;
+                cmd.CommandText = "SELECT MateriaID, NombreMateria FROM Materias WHERE EstudianteID = @uid";
+                var p = cmd.CreateParameter(); p.ParameterName = "@uid"; p.Value = userId;
                 cmd.Parameters.Add(p);
-
-                using var reader = await cmd.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                {
-                    materias.Add(new Materia
-                    {
-                        MateriaId = reader.GetGuid(0),
-                        NombreMateria = reader.GetString(1),
-                        EstudianteId = reader.GetGuid(2)
-                    });
-                }
+                using var r = await cmd.ExecuteReaderAsync();
+                while (await r.ReadAsync())
+                    materias.Add(new Materia { MateriaId = r.GetGuid(0), NombreMateria = r.GetString(1) });
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading materias for user {UserId}", userId);
-            }
+            finally { await conn.CloseAsync(); }
 
             ViewBag.Materias = materias;
-            return View("Create", new Apunte());
+            return View(new Apunte());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Apunte model, string? newMateriaName)
+        public async Task<IActionResult> Create(Apunte model)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null) return RedirectToAction("Login", "Auth");
-            if (!Guid.TryParse(userIdClaim.Value, out var userId))
-                return RedirectToAction("Login", "Auth");
+            Guid userId = Guid.Parse(userIdClaim.Value);
 
-            if (!ModelState.IsValid)
-            {
-                ViewBag.Materias = new List<Materia>();
-                return View("Create", model);
-            }
-
+            var conn = _context.Database.GetDbConnection();
             try
             {
-                var conn = _context.Database.GetDbConnection();
                 if (conn.State != ConnectionState.Open) await conn.OpenAsync();
 
-                // Si hay nueva materia, insertarla primero
                 if (!string.IsNullOrWhiteSpace(model.newMateriaName))
                 {
-                    var nuevaMateriaId = Guid.NewGuid();
-                    using var cmdMateria = conn.CreateCommand();
-                    cmdMateria.CommandText = @"
-                        INSERT INTO Materias (MateriaID, NombreMateria, EstudianteID)
-                        VALUES (@mid, @nombre, @eid)";
-
-                    var p1 = cmdMateria.CreateParameter();
-                    p1.ParameterName = "@mid"; p1.Value = nuevaMateriaId;
-                    var p2 = cmdMateria.CreateParameter();
-                    p2.ParameterName = "@nombre"; p2.Value = model.newMateriaName;
-                    var p3 = cmdMateria.CreateParameter();
-                    p3.ParameterName = "@eid"; p3.Value = userId;
-                    cmdMateria.Parameters.Add(p1);
-                    cmdMateria.Parameters.Add(p2);
-                    cmdMateria.Parameters.Add(p3);
-                    await cmdMateria.ExecuteNonQueryAsync();
-                    model.MateriaId = nuevaMateriaId;
+                    var mid = Guid.NewGuid();
+                    using var cmdM = conn.CreateCommand();
+                    cmdM.CommandText = "INSERT INTO Materias (MateriaID, NombreMateria, EstudianteID) VALUES (@mid, @n, @eid)";
+                    cmdM.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@mid", mid));
+                    cmdM.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@n", model.newMateriaName));
+                    cmdM.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@eid", userId));
+                    await cmdM.ExecuteNonQueryAsync();
+                    model.MateriaId = mid;
                 }
 
-                // Insertar el apunte
                 using var cmd = conn.CreateCommand();
-                cmd.CommandText = @"
-                    INSERT INTO Apuntes (ApunteID, TituloNota, ContenidoTexto, MateriaID, EstudianteID, FechaRegistro)
-                    VALUES (@id, @titulo, @contenido, @materia, @estudiante, @fecha)";
-
-                var pa1 = cmd.CreateParameter();
-                pa1.ParameterName = "@id"; pa1.Value = Guid.NewGuid();
-                var pa2 = cmd.CreateParameter();
-                pa2.ParameterName = "@titulo"; pa2.Value = model.TituloNota;
-                var pa3 = cmd.CreateParameter();
-                pa3.ParameterName = "@contenido"; pa3.Value = (object?)model.ContenidoTexto ?? DBNull.Value;
-                var pa4 = cmd.CreateParameter();
-                pa4.ParameterName = "@materia"; pa4.Value = (object?)model.MateriaId ?? DBNull.Value;
-                var pa5 = cmd.CreateParameter();
-                pa5.ParameterName = "@estudiante"; pa5.Value = userId;
-                var pa6 = cmd.CreateParameter();
-                pa6.ParameterName = "@fecha"; pa6.Value = DateTime.UtcNow;
-
-                cmd.Parameters.Add(pa1);
-                cmd.Parameters.Add(pa2);
-                cmd.Parameters.Add(pa3);
-                cmd.Parameters.Add(pa4);
-                cmd.Parameters.Add(pa5);
-                cmd.Parameters.Add(pa6);
+                cmd.CommandText = @"INSERT INTO Apuntes (ApunteID, TituloNota, ContenidoTexto, MateriaID, EstudianteID, FechaRegistro) 
+                                  VALUES (@id, @t, @c, @m, @e, @f)";
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@id", Guid.NewGuid()));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@t", model.TituloNota));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@c", (object)model.ContenidoTexto ?? DBNull.Value));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@m", (object)model.MateriaId ?? DBNull.Value));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@e", userId));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@f", DateTime.Now));
 
                 await cmd.ExecuteNonQueryAsync();
-
-                _logger.LogInformation("Apunte creado por usuario {UserId}", userId);
-                TempData["Success"] = "Apunte guardado correctamente.";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error saving apunte for user {UserId}", userId);
-                ModelState.AddModelError(string.Empty, ex.ToString());
-                ViewBag.Materias = new List<Materia>();
-                return View("Create", model);
+                _logger.LogError(ex.ToString());
+                return View(model);
             }
+            finally { await conn.CloseAsync(); }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetMaterias()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Json(new List<object>());
+            Guid userId = Guid.Parse(userIdClaim.Value);
+
+            var materias = new List<object>();
+            var conn = _context.Database.GetDbConnection();
+            try
+            {
+                if (conn.State != ConnectionState.Open) await conn.OpenAsync();
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT MateriaID, NombreMateria FROM Materias WHERE EstudianteID = @uid ORDER BY NombreMateria";
+                var p = cmd.CreateParameter(); p.ParameterName = "@uid"; p.Value = userId;
+                cmd.Parameters.Add(p);
+                using var r = await cmd.ExecuteReaderAsync();
+                while (await r.ReadAsync())
+                    materias.Add(new { materiaId = r.GetGuid(0).ToString(), nombreMateria = r.GetString(1) });
+            }
+            finally { await conn.CloseAsync(); }
+            return Json(materias);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateRapido(Apunte model)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            Guid userId = Guid.Parse(userIdClaim!.Value);
+            var conn = _context.Database.GetDbConnection();
+            var newId = Guid.NewGuid();
+            try
+            {
+                if (conn.State != ConnectionState.Open) await conn.OpenAsync();
+                if (!string.IsNullOrWhiteSpace(model.newMateriaName))
+                {
+                    var mid = Guid.NewGuid();
+                    using var cmdM = conn.CreateCommand();
+                    cmdM.CommandText = "INSERT INTO Materias (MateriaID, NombreMateria, EstudianteID) VALUES (@mid, @n, @eid)";
+                    cmdM.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@mid", mid));
+                    cmdM.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@n", model.newMateriaName));
+                    cmdM.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@eid", userId));
+                    await cmdM.ExecuteNonQueryAsync();
+                    model.MateriaId = mid;
+                }
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "INSERT INTO Apuntes (ApunteID, TituloNota, ContenidoTexto, MateriaID, EstudianteID, FechaRegistro) VALUES (@id,@t,@c,@m,@e,@f)";
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@id", newId));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@t", model.TituloNota));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@c", DBNull.Value));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@m", (object?)model.MateriaId ?? DBNull.Value));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@e", userId));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@f", DateTime.Now));
+                await cmd.ExecuteNonQueryAsync();
+            }
+            finally { await conn.CloseAsync(); }
+            return RedirectToAction("Editor", new { id = newId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Editor(Guid id)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return RedirectToAction("Login", "Auth");
+            Guid userId = Guid.Parse(userIdClaim.Value);
+
+            Apunte? apunte = null;
+            var conn = _context.Database.GetDbConnection();
+            try
+            {
+                if (conn.State != ConnectionState.Open) await conn.OpenAsync();
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT ApunteID, TituloNota, ContenidoTexto, FechaRegistro, EstudianteID FROM Apuntes WHERE ApunteID = @id AND EstudianteID = @uid";
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@id", id));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@uid", userId));
+                using var r = await cmd.ExecuteReaderAsync();
+                if (await r.ReadAsync())
+                {
+                    apunte = new Apunte
+                    {
+                        ApunteId = r.GetGuid(0),
+                        TituloNota = r.GetString(1),
+                        ContenidoTexto = r.IsDBNull(2) ? null : r.GetString(2),
+                        FechaRegistro = r.IsDBNull(3) ? null : r.GetDateTime(3),
+                        EstudianteId = r.GetGuid(4)
+                    };
+                }
+            }
+            finally { await conn.CloseAsync(); }
+
+            if (apunte == null) return NotFound();
+            return View(apunte);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AutoSave([FromBody] AutoSaveDto dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+            Guid userId = Guid.Parse(userIdClaim.Value);
+
+            var conn = _context.Database.GetDbConnection();
+            try
+            {
+                if (conn.State != ConnectionState.Open) await conn.OpenAsync();
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "UPDATE Apuntes SET TituloNota=@t, ContenidoTexto=@c WHERE ApunteID=@id AND EstudianteID=@uid";
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@t", dto.Titulo ?? ""));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@c", (object?)dto.Contenido ?? DBNull.Value));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@id", Guid.Parse(dto.ApunteId!)));
+                cmd.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@uid", userId));
+                await cmd.ExecuteNonQueryAsync();
+            }
+            finally { await conn.CloseAsync(); }
+            return Ok();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Eliminar([FromBody] EliminarApunteDto dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Unauthorized();
+            Guid userId = Guid.Parse(userIdClaim.Value);
+
+            var conn = _context.Database.GetDbConnection();
+            try
+            {
+                if (conn.State != ConnectionState.Open) await conn.OpenAsync();
+
+                using var cmdO = conn.CreateCommand();
+                cmdO.CommandText = @"DELETE o FROM OpcionesRespuesta o
+                                    INNER JOIN Preguntas p ON o.PreguntaID = p.PreguntaID
+                                    INNER JOIN Examenes e ON p.ExamenID = e.ExamenID
+                                    WHERE e.ApunteID = @id";
+                cmdO.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@id", Guid.Parse(dto.ApunteId!)));
+                await cmdO.ExecuteNonQueryAsync();
+
+                using var cmdP = conn.CreateCommand();
+                cmdP.CommandText = @"DELETE p FROM Preguntas p
+                                    INNER JOIN Examenes e ON p.ExamenID = e.ExamenID
+                                    WHERE e.ApunteID = @id";
+                cmdP.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@id", Guid.Parse(dto.ApunteId!)));
+                await cmdP.ExecuteNonQueryAsync();
+
+                using var cmdE = conn.CreateCommand();
+                cmdE.CommandText = "DELETE FROM Examenes WHERE ApunteID = @id";
+                cmdE.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@id", Guid.Parse(dto.ApunteId!)));
+                await cmdE.ExecuteNonQueryAsync();
+
+                using var cmdA = conn.CreateCommand();
+                cmdA.CommandText = "DELETE FROM Apuntes WHERE ApunteID = @id AND EstudianteID = @uid";
+                cmdA.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@id", Guid.Parse(dto.ApunteId!)));
+                cmdA.Parameters.Add(new Microsoft.Data.SqlClient.SqlParameter("@uid", userId));
+                await cmdA.ExecuteNonQueryAsync();
+            }
+            finally { await conn.CloseAsync(); }
+
+            return Ok(new { ok = true });
         }
     }
+}
+
+public class AutoSaveDto
+{
+    public string? ApunteId { get; set; }
+    public string? Titulo { get; set; }
+    public string? Contenido { get; set; }
+}
+
+public class EliminarApunteDto
+{
+    public string? ApunteId { get; set; }
 }

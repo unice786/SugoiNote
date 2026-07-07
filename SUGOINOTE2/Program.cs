@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddConsole();
 
 // Configuración de la base de datos
-// Usar la cadena de conexión definida en appsettings.json (DefaultConnection)
+// cadena de conexión en appsettings.json (DefaultConnection)
 builder.Services.AddDbContext<Sugoinotee2Context>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")).EnableSensitiveDataLogging());
 
@@ -16,7 +16,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options => {
-        options.LoginPath = "/Auth/Login"; // Ajustado a /Auth/Login
+        options.LoginPath = "/Auth/Login"; ///Auth/Login
     });
 
 var app = builder.Build();
@@ -35,6 +35,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Auth}/{action=Login}/{id?}"); // Cambiamos a Auth/Login
+    pattern: "{controller=Auth}/{action=Login}/{id?}"); // Auth/Login
 
 app.Run();

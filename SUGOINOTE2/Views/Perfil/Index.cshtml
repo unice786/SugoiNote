@@ -1,0 +1,118 @@
+﻿@model SugoiNote.Controllers.PerfilVM
+@{
+    ViewData["Title"] = "Mi Perfil";
+    var iniciales = Model.NombreCompleto.Length >= 2 ? Model.NombreCompleto.Substring(0, 2).ToUpper() : "U";
+}
+
+<div class="mb-4">
+    <h2 style="font-weight:800;font-size:1.6rem;margin-bottom:4px;">Mi Perfil</h2>
+    <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">Gestiona tu información personal</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="glass-card p-4 text-center">
+            <div style="width:80px;height:80px;border-radius:50%;background:rgba(139,92,246,0.2);border:3px solid rgba(139,92,246,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.6rem;font-weight:800;color:var(--neon-purple);">
+                @iniciales
+            </div>
+            <h4 style="font-weight:800;margin-bottom:4px;" id="nombreDisplay">@Model.NombreCompleto</h4>
+            <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:24px;">@Model.Correo</p>
+
+            <div style="border-top:1px solid var(--border);padding-top:20px;">
+                <p style="color:var(--text-muted);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:16px;">Estadísticas</p>
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:32px;height:32px;background:rgba(139,92,246,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                                <i class="bi bi-journal-text" style="color:var(--neon-purple);font-size:0.85rem;"></i>
+                            </div>
+                            <span style="font-size:0.85rem;color:var(--text-secondary);">Apuntes</span>
+                        </div>
+                        <span style="font-weight:700;color:var(--text-main);">@Model.TotalApuntes</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:32px;height:32px;background:rgba(139,92,246,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                                <i class="bi bi-stars" style="color:#a78bfa;font-size:0.85rem;"></i>
+                            </div>
+                            <span style="font-size:0.85rem;color:var(--text-secondary);">Resúmenes</span>
+                        </div>
+                        <span style="font-weight:700;color:var(--text-main);">@Model.TotalResumenes</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:32px;height:32px;background:rgba(34,197,94,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                                <i class="bi bi-clipboard-check" style="color:#22c55e;font-size:0.85rem;"></i>
+                            </div>
+                            <span style="font-size:0.85rem;color:var(--text-secondary);">Exámenes</span>
+                        </div>
+                        <span style="font-weight:700;color:var(--text-main);">@Model.TotalExamenes</span>
+                    </div>
+                    @if (Model.PromedioExamenes.HasValue)
+                    {
+                        var colorProm = Model.PromedioExamenes >= 70 ? "#22c55e" : Model.PromedioExamenes >= 50 ? "#f59e0b" : "#ef4444";
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:32px;height:32px;background:rgba(34,197,94,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                                    <i class="bi bi-graph-up" style="color:@colorProm;font-size:0.85rem;"></i>
+                                </div>
+                                <span style="font-size:0.85rem;color:var(--text-secondary);">Promedio</span>
+                            </div>
+                            <span style="font-weight:700;color:@colorProm;">@Model.PromedioExamenes%</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="glass-card p-4">
+            <div class="d-flex align-items-center gap-2 mb-4">
+                <i class="bi bi-person-fill" style="color:var(--neon-purple);"></i>
+                <h5 style="font-weight:700;margin:0;">Información Personal</h5>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="sugoi-label">Nombre Completo</label>
+                    <input type="text" id="inputNombre" class="sugoi-input" value="@Model.NombreCompleto" />
+                </div>
+                <div class="col-md-6">
+                    <label class="sugoi-label">Correo Electrónico</label>
+                    <input type="text" class="sugoi-input" value="@Model.Correo" disabled
+                           style="opacity:0.5;cursor:not-allowed;" />
+                </div>
+            </div>
+
+            <div id="msgGuardado" style="display:none;margin-top:12px;">
+                <span style="color:#22c55e;font-size:0.85rem;"><i class="bi bi-check-circle"></i> Cambios guardados</span>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <button class="btn-sugoi" onclick="guardarPerfil()">
+                    <i class="bi bi-floppy"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function guardarPerfil() {
+            const nombre = document.getElementById('inputNombre').value.trim();
+            if (!nombre) { alert('El nombre no puede estar vacío'); return; }
+
+            await fetch('/Perfil/Actualizar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombreCompleto: nombre })
+            });
+
+            document.getElementById('nombreDisplay').textContent = nombre;
+            document.getElementById('msgGuardado').style.display = 'block';
+            setTimeout(() => document.getElementById('msgGuardado').style.display = 'none', 3000);
+        }
+    </script>
+}

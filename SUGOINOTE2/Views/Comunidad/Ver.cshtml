@@ -1,0 +1,87 @@
+﻿@model SugoiNote.Controllers.PostDetalleVM
+@{
+    ViewData["Title"] = "Pregunta";
+    var userId = ViewBag.UserId as Guid?;
+    var iniciales = Model.NombreEstudiante.Length >= 2 ? Model.NombreEstudiante.Substring(0, 2).ToUpper() : "U";
+}
+
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a href="/Comunidad/Index" class="btn-ghost" style="padding:8px 14px;">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h2 style="font-weight:800;font-size:1.3rem;margin:0;">Pregunta de la comunidad</h2>
+</div>
+
+<div class="glass-card p-4 mb-4">
+    <div class="d-flex gap-3 align-items-start mb-3">
+        <div style="width:44px;height:44px;border-radius:12px;background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--neon-purple);flex-shrink:0;">
+            @iniciales
+        </div>
+        <div>
+            <div style="font-weight:700;">@Model.NombreEstudiante</div>
+            <div style="color:var(--text-muted);font-size:0.78rem;">@(Model.Fecha?.ToString("dd MMM yyyy · HH:mm"))</div>
+        </div>
+    </div>
+    <h3 style="font-weight:800;font-size:1.1rem;margin-bottom:10px;">@Model.Titulo</h3>
+    <p style="color:var(--text-secondary);line-height:1.7;margin:0;">@Model.Detalle</p>
+</div>
+
+<div class="d-flex align-items-center gap-2 mb-3">
+    <div style="width:6px;height:6px;border-radius:50%;background:var(--neon-purple);"></div>
+    <h5 style="margin:0;font-weight:700;font-size:0.95rem;">@Model.Respuestas.Count respuestas</h5>
+</div>
+
+@foreach (var resp in Model.Respuestas)
+{
+    var iniR = resp.NombreEstudiante.Length >= 2 ? resp.NombreEstudiante.Substring(0, 2).ToUpper() : "U";
+    bool esMia = resp.EstudianteId == userId;
+    <div class="glass-card p-4 mb-3" style="@(esMia ? "border-color:rgba(139,92,246,0.25);" : "")">
+        <div class="d-flex gap-3 align-items-start">
+            <div style="width:36px;height:36px;border-radius:10px;background:@(esMia ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.05)");display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.78rem;color:@(esMia ? "var(--neon-purple)" : "var(--text-muted)");flex-shrink:0;">
+                @iniR
+            </div>
+            <div style="flex:1;">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span style="font-weight:700;font-size:0.88rem;">@resp.NombreEstudiante</span>
+                    @if (esMia)
+                    {
+                        <span style="background:rgba(139,92,246,0.1);color:#a78bfa;border-radius:4px;padding:1px 7px;font-size:0.7rem;font-weight:600;">Tú</span>
+                    }
+                    <span style="color:var(--text-muted);font-size:0.75rem;margin-left:auto;">@(resp.Fecha?.ToString("dd MMM · HH:mm"))</span>
+                </div>
+                <p style="color:var(--text-secondary);margin:0;font-size:0.9rem;line-height:1.6;">@resp.Texto</p>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="glass-card p-4 mt-4">
+    <label class="sugoi-label" style="margin-bottom:12px;">Tu respuesta</label>
+    <textarea id="inputRespuesta" class="sugoi-input" rows="3"
+              style="resize:none;margin-bottom:12px;"
+              placeholder="Escribe tu respuesta..."></textarea>
+    <button class="btn-sugoi" onclick="responder()">
+        <i class="bi bi-send"></i> Publicar respuesta
+    </button>
+</div>
+
+<input type="hidden" id="postId" value="@Model.PostId" />
+
+@section Scripts {
+    <script>
+        async function responder() {
+            const texto = document.getElementById('inputRespuesta').value.trim();
+            if (!texto) { alert('Escribe una respuesta'); return; }
+
+            await fetch('/Comunidad/Responder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    postId: document.getElementById('postId').value,
+                    texto
+                })
+            });
+            location.reload();
+        }
+    </script>
+}

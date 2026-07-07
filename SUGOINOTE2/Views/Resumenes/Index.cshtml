@@ -1,0 +1,176 @@
+﻿@model IEnumerable<SugoiNote.Models.Apunte>
+@{
+    ViewData["Title"] = "Mis Resúmenes";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="font-weight:800;font-size:1.6rem;margin-bottom:4px;">Mis Resúmenes</h2>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">Resúmenes generados con IA desde tus apuntes</p>
+    </div>
+    <button class="btn-sugoi" onclick="abrirModal()">
+        <i class="bi bi-stars"></i> Generar Resumen
+    </button>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <div class="row g-3" id="lista-resumenes">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="note-card" onclick="verResumen('@item.ApunteId', '@Html.Raw(item.TituloNota)')" style="cursor:pointer;">
+                    <div class="note-card-icon" style="background:rgba(139,92,246,0.1);">
+                        <i class="bi bi-stars" style="color:#a78bfa;"></i>
+                    </div>
+                    <div class="note-card-title">@item.TituloNota</div>
+                    <div class="note-card-date">@(item.FechaRegistro?.ToString("dd MMM yyyy"))</div>
+                    <span class="materia-badge" style="margin-top:8px;display:inline-block;">Resumen IA</span>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-5" id="empty-state">
+        <div style="width:72px;height:72px;background:rgba(139,92,246,0.08);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+            <i class="bi bi-stars" style="font-size:2rem;color:var(--neon-purple);"></i>
+        </div>
+        <h5 style="font-weight:700;margin-bottom:8px;">Aún no tienes resúmenes</h5>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:20px;">Selecciona un apunte y la IA generará un resumen por ti</p>
+        <button class="btn-sugoi" onclick="abrirModal()">
+            <i class="bi bi-stars"></i> Crear mi primer resumen
+        </button>
+    </div>
+}
+
+<!-- MODAL SELECCIONAR APUNTE -->
+<div class="modal-overlay" id="modalGenerar">
+    <div class="modal-box">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <p class="modal-title" style="margin:0;"><i class="bi bi-stars" style="color:var(--neon-purple);margin-right:8px;"></i>Generar Resumen</p>
+            <button onclick="cerrarModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">&times;</button>
+        </div>
+        <div class="mb-4">
+            <label class="sugoi-label">Selecciona un apunte</label>
+            <select id="selectApunte" class="sugoi-input" style="padding:10px 14px !important;">
+                <option value="">-- Elige un apunte --</option>
+            </select>
+        </div>
+        <div id="generandoMsg" style="display:none;text-align:center;padding:20px 0;">
+            <div style="width:40px;height:40px;border:3px solid rgba(139,92,246,0.2);border-top-color:var(--neon-purple);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;"></div>
+            <p style="color:var(--text-muted);font-size:0.88rem;">La IA está generando tu resumen...</p>
+        </div>
+        <div class="d-flex gap-2" id="botonesModal">
+            <button class="btn-sugoi flex-fill justify-content-center" onclick="generarResumen()">
+                <i class="bi bi-stars"></i> Generar
+            </button>
+            <button class="btn-ghost" onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- PANEL VER RESUMEN -->
+<div class="modal-overlay" id="panelResumen">
+    <div class="modal-box" style="max-width:780px;max-height:85vh;overflow-y:auto;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <p class="modal-title" style="margin:0;" id="tituloResumenPanel">Resumen</p>
+                <span style="font-size:0.75rem;color:var(--neon-purple);">Generado con IA</span>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <button class="btn-sugoi" onclick="descargarPDF()" style="padding:8px 16px;font-size:0.82rem;">
+                    <i class="bi bi-download"></i> Descargar PDF
+                </button>
+                <button onclick="cerrarPanel()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">&times;</button>
+            </div>
+        </div>
+        <div id="contenidoResumen" style="color:var(--text-main);line-height:1.8;font-size:0.95rem;"></div>
+    </div>
+</div>
+
+<style>
+@@keyframes spin { to { transform: rotate(360deg); } }
+#contenidoResumen h2 { font-size:1.2rem;font-weight:700;margin:20px 0 8px;color:var(--text-main); }
+#contenidoResumen h3 { font-size:1rem;font-weight:600;margin:16px 0 6px;color:#a78bfa; }
+#contenidoResumen p { color:var(--text-secondary);margin-bottom:10px; }
+#contenidoResumen ul { padding-left:20px;color:var(--text-secondary); }
+#contenidoResumen li { margin-bottom:4px; }
+#contenidoResumen code { background:rgba(139,92,246,0.1);color:#a78bfa;padding:2px 8px;border-radius:5px;font-size:0.88rem; }
+#contenidoResumen strong { color:var(--text-main); }
+</style>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    let resumenActualTitulo = '';
+
+    async function abrirModal() {
+        document.getElementById('modalGenerar').classList.add('open');
+        const res = await fetch('/Resumenes/GetApuntes');
+        const data = await res.json();
+        const sel = document.getElementById('selectApunte');
+        sel.innerHTML = '<option value="">-- Elige un apunte --</option>';
+        data.forEach(a => sel.innerHTML += `<option value="${a.apunteId}">${a.tituloNota}</option>`);
+    }
+
+    function cerrarModal() { document.getElementById('modalGenerar').classList.remove('open'); }
+    function cerrarPanel() { document.getElementById('panelResumen').classList.remove('open'); }
+
+    document.getElementById('modalGenerar').addEventListener('click', e => { if (e.target === document.getElementById('modalGenerar')) cerrarModal(); });
+    document.getElementById('panelResumen').addEventListener('click', e => { if (e.target === document.getElementById('panelResumen')) cerrarPanel(); });
+
+    async function generarResumen() {
+        const apunteId = document.getElementById('selectApunte').value;
+        if (!apunteId) { alert('Selecciona un apunte'); return; }
+
+        document.getElementById('botonesModal').style.display = 'none';
+        document.getElementById('generandoMsg').style.display = 'block';
+
+        try {
+            const res = await fetch('/Resumenes/Generar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ apunteId })
+            });
+            const data = await res.json();
+            cerrarModal();
+            document.getElementById('botonesModal').style.display = 'flex';
+            document.getElementById('generandoMsg').style.display = 'none';
+            verResumenDirecto(data.resumen, data.titulo);
+            setTimeout(() => location.reload(), 500);
+        } catch(e) {
+            alert('Error al generar el resumen');
+            document.getElementById('botonesModal').style.display = 'flex';
+            document.getElementById('generandoMsg').style.display = 'none';
+        }
+    }
+
+    async function verResumen(apunteId, titulo) {
+        const res = await fetch(`/Resumenes/ObtenerResumen?apunteId=${apunteId}`);
+        const data = await res.json();
+        verResumenDirecto(data.resumen, titulo);
+    }
+
+    function verResumenDirecto(html, titulo) {
+        resumenActualTitulo = titulo;
+        document.getElementById('tituloResumenPanel').textContent = titulo;
+        document.getElementById('contenidoResumen').innerHTML = html;
+        document.getElementById('panelResumen').classList.add('open');
+    }
+
+    async function descargarPDF() {
+        const { jsPDF } = window.jspdf;
+        const el = document.getElementById('contenidoResumen');
+        const canvas = await html2canvas(el, { backgroundColor: '#13151f', scale: 2 });
+        const img = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const w = pdf.internal.pageSize.getWidth();
+        const h = (canvas.height * w) / canvas.width;
+        pdf.addImage(img, 'PNG', 0, 10, w, h);
+        pdf.save(`Resumen - ${resumenActualTitulo}.pdf`);
+    }
+</script>
+}

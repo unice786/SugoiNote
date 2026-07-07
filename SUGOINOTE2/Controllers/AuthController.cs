@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SugoiNote.Models; // Esto conecta con tus modelos
+using SugoiNote.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
@@ -31,10 +31,32 @@ namespace SugoiNote.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
+            // Buscamos solo por correo para poder comparar el hash después
             var user = await _context.Estudiantes
-                .FirstOrDefaultAsync(e => e.CorreoElectronico == model.CorreoElectronico && e.ClaveAcceso == model.ClaveAcceso);
+                .FirstOrDefaultAsync(e => e.CorreoElectronico == model.CorreoElectronico);
 
             if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Credenciales inválidas");
+                return View(model);
+            }
+
+            // Verificamos la contraseña con BCrypt
+            // Si la contraseña en BD no tiene el formato bcrypt (usuarios viejos),
+            // hacemos comparación directa para no romper cuentas existentes.
+            bool passwordValida;
+            if (user.ClaveAcceso.StartsWith("$2"))
+            {
+                // Contraseña hasheada con BCrypt
+                passwordValida = BCrypt.Net.BCrypt.Verify(model.ClaveAcceso, user.ClaveAcceso);
+            }
+            else
+            {
+                // Contraseña en texto plano (usuarios viejos)
+                passwordValida = user.ClaveAcceso == model.ClaveAcceso;
+            }
+
+            if (!passwordValida)
             {
                 ModelState.AddModelError(string.Empty, "Credenciales inválidas");
                 return View(model);
@@ -83,14 +105,14 @@ namespace SugoiNote.Controllers
                 EstudianteId = Guid.NewGuid(),
                 NombreCompleto = model.NombreCompleto,
                 CorreoElectronico = model.CorreoElectronico,
-                ClaveAcceso = model.ClaveAcceso,
+                // Hasheamos la contraseña antes de guardarla
+                ClaveAcceso = BCrypt.Net.BCrypt.HashPassword(model.ClaveAcceso),
                 FechaCreacion = DateTime.UtcNow
             };
 
             _context.Estudiantes.Add(nuevo);
             await _context.SaveChangesAsync();
 
-            // Iniciar sesión automáticamente después del registro
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, nuevo.EstudianteId.ToString()),
@@ -110,6 +132,27 @@ namespace SugoiNote.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login", "Auth");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RecuperarContrasena(string correo, string nuevaContrasena)
+        {
+            var user = await _context.Estudiantes
+                .FirstOrDefaultAsync(e => e.CorreoElectronico == correo);
+
+            if (user == null)
+            {
+                TempData["ErrorRecuperar"] = "No existe una cuenta con ese correo.";
+                return RedirectToAction("Login");
+            }
+
+            // Hasheamos la nueva contraseña antes de guardarla
+            user.ClaveAcceso = BCrypt.Net.BCrypt.HashPassword(nuevaContrasena);
+            await _context.SaveChangesAsync();
+
+            TempData["ExitoRecuperar"] = "Contraseña actualizada. Ya puedes iniciar sesión.";
+            return RedirectToAction("Login");
         }
     }
 }

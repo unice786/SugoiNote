@@ -1,0 +1,213 @@
+﻿@model SugoiNote.Controllers.ExamenDetalleVM
+@{
+    ViewData["Title"] = "Examen";
+    bool yaEntregado = Model.Calificacion.HasValue;
+}
+
+<div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+    <a href="/Examenes/Index" class="btn-ghost" style="padding:8px 14px;">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <div style="flex:1;">
+        <h2 style="font-weight:800;font-size:1.3rem;margin:0;">@Model.TituloApunte</h2>
+        <p style="color:var(--text-muted);font-size:0.8rem;margin:0;">
+            @Model.Preguntas.Count preguntas —
+            @if (yaEntregado)
+            {
+                <span style="color:#22c55e;">Examen entregado</span>
+            }
+            else
+            {
+                <span style="color:#a78bfa;">Pendiente de entrega</span>
+            }
+        </p>
+    </div>
+
+    @if (yaEntregado)
+    {
+        var color = Model.Calificacion >= 70 ? "#22c55e" : Model.Calificacion >= 50 ? "#f59e0b" : "#ef4444";
+        var bg = Model.Calificacion >= 70 ? "rgba(34,197,94,0.08)" : Model.Calificacion >= 50 ? "rgba(245,158,11,0.08)" : "rgba(239,68,68,0.08)";
+        var border = Model.Calificacion >= 70 ? "rgba(34,197,94,0.25)" : Model.Calificacion >= 50 ? "rgba(245,158,11,0.25)" : "rgba(239,68,68,0.25)";
+        var label = Model.Calificacion >= 70 ? "Aprobado" : Model.Calificacion >= 50 ? "Regular" : "Reprobado";
+        <div style="background:@bg;border:1px solid @border;border-radius:14px;padding:12px 24px;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:800;color:@color;line-height:1;">@Model.Calificacion%</div>
+            <div style="font-size:0.72rem;color:@color;font-weight:600;margin-top:2px;">@label</div>
+        </div>
+    }
+</div>
+
+@if (yaEntregado)
+{
+    var correctas = Model.Preguntas.Count(p => p.Opciones.Any(o => o.EsCorrecta && o.OpcionId == p.RespuestaSeleccionadaId));
+    <div class="glass-card p-3 mb-4 d-flex gap-4 align-items-center">
+        <div style="text-align:center;flex:1;">
+            <div style="font-size:1.3rem;font-weight:800;color:#22c55e;">@correctas</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Correctas</div>
+        </div>
+        <div style="width:1px;height:40px;background:var(--border);"></div>
+        <div style="text-align:center;flex:1;">
+            <div style="font-size:1.3rem;font-weight:800;color:#ef4444;">@(Model.Preguntas.Count - correctas)</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Incorrectas</div>
+        </div>
+        <div style="width:1px;height:40px;background:var(--border);"></div>
+        <div style="text-align:center;flex:1;">
+            <div style="font-size:1.3rem;font-weight:800;color:var(--text-main);">@Model.Preguntas.Count</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Total</div>
+        </div>
+    </div>
+}
+
+<div id="examenForm">
+    @for (int i = 0; i < Model.Preguntas.Count; i++)
+    {
+        var preg = Model.Preguntas[i];
+        bool respondioCorrect = preg.Opciones.Any(o => o.EsCorrecta && o.OpcionId == preg.RespuestaSeleccionadaId);
+
+        <div class="glass-card p-4 mb-3">
+            <div class="d-flex align-items-start gap-3 mb-3">
+                <span style="background:rgba(139,92,246,0.12);color:var(--neon-purple);border-radius:8px;padding:4px 10px;font-size:0.8rem;font-weight:700;flex-shrink:0;">@(i + 1)</span>
+                <p style="font-weight:600;margin:0;font-size:0.93rem;line-height:1.5;">@preg.Texto</p>
+                @if (yaEntregado)
+                {
+                    if (respondioCorrect)
+                    {
+                        <i class="bi bi-check-circle-fill" style="color:#22c55e;font-size:1.1rem;flex-shrink:0;margin-left:auto;"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-x-circle-fill" style="color:#ef4444;font-size:1.1rem;flex-shrink:0;margin-left:auto;"></i>
+                    }
+                }
+            </div>
+
+            <div class="d-flex flex-column gap-2">
+                @foreach (var op in preg.Opciones)
+                {
+                    string estilo = "border-radius:10px;padding:11px 16px;font-size:0.88rem;border:1px solid var(--border);transition:all 0.2s;";
+                    string icono = "";
+
+                    if (yaEntregado)
+                    {
+                        if (op.EsCorrecta)
+                        {
+                            estilo += "background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.35);color:#22c55e;";
+                            icono = "<i class='bi bi-check-circle-fill' style='margin-right:8px;'></i>";
+                        }
+                        else if (op.OpcionId == preg.RespuestaSeleccionadaId)
+                        {
+                            estilo += "background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.35);color:#ef4444;";
+                            icono = "<i class='bi bi-x-circle-fill' style='margin-right:8px;'></i>";
+                        }
+                        else
+                        {
+                            estilo += "background:rgba(255,255,255,0.02);color:var(--text-muted);";
+                        }
+                        <div style="@estilo">@Html.Raw(icono)@op.Texto</div>
+                    }
+                    else
+                    {
+                        estilo += "background:rgba(255,255,255,0.03);cursor:pointer;";
+                        <div class="opcion-btn"
+                             data-pregunta="@preg.PreguntaId"
+                             data-opcion="@op.OpcionId"
+                             style="@estilo"
+                             onclick="seleccionar(this)">
+                            @op.Texto
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+
+    @if (!yaEntregado)
+    {
+        <div class="d-flex justify-content-between align-items-center mt-4 p-3 glass-card">
+            <span style="color:var(--text-muted);font-size:0.85rem;">
+                <span id="contador">0</span> de @Model.Preguntas.Count respondidas
+            </span>
+            <button class="btn-sugoi" onclick="enviarExamen()" id="btnEnviar"
+                    style="background:#22c55e;padding:11px 28px;">
+                <i class="bi bi-send-check"></i> Entregar Examen
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex justify-content-center mt-3">
+            <a href="/Examenes/Index" class="btn-ghost">
+                <i class="bi bi-arrow-left"></i> Volver a mis exámenes
+            </a>
+        </div>
+    }
+</div>
+
+<input type="hidden" id="examenId" value="@Model.ExamenId" />
+<input type="hidden" id="totalPreguntas" value="@Model.Preguntas.Count" />
+
+@section Scripts {
+    <script>
+        function seleccionar(el) {
+            const pregId = el.dataset.pregunta;
+            document.querySelectorAll(`[data-pregunta="${pregId}"]`).forEach(o => {
+                o.style.background = 'rgba(255,255,255,0.03)';
+                o.style.borderColor = 'var(--border)';
+                o.style.color = 'var(--text-main)';
+                o.classList.remove('selected');
+            });
+            el.style.background = 'rgba(139,92,246,0.12)';
+            el.style.borderColor = 'rgba(139,92,246,0.4)';
+            el.style.color = '#a78bfa';
+            el.classList.add('selected');
+            actualizarContador();
+        }
+
+        function actualizarContador() {
+            const total = parseInt(document.getElementById('totalPreguntas').value);
+            const respondidas = document.querySelectorAll('.opcion-btn.selected').length;
+            document.getElementById('contador').textContent = respondidas;
+        }
+
+        async function enviarExamen() {
+            const total = parseInt(document.getElementById('totalPreguntas').value);
+            const seleccionadas = document.querySelectorAll('.opcion-btn.selected');
+
+            if (seleccionadas.length < total) {
+                alert(`Faltan ${total - seleccionadas.length} pregunta(s) por responder`);
+                return;
+            }
+
+            const btn = document.getElementById('btnEnviar');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Calificando...';
+
+            const respuestas = Array.from(seleccionadas).map(el => ({
+                preguntaId: el.dataset.pregunta,
+                opcionId: el.dataset.opcion
+            }));
+
+            try {
+                const res = await fetch('/Examenes/Calificar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        examenId: document.getElementById('examenId').value,
+                        respuestas
+                    })
+                });
+
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-send-check"></i> Entregar Examen';
+                    alert('Error al calificar. Intenta de nuevo.');
+                }
+            } catch(e) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-send-check"></i> Entregar Examen';
+                alert('Error de conexión.');
+            }
+        }
+    </script>
+}

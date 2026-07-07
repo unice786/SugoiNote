@@ -1,0 +1,209 @@
+﻿@model IEnumerable<SugoiNote.Models.Apunte>
+@{
+    ViewData["Title"] = "Mis Apuntes";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="font-weight:800;font-size:1.6rem;margin-bottom:4px;">Mis Apuntes</h2>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">Organiza y gestiona todos tus apuntes</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn-ghost" id="btnModoEliminar" onclick="toggleModoEliminar()">
+            <i class="bi bi-trash"></i> Eliminar
+        </button>
+        <button class="btn-sugoi" onclick="abrirModal()">
+            <i class="bi bi-plus-lg"></i> Nuevo Apunte
+        </button>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mb-4 flex-wrap">
+    <a href="#" class="filter-pill active" onclick="filtrar('', this)">Todas</a>
+    <span id="filtros-materia"></span>
+</div>
+
+<div class="row g-3" id="lista-apuntes">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4 col-lg-3 apunte-item" data-materia="@item.MateriaId" data-id="@item.ApunteId">
+                <div class="note-card-wrapper" style="position:relative;">
+                    <a href="/Apuntes/Editor/@item.ApunteId" class="note-card" id="card-@item.ApunteId">
+                        <div class="note-card-icon">
+                            <i class="bi bi-journal-richtext"></i>
+                        </div>
+                        <div class="note-card-title">@item.TituloNota</div>
+                        <div class="note-card-date">@(item.FechaRegistro?.ToString("dd MMM yyyy"))</div>
+                        <span class="note-card-link">Abrir →</span>
+                    </a>
+                    <button class="btn-eliminar-apunte" id="del-@item.ApunteId"
+                            onclick="seleccionarEliminar('@item.ApunteId', '@item.TituloNota')"
+                            style="display:none;position:absolute;top:8px;right:8px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.3);color:#ff4d4f;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="col-12 text-center py-5">
+            <i class="bi bi-journal-plus" style="font-size:2.5rem;color:var(--text-muted);display:block;margin-bottom:12px;"></i>
+            <p style="color:var(--text-muted);">Aún no tienes apuntes. ¡Crea tu primero!</p>
+        </div>
+    }
+</div>
+
+<!-- MODAL CREAR APUNTE -->
+<div class="modal-overlay" id="modalCrear">
+    <div class="modal-box">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <p class="modal-title" style="margin:0;">Nueva nota</p>
+            <button onclick="cerrarModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;line-height:1;">&times;</button>
+        </div>
+        <form method="post" action="/Apuntes/CreateRapido">
+            @Html.AntiForgeryToken()
+            <div class="mb-3">
+                <label class="sugoi-label">Título</label>
+                <input type="text" name="TituloNota" class="sugoi-input" placeholder="Ej: Cálculo Diferencial..." required />
+            </div>
+            <div class="mb-3">
+                <label class="sugoi-label">Materia</label>
+                <select name="MateriaId" id="selectMateriaApuntes" class="sugoi-input" style="padding:10px 14px !important;">
+                    <option value="">-- Selecciona una materia --</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="sugoi-label">O crea una nueva materia</label>
+                <input type="text" name="newMateriaName" class="sugoi-input" placeholder="Nombre de la materia" />
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn-sugoi flex-fill justify-content-center">
+                    <i class="bi bi-plus-lg"></i> Crear nota
+                </button>
+                <button type="button" onclick="cerrarModal()" class="btn-ghost">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL CONFIRMAR ELIMINAR -->
+<div class="modal-overlay" id="modalEliminar">
+    <div class="modal-box" style="max-width:420px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="modal-title" style="margin:0;color:#ff4d4f;"><i class="bi bi-exclamation-triangle"></i> Eliminar apunte</p>
+            <button onclick="cerrarModalEliminar()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">&times;</button>
+        </div>
+        <p style="color:var(--text-muted);font-size:0.9rem;">¿Estás seguro que deseas eliminar <strong id="nombreApunteEliminar" style="color:var(--text-main);"></strong>? Esta acción no se puede deshacer.</p>
+        <div class="d-flex gap-2 mt-4">
+            <button onclick="confirmarEliminar()" class="btn-sugoi flex-fill justify-content-center" style="background:#ff4d4f;">
+                <i class="bi bi-trash"></i> Sí, eliminar
+            </button>
+            <button onclick="cerrarModalEliminar()" class="btn-ghost">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let modoEliminar = false;
+        let apunteIdAEliminar = null;
+
+        function toggleModoEliminar() {
+            modoEliminar = !modoEliminar;
+            const btn = document.getElementById('btnModoEliminar');
+            const botones = document.querySelectorAll('[id^="del-"]');
+            const cards = document.querySelectorAll('[id^="card-"]');
+
+            if (modoEliminar) {
+                btn.innerHTML = '<i class="bi bi-arrow-left"></i> Cancelar';
+                btn.style.borderColor = '#ff4d4f';
+                btn.style.color = '#ff4d4f';
+                botones.forEach(b => b.style.display = 'block');
+                cards.forEach(c => {
+                    c.style.pointerEvents = 'none';
+                    c.style.opacity = '0.6';
+                });
+            } else {
+                btn.innerHTML = '<i class="bi bi-trash"></i> Eliminar';
+                btn.style.borderColor = '';
+                btn.style.color = '';
+                botones.forEach(b => b.style.display = 'none');
+                cards.forEach(c => {
+                    c.style.pointerEvents = '';
+                    c.style.opacity = '';
+                });
+            }
+        }
+
+        function seleccionarEliminar(id, nombre) {
+            apunteIdAEliminar = id;
+            document.getElementById('nombreApunteEliminar').textContent = nombre;
+            document.getElementById('modalEliminar').classList.add('open');
+        }
+
+        function cerrarModalEliminar() {
+            apunteIdAEliminar = null;
+            document.getElementById('modalEliminar').classList.remove('open');
+        }
+
+        async function confirmarEliminar() {
+            if (!apunteIdAEliminar) return;
+            try {
+                const res = await fetch('/Apuntes/Eliminar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apunteId: apunteIdAEliminar })
+                });
+                if (res.ok) {
+                    const item = document.querySelector(`.apunte-item[data-id="${apunteIdAEliminar}"]`);
+                    if (item) item.remove();
+                    cerrarModalEliminar();
+                    toggleModoEliminar();
+                }
+            } catch(e) {
+                alert('Error al eliminar. Intenta de nuevo.');
+            }
+        }
+
+        function abrirModal() {
+            document.getElementById('modalCrear').classList.add('open');
+            cargarMaterias();
+        }
+        function cerrarModal() {
+            document.getElementById('modalCrear').classList.remove('open');
+        }
+        document.getElementById('modalCrear').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModal();
+        });
+        document.getElementById('modalEliminar').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModalEliminar();
+        });
+
+        async function cargarMaterias() {
+            try {
+                const res = await fetch('/Apuntes/GetMaterias');
+                const data = await res.json();
+                const sel = document.getElementById('selectMateriaApuntes');
+                const filtros = document.getElementById('filtros-materia');
+                sel.innerHTML = '<option value="">-- Selecciona una materia --</option>';
+                filtros.innerHTML = '';
+                data.forEach(m => {
+                    sel.innerHTML += `<option value="${m.materiaId}">${m.nombreMateria}</option>`;
+                    filtros.innerHTML += `<a href="#" class="filter-pill" onclick="filtrar('${m.materiaId}', this)">${m.nombreMateria}</a>`;
+                });
+            } catch(e) {}
+        }
+
+        function filtrar(materiaId, el) {
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            document.querySelectorAll('.apunte-item').forEach(item => {
+                item.style.display = (!materiaId || item.dataset.materia === materiaId) ? '' : 'none';
+            });
+        }
+        cargarMaterias();
+    </script>
+}

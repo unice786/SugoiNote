@@ -1,0 +1,47 @@
+﻿@model IEnumerable<SugoiNote.Models.Apunte>
+@{
+    ViewData["Title"] = "Mis Resúmenes";
+}
+<style>
+    .resumen-card { background: linear-gradient(145deg, #151b2e, #1a2035); border: 1px solid rgba(139,92,246,0.15); border-radius: 16px; padding: 24px; transition: all 0.25s; text-decoration: none; display: block; }
+    .resumen-card:hover { border-color: rgba(139,92,246,0.4); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(139,92,246,0.12); }
+    .resumen-preview { font-size: 0.85rem; color: #9ca3af; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .text-gradient { background: linear-gradient(to right, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .ia-badge { background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(217,70,239,0.2)); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; }
+    .empty-state { text-align: center; padding: 60px 20px; background: rgba(23,28,41,0.5); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.08); }
+</style>
+
+<div class="mb-5">
+    <h1 class="fw-bold text-gradient mb-1">Mis Resúmenes ✨</h1>
+    <p style="color:#6b7280;font-size:0.9rem;">Resúmenes generados con inteligencia artificial.</p>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <div class="row g-3">
+        @foreach (var apunte in Model)
+        {
+            <div class="col-md-6">
+                <a asp-controller="Apuntes" asp-action="Details" asp-route-id="@apunte.ApunteId" class="resumen-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h6 class="fw-bold text-white mb-0">@apunte.TituloNota</h6>
+                        <span class="ia-badge ms-2">✨ IA</span>
+                    </div>
+                    <p class="resumen-preview">@apunte.ResumenGeneradoIA</p>
+                    <small style="color:#4b5563;font-size:0.72rem;margin-top:12px;display:block;">
+                        @(apunte.FechaRegistro.HasValue ? apunte.FechaRegistro.Value.ToString("dd MMM yyyy") : "")
+                    </small>
+                </a>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <div style="font-size:3rem;margin-bottom:16px;">🤖</div>
+        <h4 style="color:#9ca3af;">No hay resúmenes todavía</h4>
+        <p style="color:#4b5563;font-size:0.9rem;">Abre un apunte y genera tu primer resumen con IA.</p>
+        <a asp-controller="Apuntes" asp-action="Index" class="btn mt-3" style="background:linear-gradient(135deg,#8b5cf6,#d946ef);color:white;border-radius:12px;padding:10px 22px;font-weight:600;">Ver mis apuntes</a>
+    </div>
+}

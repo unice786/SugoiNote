@@ -1,0 +1,118 @@
+﻿@model IEnumerable<SugoiNote.Controllers.PostVM>
+@{
+    ViewData["Title"] = "Comunidad";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="font-weight:800;font-size:1.6rem;margin-bottom:4px;">Comunidad</h2>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">Pregunta y ayuda a otros estudiantes</p>
+    </div>
+    <button class="btn-sugoi" onclick="abrirModal()">
+        <i class="bi bi-plus-lg"></i> Nueva Pregunta
+    </button>
+</div>
+
+<div class="mb-4">
+    <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" id="buscador" placeholder="Buscar preguntas..." oninput="buscar(this.value)" />
+    </div>
+</div>
+
+<div id="listaPosts">
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var post in Model)
+        {
+            var iniciales = post.NombreEstudiante.Length >= 2 ? post.NombreEstudiante.Substring(0, 2).ToUpper() : post.NombreEstudiante.ToUpper();
+            <a href="/Comunidad/Ver/@post.PostId" style="text-decoration:none;display:block;" class="post-item">
+                <div class="glass-card p-4 mb-3" style="transition:border-color 0.2s;cursor:pointer;"
+                     onmouseover="this.style.borderColor='rgba(139,92,246,0.3)'"
+                     onmouseout="this.style.borderColor='var(--border)'">
+                    <div class="d-flex gap-3 align-items-start">
+                        <div style="width:40px;height:40px;border-radius:12px;background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.82rem;color:var(--neon-purple);flex-shrink:0;">
+                            @iniciales
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                <span style="font-weight:700;font-size:0.9rem;">@post.NombreEstudiante</span>
+                                <span style="color:var(--text-muted);font-size:0.75rem;">@(post.Fecha?.ToString("dd MMM yyyy · HH:mm"))</span>
+                            </div>
+                            <h5 style="font-weight:700;font-size:0.95rem;margin-bottom:6px;color:var(--text-main);">@post.Titulo</h5>
+                            <p style="color:var(--text-muted);font-size:0.85rem;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@post.Detalle</p>
+                        </div>
+                        <div style="text-align:center;flex-shrink:0;">
+                            <div style="font-size:1rem;font-weight:700;color:var(--text-main);">@post.TotalRespuestas</div>
+                            <div style="font-size:0.7rem;color:var(--text-muted);">respuestas</div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        }
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-people" style="font-size:2.5rem;color:var(--text-muted);display:block;margin-bottom:12px;"></i>
+            <p style="color:var(--text-muted);">Aún no hay preguntas. ¡Sé el primero!</p>
+        </div>
+    }
+</div>
+
+<!-- MODAL NUEVA PREGUNTA -->
+<div class="modal-overlay" id="modalPost">
+    <div class="modal-box">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <p class="modal-title" style="margin:0;"><i class="bi bi-question-circle" style="color:var(--neon-purple);margin-right:8px;"></i>Nueva Pregunta</p>
+            <button onclick="cerrarModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">&times;</button>
+        </div>
+        <div class="mb-3">
+            <label class="sugoi-label">Título de la pregunta</label>
+            <input type="text" id="inputTitulo" class="sugoi-input" placeholder="¿Cómo resolver...?" />
+        </div>
+        <div class="mb-4">
+            <label class="sugoi-label">Descripción</label>
+            <textarea id="inputDetalle" class="sugoi-input" rows="4"
+                      style="resize:none;min-height:100px;"
+                      placeholder="Explica tu duda con más detalle..."></textarea>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn-sugoi flex-fill justify-content-center" onclick="publicarPost()">
+                <i class="bi bi-send"></i> Publicar
+            </button>
+            <button class="btn-ghost" onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function abrirModal() { document.getElementById('modalPost').classList.add('open'); }
+        function cerrarModal() { document.getElementById('modalPost').classList.remove('open'); }
+        document.getElementById('modalPost').addEventListener('click', e => {
+            if (e.target === document.getElementById('modalPost')) cerrarModal();
+        });
+
+        async function publicarPost() {
+            const titulo = document.getElementById('inputTitulo').value.trim();
+            const detalle = document.getElementById('inputDetalle').value.trim();
+            if (!titulo || !detalle) { alert('Completa todos los campos'); return; }
+
+            await fetch('/Comunidad/CrearPost', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ titulo, detalle })
+            });
+            cerrarModal();
+            location.reload();
+        }
+
+        function buscar(q) {
+            document.querySelectorAll('.post-item').forEach(item => {
+                const texto = item.innerText.toLowerCase();
+                item.style.display = texto.includes(q.toLowerCase()) ? 'block' : 'none';
+            });
+        }
+    </script>
+}

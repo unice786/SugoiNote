@@ -1,0 +1,188 @@
+﻿@model IEnumerable<SugoiNote.Controllers.ExamenVM>
+@{
+    ViewData["Title"] = "Exámenes";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 style="font-weight:800;font-size:1.6rem;margin-bottom:4px;">Mis Exámenes</h2>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">Genera exámenes con IA y pon a prueba tus conocimientos</p>
+    </div>
+    <button class="btn-sugoi" onclick="abrirModal()" style="background:#22c55e;">
+        <i class="bi bi-clipboard-plus"></i> Generar Examen
+    </button>
+</div>
+
+@if (Model != null && Model.Any())
+{
+    <div class="row g-3">
+        @foreach (var ex in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <a href="/Examenes/Ver/@ex.ExamenId" class="note-card" style="text-decoration:none;">
+                    <div class="note-card-icon" style="background:rgba(34,197,94,0.08);">
+                        <i class="bi bi-clipboard-check" style="color:#22c55e;"></i>
+                    </div>
+                    <div class="note-card-title">@ex.TituloApunte</div>
+                    <div class="note-card-date">@(ex.Fecha?.ToString("dd MMM yyyy"))</div>
+                    <div style="margin-top:10px;">
+                        @if (ex.Calificacion.HasValue)
+                        {
+                            var color = ex.Calificacion >= 70 ? "#22c55e" : ex.Calificacion >= 50 ? "#f59e0b" : "#ef4444";
+                            var bg = ex.Calificacion >= 70 ? "rgba(34,197,94,0.1)" : ex.Calificacion >= 50 ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)";
+                            var label = ex.Calificacion >= 70 ? "Aprobado" : ex.Calificacion >= 50 ? "Regular" : "Reprobado";
+                            <span style="background:@bg;color:@color;border-radius:6px;padding:3px 10px;font-size:0.78rem;font-weight:700;">
+                                @ex.Calificacion% — @label
+                            </span>
+                        }
+                        else
+                        {
+                            <span style="background:rgba(139,92,246,0.1);color:#a78bfa;border-radius:6px;padding:3px 10px;font-size:0.78rem;font-weight:600;">
+                                Pendiente
+                            </span>
+                        }
+                    </div>
+                    <span class="note-card-link">@(ex.Calificacion.HasValue ? "Ver resultado →" : "Responder →")</span>
+                </a>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <div style="width:72px;height:72px;background:rgba(34,197,94,0.08);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+            <i class="bi bi-clipboard-plus" style="font-size:2rem;color:#22c55e;"></i>
+        </div>
+        <h5 style="font-weight:700;margin-bottom:8px;">Aún no tienes exámenes</h5>
+        <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:20px;">Genera un examen desde cualquiera de tus apuntes</p>
+        <button class="btn-sugoi" onclick="abrirModal()" style="background:#22c55e;">
+            <i class="bi bi-clipboard-plus"></i> Generar mi primer examen
+        </button>
+    </div>
+}
+
+<!-- MODAL GENERAR EXAMEN -->
+<div class="modal-overlay" id="modalGenerar">
+    <div class="modal-box">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <p class="modal-title" style="margin:0;">
+                <i class="bi bi-clipboard-plus" style="color:#22c55e;margin-right:8px;"></i>Nuevo Examen
+            </p>
+            <button onclick="cerrarModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">&times;</button>
+        </div>
+
+        <div id="formGenerar">
+            <div class="mb-3">
+                <label class="sugoi-label">Selecciona un apunte</label>
+                <select id="selectApunteExamen" class="sugoi-input" style="padding:10px 14px !important;">
+                    <option value="">-- Elige un apunte --</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="sugoi-label">Tipo de preguntas</label>
+                <select id="tipoRespuesta" class="sugoi-input" style="padding:10px 14px !important;">
+                    <option value="opcion_multiple">Opción múltiple (4 opciones)</option>
+                    <option value="verdadero_falso">Verdadero o Falso</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="sugoi-label">Cantidad de preguntas</label>
+                <select id="cantidadPreguntas" class="sugoi-input" style="padding:10px 14px !important;">
+                    <option value="5">5 preguntas</option>
+                    <option value="8">8 preguntas</option>
+                    <option value="10" selected>10 preguntas</option>
+                    <option value="15">15 preguntas</option>
+                    <option value="20">20 preguntas</option>
+                </select>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn-sugoi flex-fill justify-content-center" onclick="generarExamen()" style="background:#22c55e;">
+                    <i class="bi bi-stars"></i> Generar con IA
+                </button>
+                <button class="btn-ghost" onclick="cerrarModal()">Cancelar</button>
+            </div>
+        </div>
+
+        <div id="generandoMsg" style="display:none;text-align:center;padding:24px 0;">
+            <div style="width:48px;height:48px;border:3px solid rgba(34,197,94,0.15);border-top-color:#22c55e;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div>
+            <p style="color:var(--text-main);font-weight:600;margin-bottom:4px;">Generando tu examen...</p>
+            <p style="color:var(--text-muted);font-size:0.82rem;">La IA está creando preguntas únicas basadas en tu apunte</p>
+        </div>
+
+        <div id="errorMsg" style="display:none;text-align:center;padding:16px 0;">
+            <i class="bi bi-exclamation-circle" style="font-size:2rem;color:#ef4444;display:block;margin-bottom:12px;"></i>
+            <p style="color:#ef4444;font-weight:600;margin-bottom:16px;" id="errorTexto">Error al generar</p>
+            <button class="btn-ghost" onclick="mostrarForm()">Intentar de nuevo</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    @@keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }</style>
+
+    @section Scripts {
+        <script>
+            async function abrirModal() {
+                document.getElementById('modalGenerar').classList.add('open');
+                mostrarForm();
+                const res = await fetch('/Examenes/GetApuntes');
+                const data = await res.json();
+                const sel = document.getElementById('selectApunteExamen');
+                sel.innerHTML = '<option value="">-- Elige un apunte --</option>';
+                data.forEach(a => sel.innerHTML += `<option value="${a.apunteId}">${a.tituloNota}</option>`);
+            }
+
+            function cerrarModal() {
+                document.getElementById('modalGenerar').classList.remove('open');
+            }
+
+            function mostrarForm() {
+                document.getElementById('formGenerar').style.display = 'block';
+                document.getElementById('generandoMsg').style.display = 'none';
+                document.getElementById('errorMsg').style.display = 'none';
+            }
+
+            document.getElementById('modalGenerar').addEventListener('click', e => {
+                if (e.target === document.getElementById('modalGenerar')) cerrarModal();
+            });
+
+            async function generarExamen() {
+                const apunteId = document.getElementById('selectApunteExamen').value;
+                const tipo = document.getElementById('tipoRespuesta').value;
+                const cantidad = parseInt(document.getElementById('cantidadPreguntas').value);
+                if (!apunteId) { alert('Selecciona un apunte'); return; }
+
+                document.getElementById('formGenerar').style.display = 'none';
+                document.getElementById('generandoMsg').style.display = 'block';
+
+                try {
+                    const res = await fetch('/Examenes/Generar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ apunteId, tipoRespuesta: tipo, cantidadPreguntas: cantidad })
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json();
+                        document.getElementById('generandoMsg').style.display = 'none';
+                        document.getElementById('errorTexto').textContent = err.error || 'Error al generar el examen';
+                        document.getElementById('errorMsg').style.display = 'block';
+                        return;
+                    }
+
+                    const data = await res.json();
+                    cerrarModal();
+                    window.location.href = `/Examenes/Ver/${data.examenId}`;
+                } catch(e) {
+                    document.getElementById('generandoMsg').style.display = 'none';
+                    document.getElementById('errorTexto').textContent = 'Error de conexión. Intenta de nuevo.';
+                    document.getElementById('errorMsg').style.display = 'block';
+                }
+            }
+        </script>
+    }
