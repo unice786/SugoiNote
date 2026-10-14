@@ -361,3 +361,32 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# -------------------------------------------------------------
+# SUGOINOTE — secretos y config local (NUNCA subir)
+# -------------------------------------------------------------
+# Los secretos reales van en User Secrets (dotnet user-secrets set)
+# o en variables de entorno: ConnectionStrings__DefaultConnection, Anthropic__ApiKey
+appsettings.Local.json
+appsettings.Production.json
+appsettings.*.Local.json
+.env
+.env.*
+!.env.example
+secrets.json
+*.pfx
+
+# Backups de base de datos
+*.bak
+*.sql
+backups/
+
+# Agentes / editores
+.cursor/
+.vscode/
+.idea/
+.claude/
+
+# Logs
+logs/
+*.log
+serilog-*.txt

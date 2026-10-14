@@ -1,87 +1,225 @@
-﻿@model SugoiNote.Controllers.PostDetalleVM
+﻿@model SugoiNote.Models.ViewModels.PostDetalleVM
+@using SugoiNote.Models.ViewModels
 @{
-    ViewData["Title"] = "Pregunta";
+    ViewData["Title"] = Model.EsEncuesta ? "Encuesta" : "Pregunta";
     var userId = ViewBag.UserId as Guid?;
-    var iniciales = Model.NombreEstudiante.Length >= 2 ? Model.NombreEstudiante.Substring(0, 2).ToUpper() : "U";
+    var totalVotos = Model.TotalVotosEncuesta;
 }
 
-<div class="d-flex align-items-center gap-3 mb-4">
-    <a href="/Comunidad/Index" class="btn-ghost" style="padding:8px 14px;">
-        <i class="bi bi-arrow-left"></i>
-    </a>
-    <h2 style="font-weight:800;font-size:1.3rem;margin:0;">Pregunta de la comunidad</h2>
-</div>
-
-<div class="glass-card p-4 mb-4">
-    <div class="d-flex gap-3 align-items-start mb-3">
-        <div style="width:44px;height:44px;border-radius:12px;background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--neon-purple);flex-shrink:0;">
-            @iniciales
-        </div>
+<div class="comunidad-page">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="/Comunidad/Index" class="btn-ghost" aria-label="Volver a la comunidad" style="padding:8px 14px;">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+        </a>
         <div>
-            <div style="font-weight:700;">@Model.NombreEstudiante</div>
-            <div style="color:var(--text-muted);font-size:0.78rem;">@(Model.Fecha?.ToString("dd MMM yyyy · HH:mm"))</div>
+            <h2 class="comunidad-title" style="font-size:1.3rem;margin:0;">
+                @(Model.EsEncuesta ? "Encuesta de la comunidad" : "Pregunta de la comunidad")
+            </h2>
+            @if (Model.EsEncuesta)
+            {
+                <span class="comunidad-badge comunidad-badge-poll mt-1"><i class="bi bi-bar-chart-fill" aria-hidden="true"></i> Encuesta</span>
+            }
         </div>
     </div>
-    <h3 style="font-weight:800;font-size:1.1rem;margin-bottom:10px;">@Model.Titulo</h3>
-    <p style="color:var(--text-secondary);line-height:1.7;margin:0;">@Model.Detalle</p>
-</div>
 
-<div class="d-flex align-items-center gap-2 mb-3">
-    <div style="width:6px;height:6px;border-radius:50%;background:var(--neon-purple);"></div>
-    <h5 style="margin:0;font-weight:700;font-size:0.95rem;">@Model.Respuestas.Count respuestas</h5>
-</div>
-
-@foreach (var resp in Model.Respuestas)
-{
-    var iniR = resp.NombreEstudiante.Length >= 2 ? resp.NombreEstudiante.Substring(0, 2).ToUpper() : "U";
-    bool esMia = resp.EstudianteId == userId;
-    <div class="glass-card p-4 mb-3" style="@(esMia ? "border-color:rgba(139,92,246,0.25);" : "")">
-        <div class="d-flex gap-3 align-items-start">
-            <div style="width:36px;height:36px;border-radius:10px;background:@(esMia ? "rgba(139,92,246,0.2)" : "rgba(255,255,255,0.05)");display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.78rem;color:@(esMia ? "var(--neon-purple)" : "var(--text-muted)");flex-shrink:0;">
-                @iniR
+    <div class="glass-card comunidad-detail-card p-4 mb-4">
+        <div class="d-flex gap-3 align-items-start mb-3">
+            @await Html.PartialAsync("_Avatar", new AvatarVM { Nombre = Model.NombreEstudiante, FotoUrl = Model.FotoEstudiante, CssClass = "comunidad-avatar comunidad-avatar-lg" })
+            <div>
+                <div class="comunidad-author">@Model.NombreEstudiante</div>
+                <div class="comunidad-date">@(Model.Fecha?.ToString("dd MMM yyyy · HH:mm"))</div>
             </div>
-            <div style="flex:1;">
-                <div class="d-flex align-items-center gap-2 mb-1">
-                    <span style="font-weight:700;font-size:0.88rem;">@resp.NombreEstudiante</span>
-                    @if (esMia)
+        </div>
+
+        <div class="comunidad-topic-label">@(Model.EsEncuesta ? "Tema" : "Título")</div>
+        <h3 class="comunidad-detail-title">@Model.Titulo</h3>
+
+        @if (Model.EsEncuesta)
+        {
+            <div class="comunidad-topic-label mt-3">Pregunta</div>
+        }
+        <p class="comunidad-detail-text">@Model.Detalle</p>
+
+        @if (!string.IsNullOrEmpty(Model.ImagenUrl))
+        {
+            <img src="@Model.ImagenUrl" alt="Imagen adjunta" class="comunidad-attached-image" />
+        }
+    </div>
+
+    @if (Model.EsEncuesta)
+    {
+        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+            <div class="comunidad-dot"></div>
+            <h5 class="comunidad-section-title">@totalVotos votos · @Model.Opciones.Count opciones</h5>
+            @if (Model.SoloUnaOpcion)
+            {
+                <span class="comunidad-badge comunidad-badge-single"><i class="bi bi-record-circle" aria-hidden="true"></i> Una sola respuesta</span>
+            }
+            else
+            {
+                <span class="comunidad-badge comunidad-badge-multi"><i class="bi bi-check2-square" aria-hidden="true"></i> Varias respuestas</span>
+            }
+        </div>
+
+        <div class="glass-card p-4 mb-4" id="encuestaPanel">
+            @foreach (var opcion in Model.Opciones)
+            {
+                var pct = totalVotos > 0 ? Math.Round(opcion.TotalVotos * 100.0 / totalVotos, 1) : 0;
+                var seleccionada = Model.VotosUsuario.Contains(opcion.OpcionId);
+                <div class="encuesta-opcion @(Model.YaVoto ? "encuesta-opcion-result" : "") @(seleccionada ? "encuesta-opcion-selected" : "")"
+                     data-opcion-id="@opcion.OpcionId"
+                     onclick="@(Model.YaVoto ? "" : "toggleOpcion(this)")">
+                    <div class="encuesta-opcion-main">
+                        @if (!Model.YaVoto)
+                        {
+                            if (Model.SoloUnaOpcion)
+                            {
+                                <span class="encuesta-radio @(seleccionada ? "checked" : "")"></span>
+                            }
+                            else
+                            {
+                                <span class="encuesta-checkbox @(seleccionada ? "checked" : "")"><i class="bi bi-check" aria-hidden="true"></i></span>
+                            }
+                        }
+                        <span class="encuesta-opcion-text">@opcion.Texto</span>
+                        @if (Model.YaVoto)
+                        {
+                            <span class="encuesta-opcion-pct">@pct%</span>
+                        }
+                    </div>
+                    @if (Model.YaVoto)
                     {
-                        <span style="background:rgba(139,92,246,0.1);color:#a78bfa;border-radius:4px;padding:1px 7px;font-size:0.7rem;font-weight:600;">Tú</span>
+                        <div class="encuesta-bar-wrap">
+                            <div class="encuesta-bar" style="width:@pct%"></div>
+                        </div>
+                        <div class="encuesta-votes-count">@opcion.TotalVotos voto@(opcion.TotalVotos == 1 ? "" : "s")</div>
                     }
-                    <span style="color:var(--text-muted);font-size:0.75rem;margin-left:auto;">@(resp.Fecha?.ToString("dd MMM · HH:mm"))</span>
                 </div>
-                <p style="color:var(--text-secondary);margin:0;font-size:0.9rem;line-height:1.6;">@resp.Texto</p>
-            </div>
-        </div>
-    </div>
-}
+            }
 
-<div class="glass-card p-4 mt-4">
-    <label class="sugoi-label" style="margin-bottom:12px;">Tu respuesta</label>
-    <textarea id="inputRespuesta" class="sugoi-input" rows="3"
-              style="resize:none;margin-bottom:12px;"
-              placeholder="Escribe tu respuesta..."></textarea>
-    <button class="btn-sugoi" onclick="responder()">
-        <i class="bi bi-send"></i> Publicar respuesta
-    </button>
+            @if (!Model.YaVoto)
+            {
+                <button type="button" class="btn-sugoi mt-3" onclick="enviarVoto()">
+                    <i class="bi bi-check2-circle" aria-hidden="true"></i> Enviar voto
+                </button>
+            }
+            else
+            {
+                <div class="comunidad-voted-msg mt-3">
+                    <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Ya participaste en esta encuesta
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="comunidad-dot"></div>
+            <h5 class="comunidad-section-title">@Model.Respuestas.Count respuestas</h5>
+        </div>
+
+        @foreach (var resp in Model.Respuestas)
+        {
+            bool esMia = resp.EstudianteId == userId;
+            <div class="glass-card p-4 mb-3 @(esMia ? "comunidad-reply-mine" : "")">
+                <div class="d-flex gap-3 align-items-start">
+                    @await Html.PartialAsync("_Avatar", new AvatarVM {
+                        Nombre = resp.NombreEstudiante,
+                        FotoUrl = resp.FotoEstudiante,
+                        CssClass = "comunidad-avatar comunidad-avatar-sm" + (esMia ? " comunidad-avatar-mine" : "")
+                    })
+                    <div style="flex:1;">
+                        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                            <span class="comunidad-author">@resp.NombreEstudiante</span>
+                            @if (esMia)
+                            {
+                                <span class="comunidad-you-badge">Tú</span>
+                            }
+                            <span class="comunidad-date ms-auto">@(resp.Fecha?.ToString("dd MMM · HH:mm"))</span>
+                        </div>
+                        <p class="comunidad-detail-text" style="margin:0;">@resp.Texto</p>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="glass-card p-4 mt-4">
+            <label class="sugoi-label" for="inputRespuesta" style="margin-bottom:12px;">Tu respuesta</label>
+            <textarea id="inputRespuesta" class="sugoi-input" rows="3" placeholder="Escribe tu respuesta..."></textarea>
+            <button type="button" class="btn-sugoi mt-3" onclick="responder()">
+                <i class="bi bi-send" aria-hidden="true"></i> Publicar respuesta
+            </button>
+        </div>
+    }
 </div>
 
 <input type="hidden" id="postId" value="@Model.PostId" />
+<input type="hidden" id="soloUnaOpcion" value="@(Model.SoloUnaOpcion ? "1" : "0")" />
 
 @section Scripts {
     <script>
+        const seleccionadas = new Set(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VotosUsuario.Select(v => v.ToString()))));
+        const soloUna = document.getElementById('soloUnaOpcion').value === '1';
+
+        function toggleOpcion(el) {
+            const id = el.dataset.opcionId;
+            if (soloUna) {
+                seleccionadas.clear();
+                document.querySelectorAll('.encuesta-opcion').forEach(o => {
+                    o.classList.remove('encuesta-opcion-selected');
+                    o.querySelector('.encuesta-radio, .encuesta-checkbox')?.classList.remove('checked');
+                });
+                seleccionadas.add(id);
+                el.classList.add('encuesta-opcion-selected');
+                el.querySelector('.encuesta-radio, .encuesta-checkbox')?.classList.add('checked');
+                return;
+            }
+
+            if (seleccionadas.has(id)) {
+                seleccionadas.delete(id);
+                el.classList.remove('encuesta-opcion-selected');
+                el.querySelector('.encuesta-checkbox')?.classList.remove('checked');
+            } else {
+                seleccionadas.add(id);
+                el.classList.add('encuesta-opcion-selected');
+                el.querySelector('.encuesta-checkbox')?.classList.add('checked');
+            }
+        }
+
+        async function enviarVoto() {
+            if (seleccionadas.size === 0) {
+                Sugoi.toast.error('Selecciona al menos una opción');
+                return;
+            }
+            if (soloUna && seleccionadas.size > 1) {
+                Sugoi.toast.error('Solo puedes elegir una opción');
+                return;
+            }
+
+            try {
+                await Sugoi.apiPost('/Comunidad/Votar', {
+                    postId: document.getElementById('postId').value,
+                    opcionIds: [...seleccionadas]
+                });
+                location.reload();
+            } catch (err) {
+                Sugoi.toast.error(err.message);
+            }
+        }
+
         async function responder() {
             const texto = document.getElementById('inputRespuesta').value.trim();
-            if (!texto) { alert('Escribe una respuesta'); return; }
+            if (!texto) { Sugoi.toast.error('Escribe una respuesta'); return; }
 
-            await fetch('/Comunidad/Responder', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            try {
+                await Sugoi.apiPost('/Comunidad/Responder', {
                     postId: document.getElementById('postId').value,
                     texto
-                })
-            });
-            location.reload();
+                });
+                location.reload();
+            } catch (err) {
+                Sugoi.toast.error(err.message);
+            }
         }
     </script>
 }

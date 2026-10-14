@@ -1,0 +1,51 @@
+﻿@model SugoiNote.Models.ViewModels.RestablecerClaveVM
+@{
+    ViewData["Title"] = "Nueva contraseña";
+    Layout = "_AuthLayout";
+}
+
+<div class="auth-container">
+    <div class="form-section">
+        <div class="logo-area">
+            <div class="logo-icon-bg" aria-hidden="true"><i class="bi bi-journal-bookmark-fill"></i></div>
+            SugoiNote
+        </div>
+
+        <div class="welcome-header">
+            <h1>Crea una nueva contraseña</h1>
+            <p>El enlace solo puede usarse una vez y expira en 30 minutos</p>
+        </div>
+
+        <form asp-controller="Auth" asp-action="Restablecer" method="post" autocomplete="off">
+            <input type="hidden" name="token" value="@Context.Request.Query["token"]" />
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <div class="input-group">
+                <label for="NuevaClave">Nueva contraseña</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-lock" aria-hidden="true"></i>
+                    <input asp-for="NuevaClave" id="NuevaClave" type="password"
+                           placeholder="Mínimo 8 caracteres, con letra y número"
+                           autocomplete="new-password" required minlength="8" autofocus />
+                </div>
+                <span asp-validation-for="NuevaClave" class="field-validation-error"></span>
+            </div>
+
+            <div class="input-group">
+                <label for="ConfirmarClave">Repetir contraseña</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-lock-fill" aria-hidden="true"></i>
+                    <input asp-for="ConfirmarClave" id="ConfirmarClave" type="password"
+                           placeholder="Repite la contraseña"
+                           autocomplete="new-password" required minlength="8" />
+                </div>
+                <span asp-validation-for="ConfirmarClave" class="field-validation-error"></span>
+            </div>
+
+            <button type="submit" class="btn-auth">Guardar nueva contraseña</button>
+            <a href="/Auth/Login" class="btn-ghost-auth mt-2" style="display:block;text-align:center;text-decoration:none;">
+                Cancelar
+            </a>
+        </form>
+    </div>
+</div>

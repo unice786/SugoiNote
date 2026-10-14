@@ -6,8 +6,6 @@
 }
 
 <style>
-    .sugoi-input { background: #0b0e14; border: 1px solid rgba(255,255,255,0.06); color: #fff; }
-    .sugoi-textarea { background: #0b0e14; border: 1px solid rgba(255,255,255,0.06); color: #fff; }
     .sugoi-form { max-width: 900px; margin: 0 auto; }
 </style>
 
@@ -40,8 +38,8 @@
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Materia</label>
-                <select name="MateriaId" class="form-select sugoi-input">
+                <label class="form-label" for="MateriaId">Materia</label>
+                <select name="MateriaId" id="MateriaId" class="form-select sugoi-input">
                     <option value="">-- Selecciona una materia --</option>
                     @if (materias != null)
                     {
@@ -51,12 +49,12 @@
                         }
                     }
                 </select>
-                <div class="form-text" style="color: #9ca3af;">Si la materia no existe, escribe un nombre abajo y se creará automáticamente.</div>
+                <div class="form-text" style="color: var(--text-muted);">Si la materia no existe, escribe un nombre abajo y se creará automáticamente.</div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Crear nueva materia (opcional)</label>
-                <input asp-for="newMateriaName" class="form-control sugoi-input" placeholder="Nombre de la materia" />
+                <label class="form-label" for="NuevaMateriaNombre">Crear nueva materia (opcional)</label>
+                <input asp-for="NuevaMateriaNombre" class="form-control sugoi-input" placeholder="Nombre de la materia" />
             </div>
 
             <div class="mb-3">

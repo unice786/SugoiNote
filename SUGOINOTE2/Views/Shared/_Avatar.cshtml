@@ -1,0 +1,13 @@
+@model SugoiNote.Models.ViewModels.AvatarVM
+@{
+    var iniciales = Model.Nombre.Length >= 2 ? Model.Nombre.Substring(0, 2).ToUpper() : Model.Nombre.ToUpper();
+    var css = string.IsNullOrWhiteSpace(Model.CssClass) ? "comunidad-avatar" : Model.CssClass;
+}
+@if (!string.IsNullOrEmpty(Model.FotoUrl))
+{
+    <img src="@Model.FotoUrl" alt="@Model.Nombre" class="@css comunidad-avatar-img" />
+}
+else
+{
+    <div class="@css">@iniciales</div>
+}

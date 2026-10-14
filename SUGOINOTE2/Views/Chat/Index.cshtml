@@ -2,78 +2,58 @@
     ViewData["Title"] = "Chat IA";
 }
 
-<div style="height:calc(100vh - 120px);display:flex;flex-direction:column;">
+<div class="chat-page">
     <div class="d-flex align-items-center gap-3 mb-4">
-        <div style="width:42px;height:42px;background:rgba(139,92,246,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-            <i class="bi bi-robot" style="color:var(--neon-purple);font-size:1.1rem;"></i>
+        <div class="chat-header-icon">
+            <i class="bi bi-robot" aria-hidden="true"></i>
         </div>
         <div>
-            <h2 style="font-weight:800;font-size:1.4rem;margin:0;">Chat IA</h2>
-            <p style="color:var(--text-muted);font-size:0.82rem;margin:0;">Tu tutor académico personal</p>
+            <h2 class="chat-title">Chat IA</h2>
+            <p class="chat-subtitle">Tu tutor académico personal · Pega imágenes con Ctrl+V</p>
         </div>
-        <button class="btn-ghost" onclick="limpiarChat()" style="margin-left:auto;padding:8px 16px;font-size:0.82rem;">
-            <i class="bi bi-trash3"></i> Limpiar
+        <button type="button" class="btn-ghost chat-clear-btn" onclick="limpiarChat()">
+            <i class="bi bi-trash3" aria-hidden="true"></i> Limpiar
         </button>
     </div>
 
-    <div id="chatBox" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:4px 0 20px;">
+    <div id="chatBox" class="chat-box">
         <div class="msg-ia">
-            <div class="msg-avatar ia"><i class="bi bi-robot"></i></div>
+            <div class="msg-avatar ia"><i class="bi bi-robot" aria-hidden="true"></i></div>
             <div class="msg-burbuja ia">
-                ¡Hola! Soy tu asistente de estudio potenciado por IA. ¿En qué puedo ayudarte hoy? Puedo ayudarte a explicar conceptos, resolver dudas o generar ejercicios de práctica.
+                Soy tu asistente de estudio. Pregúntame lo que quieras o pega una imagen de apuntes/ejercicios para que la analice.
             </div>
         </div>
     </div>
 
-    <div style="border-top:1px solid var(--border);padding-top:16px;">
-        <div style="display:flex;gap:10px;align-items:flex-end;">
-            <textarea id="inputMsg"
-                      placeholder="Escribe tu pregunta sobre cualquier tema..."
-                      style="flex:1;background:var(--card-bg);border:1px solid var(--border);color:var(--text-main);border-radius:14px;padding:12px 16px;font-family:inherit;font-size:0.9rem;resize:none;min-height:48px;max-height:120px;line-height:1.5;"
-                      rows="1"
-                      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviar();}"></textarea>
-            <button onclick="enviar()" id="btnEnviar"
-                    style="width:46px;height:46px;background:var(--neon-purple);border:none;border-radius:12px;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;">
-                <i class="bi bi-send-fill"></i>
+    <div class="chat-input-area">
+        <div id="chatImagePreview" class="chat-image-preview" style="display:none;">
+            <img id="chatPreviewImg" alt="Vista previa" />
+            <button type="button" class="chat-image-remove" onclick="quitarImagenChat()" title="Quitar imagen" aria-label="Quitar imagen">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
             </button>
         </div>
-        <p style="color:var(--text-muted);font-size:0.72rem;text-align:center;margin-top:8px;">La IA puede cometer errores. Verifica la información importante.</p>
+        <div class="chat-input-row">
+            <label class="chat-attach-btn" for="chatFileInput" title="Adjuntar imagen">
+                <i class="bi bi-image" aria-hidden="true"></i>
+                <input type="file" id="chatFileInput" accept="image/*" hidden />
+            </label>
+            <textarea id="inputMsg"
+                      placeholder="Escribe tu pregunta o pega una imagen (Ctrl+V)..."
+                      aria-label="Mensaje para el asistente"
+                      rows="1"
+                      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviar();}"></textarea>
+            <button type="button" onclick="enviar()" id="btnEnviar" class="chat-send-btn" aria-label="Enviar mensaje" title="Enviar mensaje">
+                <i class="bi bi-send-fill" aria-hidden="true"></i>
+            </button>
+        </div>
+        <p class="chat-disclaimer">La IA puede cometer errores. Las imágenes se comprimen para ahorrar tokens.</p>
     </div>
 </div>
-
-<style>
-    .msg-ia, .msg-user { display:flex; gap:10px; align-items:flex-start; }
-    .msg-user { flex-direction:row-reverse; }
-    .msg-avatar {
-        width:34px; height:34px; border-radius:10px;
-        display:flex; align-items:center; justify-content:center;
-        font-size:0.9rem; flex-shrink:0;
-    }
-    .msg-avatar.ia { background:rgba(139,92,246,0.15); color:var(--neon-purple); }
-    .msg-avatar.user { background:rgba(139,92,246,0.9); color:white; font-weight:700; font-size:0.75rem; }
-    .msg-burbuja {
-        max-width:72%; padding:12px 16px; border-radius:14px;
-        font-size:0.9rem; line-height:1.6;
-    }
-    .msg-burbuja.ia {
-        background:var(--card-bg);
-        border:1px solid var(--border);
-        color:var(--text-main);
-        border-top-left-radius:4px;
-    }
-    .msg-burbuja.user {
-        background:var(--neon-purple);
-        color:white;
-        border-top-right-radius:4px;
-    }
-    .msg-burbuja.typing { color:var(--text-muted); font-style:italic; }
-    @@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-    .msg-ia, .msg-user { animation: fadeIn 0.2s ease; }
-</style>
 
 @section Scripts {
     <script>
         let historial = [];
+        let imagenPendiente = null;
         const chatBox = document.getElementById('chatBox');
         const input = document.getElementById('inputMsg');
         const btn = document.getElementById('btnEnviar');
@@ -83,61 +63,124 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        function agregarMensaje(texto, esUsuario, esTyping = false) {
+        function escHtml(t) {
+            const d = document.createElement('div');
+            d.textContent = t;
+            return d.innerHTML;
+        }
+
+        function agregarMensaje(texto, esUsuario, esTyping = false, imagenUrl = null) {
             const div = document.createElement('div');
             div.className = esUsuario ? 'msg-user' : 'msg-ia';
-            const avatar = `<div class="msg-avatar ${esUsuario ? 'user' : 'ia'}">${esUsuario ? iniciales : '<i class="bi bi-robot"></i>'}</div>`;
-            const burbuja = `<div class="msg-burbuja ${esUsuario ? 'user' : 'ia'} ${esTyping ? 'typing' : ''}" id="${esTyping ? 'typing-indicator' : ''}">${texto}</div>`;
+            const avatar = `<div class="msg-avatar ${esUsuario ? 'user' : 'ia'}">${esUsuario ? iniciales : '<i class="bi bi-robot" aria-hidden="true"></i>'}</div>`;
+            let contenido = esTyping ? texto : escHtml(texto).replace(/\n/g, '<br>');
+            if (imagenUrl && esUsuario) {
+                contenido = `<img src="${imagenUrl}" class="msg-chat-img" alt="Imagen" />` + (texto ? `<div class="mt-2">${contenido}</div>` : '');
+            }
+            const burbuja = `<div class="msg-burbuja ${esUsuario ? 'user' : 'ia'} ${esTyping ? 'typing' : ''}" id="${esTyping ? 'typing-indicator' : ''}">${contenido}</div>`;
             div.innerHTML = esUsuario ? burbuja + avatar : avatar + burbuja;
             chatBox.appendChild(div);
             scrollAbajo();
             return div;
         }
 
+        function comprimirImagen(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const maxW = 900;
+                        const scale = Math.min(1, maxW / img.width);
+                        const w = Math.round(img.width * scale);
+                        const h = Math.round(img.height * scale);
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.72));
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function setImagenChat(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            if (file.size > 5 * 1024 * 1024) {
+                Sugoi.toast.error('La imagen no puede superar 5 MB.');
+                return;
+            }
+            imagenPendiente = await comprimirImagen(file);
+            document.getElementById('chatPreviewImg').src = imagenPendiente;
+            document.getElementById('chatImagePreview').style.display = 'flex';
+        }
+
+        function quitarImagenChat() {
+            imagenPendiente = null;
+            document.getElementById('chatImagePreview').style.display = 'none';
+            document.getElementById('chatPreviewImg').src = '';
+            document.getElementById('chatFileInput').value = '';
+        }
+
+        document.getElementById('chatFileInput').addEventListener('change', e => {
+            if (e.target.files?.[0]) setImagenChat(e.target.files[0]);
+        });
+
+        input.addEventListener('paste', e => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    setImagenChat(item.getAsFile());
+                    break;
+                }
+            }
+        });
+
         async function enviar() {
             const msg = input.value.trim();
-            if (!msg) return;
+            if (!msg && !imagenPendiente) return;
 
-            agregarMensaje(msg, true);
+            const imgEnviar = imagenPendiente;
+            agregarMensaje(msg || '(Imagen adjunta)', true, false, imgEnviar);
             historial.push({ texto: msg, esUsuario: true });
             input.value = '';
             input.style.height = 'auto';
+            quitarImagenChat();
             btn.disabled = true;
 
             agregarMensaje('Escribiendo...', false, true);
 
             try {
-                const res = await fetch('/Chat/Enviar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        mensaje: msg,
-                        historial: historial.slice(-10)
-                    })
+                const data = await Sugoi.apiPost('/Chat/Enviar', {
+                    mensaje: msg,
+                    imagen: imgEnviar || null
                 });
-
-                const typing = document.getElementById('typing-indicator');
-                if (typing) typing.closest('.msg-ia').remove();
-
-                if (res.ok) {
-                    const data = await res.json();
-                    agregarMensaje(data.respuesta, false);
-                    historial.push({ texto: data.respuesta, esUsuario: false });
-                } else {
-                    agregarMensaje('Hubo un error al obtener respuesta. Intenta de nuevo.', false);
-                }
-            } catch(e) {
-                const typing = document.getElementById('typing-indicator');
-                if (typing) typing.closest('.msg-ia').remove();
-                agregarMensaje('Error de conexión. Intenta de nuevo.', false);
+                quitarTyping();
+                agregarMensaje(data.respuesta, false);
+                historial.push({ texto: data.respuesta, esUsuario: false });
+            } catch (err) {
+                quitarTyping();
+                agregarMensaje(err.message || 'Hubo un error al obtener respuesta. Intenta de nuevo.', false);
+                Sugoi.toast.error(err.message);
+            } finally {
+                btn.disabled = false;
+                input.focus();
             }
+        }
 
-            btn.disabled = false;
-            input.focus();
+        function quitarTyping() {
+            document.getElementById('typing-indicator')?.closest('.msg-ia')?.remove();
         }
 
         function limpiarChat() {
             historial = [];
+            quitarImagenChat();
             chatBox.innerHTML = '';
             agregarMensaje('Chat reiniciado. ¿En qué puedo ayudarte?', false);
         }

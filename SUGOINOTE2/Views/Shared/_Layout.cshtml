@@ -1,53 +1,147 @@
-﻿<!DOCTYPE html>
+﻿@inject SugoiNote.Services.Common.ICurrentUser Usuario
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@using SugoiNote.Services.Common
+@{
+    // Controlador actual, para marcar el enlace activo del menú.
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - SugoiNote</title>
+
+    @* Token antifalsificador para los fetch() que hace sugoi.js. *@
+    <meta name="csrf-token" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
+
+    @* El tema se aplica ANTES del primer pintado: si se hiciera después, la página
+       aparecería un instante con el tema anterior (parpadeo blanco). *@
+    <script>
+        (function () {
+            var guardado = localStorage.getItem('sugoi-tema');
+            var tema = guardado || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', tema);
+            document.documentElement.setAttribute('data-sugoi-tema', guardado || 'auto');
+
+            if (localStorage.getItem('sugoi-sidebar-collapsed') === 'true') {
+                document.documentElement.classList.add('sidebar-collapsed-init');
+            }
+        })();
+    </script>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    @* En modo claro el desplegable de <select> lo pinta el navegador con sus propios colores;
+       sin esto saldría negro sobre fondo blanco. *@
+    <style>
+        [data-bs-theme="light"] select option { background: #ffffff; color: #1c2033; }
+    </style>
 </head>
 <body>
-    <div class="sidebar">
-        <a class="sidebar-brand" href="/Home/Index">
-            <span class="brand-icon">S</span>
-            SugoiNote
-        </a>
-        <nav class="sidebar-nav">
-            <a class="nav-link-sugoi @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")" href="/Home/Index">
-                <i class="bi bi-house-door"></i> Inicio
+    <a href="#mainContent" class="skip-link">Saltar al contenido</a>
+
+    @* Botón de navegación móvil: antes el CSS escondía el sidebar por debajo de 768px
+       sin ningún modo de volver a abrirlo, y la app se quedaba sin navegación. *@
+    <button type="button" class="sugoi-nav-toggle" id="navToggle"
+            aria-label="Abrir menú" aria-expanded="false" aria-controls="sidebar">
+        <i class="bi bi-list" aria-hidden="true"></i>
+    </button>
+    <div class="sugoi-nav-scrim" id="navScrim" hidden></div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a class="sidebar-brand" href="/Home/Index" title="SugoiNote">
+                <span class="brand-icon" aria-hidden="true">S</span>
+                <span class="sidebar-brand-text">SugoiNote</span>
             </a>
-            <a class="nav-link-sugoi @(ViewContext.RouteData.Values["controller"]?.ToString() == "Apuntes" ? "active" : "")" href="/Apuntes/Index">
-                <i class="bi bi-journal-text"></i> Mis Apuntes
+            <button type="button" class="sidebar-toggle" id="sidebarToggle"
+                    aria-label="Colapsar menú" aria-expanded="true" title="Colapsar menú">
+                <i class="bi bi-layout-sidebar-inset" aria-hidden="true"></i>
+            </button>
+        </div>
+
+        @* aria-current se inyecta con Html.Raw y comillas SIMPLES dentro del literal C#:
+           Razor no puede cerrar un atributo cuyo valor es @(x ? "page" : null) porque las
+           comillas del interior lo desbalancean y lo renderiza como aria-current="page. *@
+        <nav class="sidebar-nav" aria-label="Navegación principal">
+            <a class="nav-link-sugoi@(ctrl == "Home" ? " active" : string.Empty)" href="/Home/Index" title="Inicio"@Menu.Current(ctrl, "Home")>
+                <i class="bi bi-house-door" aria-hidden="true"></i>
+                <span class="nav-label">Inicio</span>
             </a>
-            <a class="nav-link-sugoi @(ViewContext.RouteData.Values["controller"]?.ToString() == "Resumenes" ? "active" : "")" href="/Resumenes/Index">
-                <i class="bi bi-file-earmark-text"></i> Mis Resúmenes
+            <a class="nav-link-sugoi@(ctrl == "Apuntes" ? " active" : string.Empty)" href="/Apuntes/Index" title="Mis Apuntes"@Menu.Current(ctrl, "Apuntes")>
+                <i class="bi bi-journal-text" aria-hidden="true"></i>
+                <span class="nav-label">Mis Apuntes</span>
             </a>
-            <a class="nav-link-sugoi @(ViewContext.RouteData.Values["controller"]?.ToString() == "Examenes" ? "active" : "")" href="/Examenes/Index">
-                <i class="bi bi-clipboard-check"></i> Exámenes
+            <a class="nav-link-sugoi@(ctrl == "Resumenes" ? " active" : string.Empty)" href="/Resumenes/Index" title="Mis Resúmenes"@Menu.Current(ctrl, "Resumenes")>
+                <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                <span class="nav-label">Mis Resúmenes</span>
             </a>
-            <a class="nav-link-sugoi @(ViewContext.RouteData.Values["controller"]?.ToString() == "Chat" ? "active" : "")" href="/Chat/Index">
-                <i class="bi bi-chat-dots"></i> Chat IA
+            <a class="nav-link-sugoi@(ctrl == "Examenes" ? " active" : string.Empty)" href="/Examenes/Index" title="Exámenes"@Menu.Current(ctrl, "Examenes")>
+                <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+                <span class="nav-label">Exámenes</span>
             </a>
-            <a class="nav-link-sugoi @(ViewContext.RouteData.Values["controller"]?.ToString() == "Comunidad" ? "active" : "")" href="/Comunidad/Index">
-                <i class="bi bi-people"></i> Comunidad
+            <a class="nav-link-sugoi@(ctrl == "Chat" ? " active" : string.Empty)" href="/Chat/Index" title="Chat IA"@Menu.Current(ctrl, "Chat")>
+                <i class="bi bi-chat-dots" aria-hidden="true"></i>
+                <span class="nav-label">Chat IA</span>
             </a>
-            <a class="nav-link-sugoi @(ViewContext.RouteData.Values["controller"]?.ToString() == "Perfil" ? "active" : "")" href="/Perfil/Index">
-                <i class="bi bi-person-circle"></i> Perfil
+            <a class="nav-link-sugoi@(ctrl == "Comunidad" ? " active" : string.Empty)" href="/Comunidad/Index" title="Comunidad"@Menu.Current(ctrl, "Comunidad")>
+                <i class="bi bi-people" aria-hidden="true"></i>
+                <span class="nav-label">Comunidad</span>
+            </a>
+            <a class="nav-link-sugoi@(ctrl == "Perfil" ? " active" : string.Empty)" href="/Perfil/Index" title="Perfil"@Menu.Current(ctrl, "Perfil")>
+                <i class="bi bi-person-circle" aria-hidden="true"></i>
+                <span class="nav-label">Perfil</span>
             </a>
         </nav>
-        <form action="/Auth/Logout" method="post" class="sidebar-logout">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="logout-btn">
-                <i class="bi bi-box-arrow-left"></i> Cerrar sesión
-            </button>
-        </form>
+
+        <div class="sidebar-footer">
+            <div class="theme-switcher" role="group" aria-label="Tema de color">
+                <button type="button" class="theme-btn" data-tema="light" title="Modo claro">
+                    <i class="bi bi-sun" aria-hidden="true"></i><span class="visually-hidden">Modo claro</span>
+                </button>
+                <button type="button" class="theme-btn" data-tema="auto" title="Automático (según el sistema)">
+                    <i class="bi bi-circle-half" aria-hidden="true"></i><span class="visually-hidden">Automático</span>
+                </button>
+                <button type="button" class="theme-btn" data-tema="dark" title="Modo oscuro">
+                    <i class="bi bi-moon-stars" aria-hidden="true"></i><span class="visually-hidden">Modo oscuro</span>
+                </button>
+            </div>
+
+            <form action="/Auth/Logout" method="post" class="sidebar-logout">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="logout-btn" title="Cerrar sesión">
+                    <i class="bi bi-box-arrow-left" aria-hidden="true"></i>
+                    <span class="nav-label">Cerrar sesión</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <div class="main-content" id="mainContent">
+        @if (TempData["Exito"] is string exito)
+        {
+            <div class="sugoi-banner sugoi-banner--ok" role="status">
+                <i class="bi bi-check-circle-fill" aria-hidden="true"></i> @exito
+            </div>
+        }
+        @if (TempData["Error"] is string errorMsg)
+        {
+            <div class="sugoi-banner sugoi-banner--error" role="alert">
+                <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> @errorMsg
+            </div>
+        }
+
+        <main>
+            @RenderBody()
+        </main>
     </div>
-    <div class="main-content">
-        @RenderBody()
-    </div>
-    @RenderSection("Scripts", required: false)
+
+    <script src="~/js/sugoi.js" asp-append-version="true"></script>
+    <script src="~/js/sidebar.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

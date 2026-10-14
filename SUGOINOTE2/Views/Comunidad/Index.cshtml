@@ -1,117 +1,423 @@
-﻿@model IEnumerable<SugoiNote.Controllers.PostVM>
+﻿@model IEnumerable<SugoiNote.Models.ViewModels.PostVM>
+@using SugoiNote.Models.ViewModels
 @{
     ViewData["Title"] = "Comunidad";
+    var userId = ViewBag.UserId as Guid?;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 style="font-weight:800;font-size:1.6rem;margin-bottom:4px;">Comunidad</h2>
-        <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">Pregunta y ayuda a otros estudiantes</p>
-    </div>
-    <button class="btn-sugoi" onclick="abrirModal()">
-        <i class="bi bi-plus-lg"></i> Nueva Pregunta
-    </button>
-</div>
-
-<div class="mb-4">
-    <div class="search-box">
-        <i class="bi bi-search"></i>
-        <input type="text" id="buscador" placeholder="Buscar preguntas..." oninput="buscar(this.value)" />
-    </div>
-</div>
-
-<div id="listaPosts">
-    @if (Model != null && Model.Any())
-    {
-        @foreach (var post in Model)
-        {
-            var iniciales = post.NombreEstudiante.Length >= 2 ? post.NombreEstudiante.Substring(0, 2).ToUpper() : post.NombreEstudiante.ToUpper();
-            <a href="/Comunidad/Ver/@post.PostId" style="text-decoration:none;display:block;" class="post-item">
-                <div class="glass-card p-4 mb-3" style="transition:border-color 0.2s;cursor:pointer;"
-                     onmouseover="this.style.borderColor='rgba(139,92,246,0.3)'"
-                     onmouseout="this.style.borderColor='var(--border)'">
-                    <div class="d-flex gap-3 align-items-start">
-                        <div style="width:40px;height:40px;border-radius:12px;background:rgba(139,92,246,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.82rem;color:var(--neon-purple);flex-shrink:0;">
-                            @iniciales
-                        </div>
-                        <div style="flex:1;min-width:0;">
-                            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                                <span style="font-weight:700;font-size:0.9rem;">@post.NombreEstudiante</span>
-                                <span style="color:var(--text-muted);font-size:0.75rem;">@(post.Fecha?.ToString("dd MMM yyyy · HH:mm"))</span>
-                            </div>
-                            <h5 style="font-weight:700;font-size:0.95rem;margin-bottom:6px;color:var(--text-main);">@post.Titulo</h5>
-                            <p style="color:var(--text-muted);font-size:0.85rem;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@post.Detalle</p>
-                        </div>
-                        <div style="text-align:center;flex-shrink:0;">
-                            <div style="font-size:1rem;font-weight:700;color:var(--text-main);">@post.TotalRespuestas</div>
-                            <div style="font-size:0.7rem;color:var(--text-muted);">respuestas</div>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        }
-    }
-    else
-    {
-        <div class="text-center py-5">
-            <i class="bi bi-people" style="font-size:2.5rem;color:var(--text-muted);display:block;margin-bottom:12px;"></i>
-            <p style="color:var(--text-muted);">Aún no hay preguntas. ¡Sé el primero!</p>
+<div class="comunidad-page">
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="comunidad-title">Comunidad</h2>
+            <p class="comunidad-subtitle">Pregunta, publica encuestas y ayuda a otros estudiantes</p>
         </div>
-    }
+        <div class="comunidad-header-actions d-flex gap-2 flex-wrap align-items-center">
+            <button type="button" class="btn-ghost comunidad-trash-btn" id="btnModoEliminar" onclick="toggleModoEliminar()" title="Eliminar mis publicaciones" aria-label="Eliminar mis publicaciones">
+                <i class="bi bi-trash" aria-hidden="true"></i>
+            </button>
+            <button type="button" class="btn-sugoi" onclick="abrirModalPregunta()">
+                <i class="bi bi-question-circle" aria-hidden="true"></i> Nueva Pregunta
+            </button>
+            <button type="button" class="btn-sugoi btn-sugoi-outline" onclick="abrirModalEncuesta()">
+                <i class="bi bi-bar-chart" aria-hidden="true"></i> Nueva Encuesta
+            </button>
+        </div>
+    </div>
+
+    <div id="modoEliminarBanner" class="comunidad-delete-banner" style="display:none;">
+        <i class="bi bi-info-circle" aria-hidden="true"></i>
+        <span>Modo eliminar: solo ves tus preguntas y encuestas. Selecciona una para borrarla.</span>
+        <button type="button" class="btn-ghost btn-sm" onclick="toggleModoEliminar()">Cancelar</button>
+    </div>
+
+    <div class="comunidad-filters mb-4">
+        <div class="search-box">
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input type="search" id="buscador" placeholder="Buscar en la comunidad..." aria-label="Buscar en la comunidad" oninput="buscar(this.value)" />
+        </div>
+        <div class="comunidad-tabs">
+            <button class="comunidad-tab active" data-filter="todos" onclick="filtrarTipo('todos', this)">Todos</button>
+            <button class="comunidad-tab" data-filter="Pregunta" onclick="filtrarTipo('Pregunta', this)">Preguntas</button>
+            <button class="comunidad-tab" data-filter="Encuesta" onclick="filtrarTipo('Encuesta', this)">Encuestas</button>
+        </div>
+    </div>
+
+    <div id="listaPosts">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var post in Model)
+            {
+                <div class="post-item-wrapper post-item"
+                     data-tipo="@post.TipoPost"
+                     data-owner-id="@post.EstudianteId"
+                     data-post-id="@post.PostId">
+                    <a href="/Comunidad/Ver/@post.PostId" class="post-item-link">
+                        <div class="glass-card comunidad-card p-4 mb-3">
+                            <div class="d-flex gap-3 align-items-start">
+                                @await Html.PartialAsync("_Avatar", new AvatarVM { Nombre = post.NombreEstudiante, FotoUrl = post.FotoEstudiante })
+                                <div class="comunidad-card-body">
+                                    <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                        <span class="comunidad-author">@post.NombreEstudiante</span>
+                                        <span class="comunidad-date">@(post.Fecha?.ToString("dd MMM yyyy · HH:mm"))</span>
+                                        @if (post.EsEncuesta)
+                                        {
+                                            <span class="comunidad-badge comunidad-badge-poll"><i class="bi bi-bar-chart-fill" aria-hidden="true"></i> Encuesta</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="comunidad-badge comunidad-badge-question"><i class="bi bi-question-circle-fill" aria-hidden="true"></i> Pregunta</span>
+                                        }
+                                    </div>
+                                    <h5 class="comunidad-card-title">@post.Titulo</h5>
+                                    <p class="comunidad-card-preview">@post.Detalle</p>
+                                </div>
+                                <div class="comunidad-stat">
+                                    @if (post.EsEncuesta)
+                                    {
+                                        <div class="comunidad-stat-num">@post.TotalVotos</div>
+                                        <div class="comunidad-stat-label">votos</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="comunidad-stat-num">@post.TotalRespuestas</div>
+                                        <div class="comunidad-stat-label">respuestas</div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                    @if (post.EstudianteId == userId)
+                    {
+                        <button type="button" class="comunidad-card-delete"
+                                style="display:none;"
+                                data-post-id="@post.PostId"
+                                data-titulo="@post.Titulo"
+                                data-tipo="@(post.EsEncuesta ? "Encuesta" : "Pregunta")"
+                                onclick="seleccionarEliminarPost(this)">
+                            <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
+                        </button>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="comunidad-empty text-center py-5">
+                <i class="bi bi-people" aria-hidden="true"></i>
+                <p>Aún no hay publicaciones. ¡Sé el primero!</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- MODAL CONFIRMAR ELIMINAR -->
+<div class="modal-overlay" id="modalEliminarPost">
+    <div class="modal-box" style="max-width:420px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="modal-title" style="margin:0;color:var(--danger);"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Eliminar publicación</p>
+            <button type="button" class="modal-close" aria-label="Cerrar" onclick="cerrarModalEliminarPost()">&times;</button>
+        </div>
+        <p style="color:var(--text-muted);font-size:0.9rem;">
+            ¿Eliminar <strong id="tipoPostEliminar" style="color:var(--text-primary);"></strong>:
+            <strong id="nombrePostEliminar" style="color:var(--text-primary);"></strong>?
+            Esta acción no se puede deshacer.
+        </p>
+        <div class="d-flex gap-2 mt-4">
+            <button type="button" onclick="confirmarEliminarPost()" class="btn-sugoi flex-fill justify-content-center" style="background:var(--danger);">
+                <i class="bi bi-trash" aria-hidden="true"></i> Sí, eliminar
+            </button>
+            <button type="button" onclick="cerrarModalEliminarPost()" class="btn-ghost">Cancelar</button>
+        </div>
+    </div>
 </div>
 
 <!-- MODAL NUEVA PREGUNTA -->
-<div class="modal-overlay" id="modalPost">
-    <div class="modal-box">
+<div class="modal-overlay" id="modalPregunta">
+    <div class="modal-box comunidad-modal">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <p class="modal-title" style="margin:0;"><i class="bi bi-question-circle" style="color:var(--neon-purple);margin-right:8px;"></i>Nueva Pregunta</p>
-            <button onclick="cerrarModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">&times;</button>
+            <p class="modal-title"><i class="bi bi-question-circle" aria-hidden="true"></i> Nueva Pregunta</p>
+            <button type="button" class="modal-close" aria-label="Cerrar" onclick="cerrarModalPregunta()">&times;</button>
         </div>
         <div class="mb-3">
-            <label class="sugoi-label">Título de la pregunta</label>
-            <input type="text" id="inputTitulo" class="sugoi-input" placeholder="¿Cómo resolver...?" />
+            <label class="sugoi-label" for="preguntaTitulo">Título</label>
+            <input type="text" id="preguntaTitulo" class="sugoi-input" placeholder="¿Cómo resolver...?" />
+        </div>
+        <div class="mb-3">
+            <label class="sugoi-label" for="preguntaDetalle">Descripción</label>
+            <textarea id="preguntaDetalle" class="sugoi-input" rows="4" placeholder="Explica tu duda con más detalle..."></textarea>
         </div>
         <div class="mb-4">
-            <label class="sugoi-label">Descripción</label>
-            <textarea id="inputDetalle" class="sugoi-input" rows="4"
-                      style="resize:none;min-height:100px;"
-                      placeholder="Explica tu duda con más detalle..."></textarea>
+            <label class="sugoi-label" for="preguntaImagen">Imagen adjunta (opcional)</label>
+            <div class="comunidad-image-upload">
+                <input type="file" id="preguntaImagen" accept="image/*" hidden onchange="previewImagen(this, 'preguntaPreview', 'preguntaImagenData')" />
+                <button type="button" class="btn-ghost" onclick="document.getElementById('preguntaImagen').click()">
+                    <i class="bi bi-image" aria-hidden="true"></i> Seleccionar imagen
+                </button>
+                <button type="button" class="btn-ghost comunidad-remove-image" id="preguntaRemoveImg" style="display:none;" onclick="quitarImagen('preguntaImagen', 'preguntaPreview', 'preguntaImagenData', 'preguntaRemoveImg')">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i> Quitar
+                </button>
+            </div>
+            <img id="preguntaPreview" class="comunidad-image-preview" alt="" style="display:none;" />
+            <input type="hidden" id="preguntaImagenData" />
         </div>
         <div class="d-flex gap-2">
-            <button class="btn-sugoi flex-fill justify-content-center" onclick="publicarPost()">
-                <i class="bi bi-send"></i> Publicar
+            <button type="button" class="btn-sugoi flex-fill justify-content-center" onclick="publicarPregunta()">
+                <i class="bi bi-send" aria-hidden="true"></i> Publicar
             </button>
-            <button class="btn-ghost" onclick="cerrarModal()">Cancelar</button>
+            <button type="button" class="btn-ghost" onclick="cerrarModalPregunta()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL NUEVA ENCUESTA -->
+<div class="modal-overlay" id="modalEncuesta">
+    <div class="modal-box comunidad-modal comunidad-modal-wide">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <p class="modal-title"><i class="bi bi-bar-chart" aria-hidden="true"></i> Nueva Encuesta</p>
+            <button type="button" class="modal-close" aria-label="Cerrar" onclick="cerrarModalEncuesta()">&times;</button>
+        </div>
+        <div class="mb-3">
+            <label class="sugoi-label" for="encuestaTema">Tema</label>
+            <input type="text" id="encuestaTema" class="sugoi-input" placeholder="Ej: Materia de Cálculo, Horarios, etc." />
+        </div>
+        <div class="mb-3">
+            <label class="sugoi-label" for="encuestaPregunta">Pregunta</label>
+            <textarea id="encuestaPregunta" class="sugoi-input" rows="3" placeholder="¿Cuál prefieres para el examen final?"></textarea>
+        </div>
+        <div class="mb-3">
+            <label class="sugoi-label" for="encuestaImagen">Imagen adjunta (opcional)</label>
+            <div class="comunidad-image-upload">
+                <input type="file" id="encuestaImagen" accept="image/*" hidden onchange="previewImagen(this, 'encuestaPreview', 'encuestaImagenData')" />
+                <button type="button" class="btn-ghost" onclick="document.getElementById('encuestaImagen').click()">
+                    <i class="bi bi-image" aria-hidden="true"></i> Seleccionar imagen
+                </button>
+                <button type="button" class="btn-ghost comunidad-remove-image" id="encuestaRemoveImg" style="display:none;" onclick="quitarImagen('encuestaImagen', 'encuestaPreview', 'encuestaImagenData', 'encuestaRemoveImg')">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i> Quitar
+                </button>
+            </div>
+            <img id="encuestaPreview" class="comunidad-image-preview" alt="" style="display:none;" />
+            <input type="hidden" id="encuestaImagenData" />
+        </div>
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <p class="sugoi-label" id="etiquetaOpciones" style="margin:0;">Opciones</p>
+                <button type="button" class="btn-ghost btn-sm" onclick="agregarOpcion()">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> Agregar opción
+                </button>
+            </div>
+            <div id="listaOpciones" class="comunidad-opciones-list" role="group" aria-labelledby="etiquetaOpciones"></div>
+        </div>
+        <label class="comunidad-check-row mb-4" for="encuestaSoloUna">
+            <input type="checkbox" id="encuestaSoloUna" checked />
+            <span>Solo se puede elegir una opción</span>
+        </label>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn-sugoi flex-fill justify-content-center" onclick="publicarEncuesta()">
+                <i class="bi bi-send" aria-hidden="true"></i> Publicar encuesta
+            </button>
+            <button type="button" class="btn-ghost" onclick="cerrarModalEncuesta()">Cancelar</button>
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        function abrirModal() { document.getElementById('modalPost').classList.add('open'); }
-        function cerrarModal() { document.getElementById('modalPost').classList.remove('open'); }
-        document.getElementById('modalPost').addEventListener('click', e => {
-            if (e.target === document.getElementById('modalPost')) cerrarModal();
+        const currentUserId = '@userId';
+        let filtroActual = 'todos';
+        let modoEliminar = false;
+        let postIdAEliminar = null;
+
+        function toggleModoEliminar() {
+            modoEliminar = !modoEliminar;
+            const btn = document.getElementById('btnModoEliminar');
+            const banner = document.getElementById('modoEliminarBanner');
+            const deleteBtns = document.querySelectorAll('.comunidad-card-delete');
+            const links = document.querySelectorAll('.post-item-link');
+
+            if (modoEliminar) {
+                btn.classList.add('active');
+                btn.innerHTML = '<i class="bi bi-x-lg" aria-hidden="true"></i>';
+                btn.title = 'Cancelar';
+                btn.setAttribute('aria-label', 'Cancelar');
+                banner.style.display = 'flex';
+                deleteBtns.forEach(b => b.style.display = 'flex');
+                links.forEach(l => {
+                    l.style.pointerEvents = 'none';
+                    l.style.opacity = '0.65';
+                });
+            } else {
+                btn.classList.remove('active');
+                btn.innerHTML = '<i class="bi bi-trash" aria-hidden="true"></i>';
+                btn.title = 'Eliminar mis publicaciones';
+                btn.setAttribute('aria-label', 'Eliminar mis publicaciones');
+                banner.style.display = 'none';
+                deleteBtns.forEach(b => b.style.display = 'none');
+                links.forEach(l => {
+                    l.style.pointerEvents = '';
+                    l.style.opacity = '';
+                });
+            }
+            aplicarFiltros(document.getElementById('buscador').value);
+        }
+
+        function seleccionarEliminarPost(btn) {
+            postIdAEliminar = btn.dataset.postId;
+            document.getElementById('nombrePostEliminar').textContent = btn.dataset.titulo;
+            document.getElementById('tipoPostEliminar').textContent = btn.dataset.tipo.toLowerCase();
+            document.getElementById('modalEliminarPost').classList.add('open');
+        }
+
+        function cerrarModalEliminarPost() {
+            postIdAEliminar = null;
+            document.getElementById('modalEliminarPost').classList.remove('open');
+        }
+
+        async function confirmarEliminarPost() {
+            if (!postIdAEliminar) return;
+            try {
+                await Sugoi.apiPost('/Comunidad/EliminarPost', { postId: postIdAEliminar });
+                document.querySelector(`.post-item-wrapper[data-post-id="${postIdAEliminar}"]`)?.remove();
+                cerrarModalEliminarPost();
+                Sugoi.toast.ok('Publicación eliminada.');
+                if (!document.querySelector('.post-item-wrapper')) {
+                    document.getElementById('listaPosts').innerHTML = `
+                        <div class="comunidad-empty text-center py-5">
+                            <i class="bi bi-people" aria-hidden="true"></i>
+                            <p>Aún no hay publicaciones. ¡Sé el primero!</p>
+                        </div>`;
+                }
+                if (modoEliminar) toggleModoEliminar();
+            } catch (err) {
+                Sugoi.toast.error(err.message);
+            }
+        }
+
+        document.getElementById('modalEliminarPost').addEventListener('click', e => {
+            if (e.target.id === 'modalEliminarPost') cerrarModalEliminarPost();
         });
 
-        async function publicarPost() {
-            const titulo = document.getElementById('inputTitulo').value.trim();
-            const detalle = document.getElementById('inputDetalle').value.trim();
-            if (!titulo || !detalle) { alert('Completa todos los campos'); return; }
+        function abrirModalPregunta() {
+            document.getElementById('modalPregunta').classList.add('open');
+        }
+        function cerrarModalPregunta() {
+            document.getElementById('modalPregunta').classList.remove('open');
+        }
+        function abrirModalEncuesta() {
+            document.getElementById('modalEncuesta').classList.add('open');
+            if (!document.querySelector('#listaOpciones .opcion-row')) {
+                agregarOpcion();
+                agregarOpcion();
+            }
+        }
+        function cerrarModalEncuesta() {
+            document.getElementById('modalEncuesta').classList.remove('open');
+        }
 
-            await fetch('/Comunidad/CrearPost', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ titulo, detalle })
-            });
-            cerrarModal();
-            location.reload();
+        document.getElementById('modalPregunta').addEventListener('click', e => {
+            if (e.target.id === 'modalPregunta') cerrarModalPregunta();
+        });
+        document.getElementById('modalEncuesta').addEventListener('click', e => {
+            if (e.target.id === 'modalEncuesta') cerrarModalEncuesta();
+        });
+
+        function previewImagen(input, previewId, dataId) {
+            const file = input.files?.[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                Sugoi.toast.error('La imagen no puede superar 2 MB.');
+                input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = ev => {
+                document.getElementById(previewId).src = ev.target.result;
+                document.getElementById(previewId).style.display = 'block';
+                document.getElementById(dataId).value = ev.target.result;
+                const removeBtn = input.id === 'preguntaImagen' ? 'preguntaRemoveImg' : 'encuestaRemoveImg';
+                document.getElementById(removeBtn).style.display = 'inline-flex';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function quitarImagen(inputId, previewId, dataId, removeBtnId) {
+            document.getElementById(inputId).value = '';
+            document.getElementById(previewId).style.display = 'none';
+            document.getElementById(previewId).src = '';
+            document.getElementById(dataId).value = '';
+            document.getElementById(removeBtnId).style.display = 'none';
+        }
+
+        function agregarOpcion(valor = '') {
+            const list = document.getElementById('listaOpciones');
+            const row = document.createElement('div');
+            row.className = 'opcion-row';
+            row.innerHTML = `
+                <span class="opcion-drag" aria-hidden="true"><i class="bi bi-grip-vertical"></i></span>
+                <input type="text" class="sugoi-input opcion-input" placeholder="Escribe una opción..." value="${valor.replace(/"/g, '&quot;')}" />
+                <button type="button" class="opcion-remove" title="Eliminar opción" aria-label="Eliminar opción" onclick="this.closest('.opcion-row').remove()">
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                </button>`;
+            list.appendChild(row);
+            row.querySelector('.opcion-input').focus();
+        }
+
+        async function publicarPregunta() {
+            const titulo = document.getElementById('preguntaTitulo').value.trim();
+            const detalle = document.getElementById('preguntaDetalle').value.trim();
+            const imagenUrl = document.getElementById('preguntaImagenData').value || null;
+            if (!titulo || !detalle) { Sugoi.toast.error('Completa título y descripción'); return; }
+
+            try {
+                await Sugoi.apiPost('/Comunidad/CrearPost', { titulo, detalle, imagenUrl });
+                location.reload();
+            } catch (err) {
+                Sugoi.toast.error(err.message);
+            }
+        }
+
+        async function publicarEncuesta() {
+            const tema = document.getElementById('encuestaTema').value.trim();
+            const pregunta = document.getElementById('encuestaPregunta').value.trim();
+            const imagenUrl = document.getElementById('encuestaImagenData').value || null;
+            const soloUnaOpcion = document.getElementById('encuestaSoloUna').checked;
+            const opciones = [...document.querySelectorAll('#listaOpciones .opcion-input')]
+                .map(i => i.value.trim())
+                .filter(Boolean);
+
+            if (!tema && !pregunta) { Sugoi.toast.error('Completa el tema y la pregunta'); return; }
+            if (opciones.length < 2) { Sugoi.toast.error('Agrega al menos 2 opciones'); return; }
+
+            // CrearEncuesta solo acepta `titulo`: el enunciado se antepone al tema
+            // para no perder lo que el usuario escribió.
+            const titulo = [tema, pregunta].filter(Boolean).join(' — ');
+
+            try {
+                await Sugoi.apiPost('/Comunidad/CrearEncuesta', { titulo, opciones, imagenUrl, soloUnaOpcion });
+                location.reload();
+            } catch (err) {
+                Sugoi.toast.error(err.message);
+            }
         }
 
         function buscar(q) {
-            document.querySelectorAll('.post-item').forEach(item => {
+            aplicarFiltros(q);
+        }
+
+        function filtrarTipo(tipo, btn) {
+            filtroActual = tipo;
+            document.querySelectorAll('.comunidad-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            aplicarFiltros(document.getElementById('buscador').value);
+        }
+
+        function aplicarFiltros(q) {
+            const query = (q || '').toLowerCase();
+            document.querySelectorAll('.post-item-wrapper').forEach(item => {
                 const texto = item.innerText.toLowerCase();
-                item.style.display = texto.includes(q.toLowerCase()) ? 'block' : 'none';
+                const tipoOk = filtroActual === 'todos' || item.dataset.tipo === filtroActual;
+                const textoOk = !query || texto.includes(query);
+                const ownerOk = !modoEliminar || item.dataset.ownerId === currentUserId;
+                item.style.display = tipoOk && textoOk && ownerOk ? 'block' : 'none';
             });
         }
     </script>

@@ -1,21 +1,18 @@
-﻿using SUGOINOTE2.Models;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace SugoiNote.Models // <--- Asegúrate que diga SugoiNote
+namespace SugoiNote.Models;
+
+public partial class Pregunta
 {
-    public partial class Pregunta
-    {
-        [Key]
-        public Guid PreguntaId { get; set; }
-        public int? ExamenId { get; set; }
-        public string TextoPregunta { get; set; } = null!;
-        public Guid? RespuestaSeleccionadaId { get; set; }
+    public Guid PreguntaId { get; set; }
 
-        // Relación con Examene
-        public virtual Examene? Examen { get; set; }
+    public Guid? ExamenId { get; set; }
 
-        public virtual ICollection<OpcionesRespuestum> OpcionesRespuesta { get; set; } = new List<OpcionesRespuestum>();
-    }
+    [Required]
+    public string TextoPregunta { get; set; } = string.Empty;
+
+    public Guid? RespuestaSeleccionadaId { get; set; }
+
+    public virtual Examene? Examen { get; set; }
+    public virtual ICollection<OpcionRespuesta> Opciones { get; set; } = new List<OpcionRespuesta>();
 }

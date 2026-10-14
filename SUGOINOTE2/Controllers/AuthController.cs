@@ -1,158 +1,158 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SugoiNote.Models;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Security.Claims;
-using SUGOINOTE2.Models.ViewModels;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using SugoiNote.Models;
+using SugoiNote.Models.ViewModels;
+using SugoiNote.Services.Auth;
 
-namespace SugoiNote.Controllers
+namespace SugoiNote.Controllers;
+
+[AllowAnonymous]
+public class AuthController(IAuthService auth, ILogger<AuthController> logger) : Controller
 {
-    public class AuthController : Controller
+    [HttpGet]
+    public IActionResult Login(string? returnUrl = null)
     {
-        private readonly Sugoinotee2Context _context;
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
 
-        public AuthController(Sugoinotee2Context context)
-        {
-            _context = context;
-        }
-
-        [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginVM model, string? returnUrl = null)
-        {
-            if (!ModelState.IsValid)
-                return View(model);
-
-            // Buscamos solo por correo para poder comparar el hash después
-            var user = await _context.Estudiantes
-                .FirstOrDefaultAsync(e => e.CorreoElectronico == model.CorreoElectronico);
-
-            if (user == null)
-            {
-                ModelState.AddModelError(string.Empty, "Credenciales inválidas");
-                return View(model);
-            }
-
-            // Verificamos la contraseña con BCrypt
-            // Si la contraseña en BD no tiene el formato bcrypt (usuarios viejos),
-            // hacemos comparación directa para no romper cuentas existentes.
-            bool passwordValida;
-            if (user.ClaveAcceso.StartsWith("$2"))
-            {
-                // Contraseña hasheada con BCrypt
-                passwordValida = BCrypt.Net.BCrypt.Verify(model.ClaveAcceso, user.ClaveAcceso);
-            }
-            else
-            {
-                // Contraseña en texto plano (usuarios viejos)
-                passwordValida = user.ClaveAcceso == model.ClaveAcceso;
-            }
-
-            if (!passwordValida)
-            {
-                ModelState.AddModelError(string.Empty, "Credenciales inválidas");
-                return View(model);
-            }
-
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.EstudianteId.ToString()),
-                new Claim(ClaimTypes.Name, user.NombreCompleto),
-                new Claim(ClaimTypes.Email, user.CorreoElectronico)
-            };
-
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
-
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-                return Redirect(returnUrl);
-
-            return RedirectToAction("Index", "Home");
-        }
-
-        [HttpGet]
-        public IActionResult Register()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(RegistroVM model)
-        {
-            if (!ModelState.IsValid)
-                return View(model);
-
-            var exists = await _context.Estudiantes.AnyAsync(e => e.CorreoElectronico == model.CorreoElectronico);
-            if (exists)
-            {
-                ModelState.AddModelError("CorreoElectronico", "El correo ya está en uso");
-                return View(model);
-            }
-
-            var nuevo = new Estudiante
-            {
-                EstudianteId = Guid.NewGuid(),
-                NombreCompleto = model.NombreCompleto,
-                CorreoElectronico = model.CorreoElectronico,
-                // Hasheamos la contraseña antes de guardarla
-                ClaveAcceso = BCrypt.Net.BCrypt.HashPassword(model.ClaveAcceso),
-                FechaCreacion = DateTime.UtcNow
-            };
-
-            _context.Estudiantes.Add(nuevo);
-            await _context.SaveChangesAsync();
-
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, nuevo.EstudianteId.ToString()),
-                new Claim(ClaimTypes.Name, nuevo.NombreCompleto),
-                new Claim(ClaimTypes.Email, nuevo.CorreoElectronico)
-            };
-
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
-
-            return RedirectToAction("Index", "Home");
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Logout()
-        {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Login", "Auth");
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RecuperarContrasena(string correo, string nuevaContrasena)
-        {
-            var user = await _context.Estudiantes
-                .FirstOrDefaultAsync(e => e.CorreoElectronico == correo);
-
-            if (user == null)
-            {
-                TempData["ErrorRecuperar"] = "No existe una cuenta con ese correo.";
-                return RedirectToAction("Login");
-            }
-
-            // Hasheamos la nueva contraseña antes de guardarla
-            user.ClaveAcceso = BCrypt.Net.BCrypt.HashPassword(nuevaContrasena);
-            await _context.SaveChangesAsync();
-
-            TempData["ExitoRecuperar"] = "Contraseña actualizada. Ya puedes iniciar sesión.";
-            return RedirectToAction("Login");
-        }
+        ViewBag.ReturnUrl = returnUrl;
+        return View(new LoginVM { ReturnUrl = returnUrl });
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [EnableRateLimiting("Login")]
+    public async Task<IActionResult> Login(LoginVM model, CancellationToken ct)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var (resultado, estudiante) = await auth.ValidarCredencialesAsync(model.CorreoElectronico, model.ClaveAcceso, ct);
+
+        if (!resultado.Exito)
+        {
+            ModelState.AddModelError(string.Empty, resultado.Error ?? "No se pudo iniciar sesión.");
+            return View(model);
+        }
+
+        await EmitirCookie(estudiante!, model.ReturnUrl);
+        logger.LogInformation("Inicio de sesión del estudiante {EstudianteId}", estudiante!.EstudianteId);
+
+        return Redirect(Seguro(model.ReturnUrl));
+    }
+
+    [HttpGet]
+    public IActionResult Register()
+    {
+        if (User.Identity?.IsAuthenticated == true) return RedirectToAction("Index", "Home");
+        return View(new RegistroVM());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(RegistroVM model, CancellationToken ct)
+    {
+        if (!ModelState.IsValid) return View(model);
+
+        var resultado = await auth.RegistrarAsync(model.NombreCompleto, model.CorreoElectronico, model.ClaveAcceso, ct);
+
+        if (!resultado.Exito)
+        {
+            ModelState.AddModelError(string.Empty, resultado.Error ?? "No se pudo crear la cuenta.");
+            return View(model);
+        }
+
+        TempData["Exito"] = "¡Cuenta creada! Ya puedes iniciar sesión.";
+        return RedirectToAction(nameof(Login));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return RedirectToAction(nameof(Login));
+    }
+
+    // ── Recuperación de contraseña (FIX C1) ───────────────────
+    //
+    // Antes `RecuperarContrasena` recibía correo + nuevaContraseña y sobrescribía el hash
+    // sin comprobar quiénEra: cualquier visitante podía tomar cualquier cuenta.
+    // Ahora el cambio solo ocurre con un token de un uso, enviado por email y con caducidad.
+
+    [HttpGet]
+    public IActionResult OlvideClave() => View(new OlvideClaveVM());
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [EnableRateLimiting("Login")]
+    public async Task<IActionResult> OlvideClave(OlvideClaveVM model, CancellationToken ct)
+    {
+        var (_, mensaje, tokenDev) = await auth.SolicitarResetAsync(model.CorreoElectronico, ct);
+
+        // Siempre la misma vista y el mismo texto: no revela si el correo existe.
+        TempData["Exito"] = mensaje;
+
+        if (tokenDev is not null)
+        {
+            // Solo en desarrollo (sin SMTP configurado) el enlace se muestra en pantalla
+            // para poder completar la prueba.
+            ViewBag.TokenDesarrollo = tokenDev;
+        }
+
+        return View();
+    }
+
+    [HttpGet]
+    public IActionResult Restablecer(string? token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return RedirectToAction(nameof(OlvideClave));
+
+        return View(new RestablecerClaveVM());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Restablecer(string? token, RestablecerClaveVM model, CancellationToken ct)
+    {
+        var resultado = await auth.RestablecerConTokenAsync(token ?? string.Empty, model.NuevaClave, ct);
+
+        if (!resultado.Exito)
+        {
+            ModelState.AddModelError(string.Empty, resultado.Error ?? "No se pudo restablecer la contraseña.");
+            return View(model);
+        }
+
+        TempData["Exito"] = "Contraseña restablecida. Ya puedes iniciar sesión.";
+        return RedirectToAction(nameof(Login));
+    }
+
+    // ── Apoyo ─────────────────────────────────────────────────
+
+    private async Task EmitirCookie(Estudiante estudiante, string? returnUrl)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, estudiante.EstudianteId.ToString()),
+            new(ClaimTypes.Name, estudiante.NombreCompleto),
+            new(ClaimTypes.Email, estudiante.CorreoElectronico),
+            new("SecurityStamp", estudiante.SecurityStamp ?? string.Empty),
+        };
+
+        var identidad = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identidad),
+            new AuthenticationProperties { IsPersistent = true, ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7) });
+    }
+
+    /// <summary>Evita redirecciones hacia sitios externos (open redirect).</summary>
+    private string Seguro(string? returnUrl) =>
+        !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl)
+            ? returnUrl
+            : Url.Action("Index", "Home")!;
 }

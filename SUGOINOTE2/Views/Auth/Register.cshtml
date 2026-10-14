@@ -1,124 +1,97 @@
-﻿@model SUGOINOTE2.Models.ViewModels.RegistroVM
+﻿@model SugoiNote.Models.ViewModels.RegistroVM
 @{
-    Layout = null;
     ViewData["Title"] = "Crear Cuenta";
+    Layout = "_AuthLayout";
 }
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Registro - SugoiNote</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <style>
-        :root {
-            --bg-color: #050509;
-            --panel-bg: #0b0c10;
-            --primary-purple: #9d4edd;
-            --primary-hover: #7b2cbf;
-            --text-main: #ffffff;
-            --text-muted: #808085;
-            --border-color: #1a1b26;
-            --glass-bg: rgba(30, 20, 50, 0.3);
-            --glass-border: rgba(157, 78, 221, 0.2);
-        }
-        body, html { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-main); height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .auth-container { display: flex; width: 90%; max-width: 1100px; height: 80vh; align-items: center; gap: 60px; }
-        .form-section { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 20px; }
-        .logo-area { display: flex; align-items: center; gap: 15px; font-size: 28px; font-weight: 700; margin-bottom: 30px; }
-        .logo-icon-bg { background-color: var(--primary-purple); padding: 10px 14px; border-radius: 12px; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(157, 78, 221, 0.5); }
-        .welcome-header h1 { font-size: 32px; margin: 0 0 10px 0; font-weight: 700; }
-        .welcome-header p { color: var(--text-muted); font-size: 16px; margin-bottom: 30px; }
-        .input-group { margin-bottom: 20px; position: relative; }
-        .input-group label { display: block; color: var(--text-main); font-size: 14px; margin-bottom: 8px; font-weight: 500; }
-        .input-wrapper { position: relative; display: flex; align-items: center; }
-        .input-wrapper i { position: absolute; left: 18px; color: var(--text-muted); font-size: 16px; }
-        .input-wrapper input { width: 100%; background-color: var(--panel-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 14px 14px 14px 50px; border-radius: 14px; font-size: 15px; outline: none; transition: all 0.3s; box-sizing: border-box; }
-        .input-wrapper input:focus { border-color: var(--primary-purple); box-shadow: 0 0 10px rgba(157, 78, 221, 0.2); }
-        .btn-auth { width: 100%; background-color: var(--primary-purple); color: white; border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .btn-auth:hover { background-color: var(--primary-hover); }
-        .switch-auth { text-align: center; margin-top: 25px; font-size: 14px; color: var(--text-muted); }
-        .switch-auth a { color: var(--primary-purple); text-decoration: none; font-weight: 600; }
-        .error-msg { color: #ff4d4f; font-size: 12px; margin-top: 5px; display: block; }
-        .validation-summary-errors { color: #ff4d4f; text-align: center; margin-bottom: 15px; }
-        .info-section { flex: 1; background: linear-gradient(135deg, rgba(20, 10, 35, 0.6) 0%, rgba(10, 5, 20, 0.4) 100%); border: 1px solid var(--glass-border); border-radius: 30px; padding: 50px; height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 25px; box-sizing: border-box; }
-        .feature-card { display: flex; align-items: center; gap: 20px; background-color: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 18px; }
-        .feature-icon-box { background-color: rgba(157, 78, 221, 0.15); color: var(--primary-purple); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 22px; }
-        .feature-text h3 { margin: 0 0 5px 0; font-size: 16px; color: var(--text-main); }
-        .feature-text p { margin: 0; font-size: 13px; color: var(--text-muted); }
-    </style>
-</head>
-<body>
-    <div class="auth-container">
-        <div class="form-section">
-            <div class="logo-area">
-                <div class="logo-icon-bg"><i class="fa-solid fa-book-open"></i></div> SugoiNote
-            </div>
-            <div class="welcome-header">
-                <h1>Crea tu cuenta</h1>
-                <p>Únete para empezar a estudiar inteligentemente</p>
-            </div>
-
-            <form asp-controller="Auth" asp-action="Register" method="post" autocomplete="off">
-                <div asp-validation-summary="ModelOnly" class="error-msg"></div>
-
-                <div class="input-group">
-                    <label>Nombre Completo</label>
-                    <div class="input-wrapper">
-                        <i class="fa-regular fa-user"></i>
-                        <input asp-for="NombreCompleto" type="text" placeholder="Juan Pérez"
-                               autocomplete="off" readonly
-                               onfocus="this.removeAttribute('readonly')" />
-                    </div>
-                    <span asp-validation-for="NombreCompleto" class="error-msg"></span>
-                </div>
-
-                <div class="input-group">
-                    <label>Email</label>
-                    <div class="input-wrapper">
-                        <i class="fa-regular fa-envelope"></i>
-                        <input asp-for="CorreoElectronico" type="email" placeholder="estudiante@ejemplo.com"
-                               autocomplete="off" readonly
-                               onfocus="this.removeAttribute('readonly')" />
-                    </div>
-                    <span asp-validation-for="CorreoElectronico" class="error-msg"></span>
-                </div>
-
-                <div class="input-group">
-                    <label>Contraseña</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-lock"></i>
-                        <input asp-for="ClaveAcceso" type="password" placeholder="••••••••"
-                               autocomplete="new-password" readonly
-                               onfocus="this.removeAttribute('readonly')" />
-                    </div>
-                    <span asp-validation-for="ClaveAcceso" class="error-msg"></span>
-                </div>
-
-                <button type="submit" class="btn-auth">Registrarme</button>
-            </form>
-
-            <div class="switch-auth">
-                ¿Ya tienes cuenta? <a href="/Auth/Login">Inicia sesión</a>
-            </div>
+<div class="auth-container">
+    <div class="form-section">
+        <div class="logo-area">
+            <div class="logo-icon-bg" aria-hidden="true"><i class="bi bi-journal-bookmark-fill"></i></div>
+            SugoiNote
         </div>
 
-        <div class="info-section">
-            <div class="feature-card">
-                <div class="feature-icon-box"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                <div class="feature-text"><h3>Resúmenes con IA</h3><p>Genera resúmenes automáticamente a partir de tus notas largas.</p></div>
+        <div class="welcome-header">
+            <h1>Crea tu cuenta</h1>
+            <p>Únete para empezar a estudiar inteligentemente</p>
+        </div>
+
+        <form asp-controller="Auth" asp-action="Register" method="post" autocomplete="on">
+            <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+            <div class="input-group">
+                <label for="NombreCompleto">Nombre completo</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-person" aria-hidden="true"></i>
+                    <input asp-for="NombreCompleto" id="NombreCompleto" type="text"
+                           placeholder="Juan Pérez" maxlength="150"
+                           autocomplete="name" required autofocus />
+                </div>
+                <span asp-validation-for="NombreCompleto" class="field-validation-error"></span>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon-box"><i class="fa-solid fa-book"></i></div>
-                <div class="feature-text"><h3>Organiza tus apuntes</h3><p>Clasifica tus notas por materias, temas y fechas fácilmente.</p></div>
+
+            <div class="input-group">
+                <label for="CorreoElectronico">Correo electrónico</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-envelope" aria-hidden="true"></i>
+                    <input asp-for="CorreoElectronico" id="CorreoElectronico" type="email"
+                           placeholder="estudiante@ejemplo.com"
+                           autocomplete="username" required />
+                </div>
+                <span asp-validation-for="CorreoElectronico" class="field-validation-error"></span>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon-box"><i class="fa-solid fa-graduation-cap"></i></div>
-                <div class="feature-text"><h3>Exámenes personalizados</h3><p>Practica con tests generados por la IA basados en tus estudios.</p></div>
+
+            <div class="input-group">
+                <label for="ClaveAcceso">Contraseña</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-lock" aria-hidden="true"></i>
+                    <input asp-for="ClaveAcceso" id="ClaveAcceso" type="password"
+                           placeholder="Mínimo 8 caracteres, con letra y número"
+                           autocomplete="new-password" required minlength="8" />
+                </div>
+                <span asp-validation-for="ClaveAcceso" class="field-validation-error"></span>
+            </div>
+
+            <div class="input-group">
+                <label for="ConfirmarClave">Repetir contraseña</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-lock-fill" aria-hidden="true"></i>
+                    <input asp-for="ConfirmarClave" id="ConfirmarClave" type="password"
+                           placeholder="Repite la contraseña"
+                           autocomplete="new-password" required minlength="8" />
+                </div>
+                <span asp-validation-for="ConfirmarClave" class="field-validation-error"></span>
+            </div>
+
+            <button type="submit" class="btn-auth">Registrarme</button>
+        </form>
+
+        <div class="switch-auth">
+            ¿Ya tienes cuenta? <a href="/Auth/Login">Inicia sesión</a>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="feature-card">
+            <div class="feature-icon-box" aria-hidden="true"><i class="bi bi-stars"></i></div>
+            <div class="feature-text">
+                <h3>Resúmenes con IA</h3>
+                <p>Genera resúmenes automáticamente a partir de tus notas largas.</p>
+            </div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon-box" aria-hidden="true"><i class="bi bi-journal-text"></i></div>
+            <div class="feature-text">
+                <h3>Organiza tus apuntes</h3>
+                <p>Clasifica tus notas por materias, temas y fechas fácilmente.</p>
+            </div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon-box" aria-hidden="true"><i class="bi bi-clipboard-check"></i></div>
+            <div class="feature-text">
+                <h3>Exámenes personalizados</h3>
+                <p>Practica con tests generados por la IA basados en tus estudios.</p>
             </div>
         </div>
     </div>
-</body>
-</html>
+</div>

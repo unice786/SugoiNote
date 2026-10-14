@@ -1,0 +1,21 @@
+# Dependencias y artefactos de la app movil: nunca se versionan.
+node_modules/
+.expo/
+dist/
+web-build/
+*.apk
+*.aab
+*.ipa
+
+# Configuracion local de EAS
+eas.json
+.env
+.env.local
+
+# Metro / caches
+.metro-health-check*
+*.tsbuildinfo
+
+# Sistema
+.DS_Store
+Thumbs.db

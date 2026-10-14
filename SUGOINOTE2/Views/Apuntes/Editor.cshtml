@@ -3,162 +3,297 @@
     ViewData["Title"] = Model?.TituloNota ?? "Editor";
 }
 
-<div class="d-flex align-items-center gap-3 mb-4">
-    <a href="/Apuntes/Index" class="btn-ghost" style="padding:8px 14px;">
-        <i class="bi bi-arrow-left"></i>
-    </a>
-    <div style="flex:1;">
-        <input type="text" id="tituloEditor" value="@Model?.TituloNota"
-               style="background:none;border:none;color:var(--text-main);font-size:1.4rem;font-weight:800;font-family:inherit;width:100%;padding:0;"
-               placeholder="Sin título..." />
-    </div>
-    <span class="autosave-badge" id="autosaveBadge">
-        <i class="bi bi-circle" style="font-size:0.6rem;"></i> Sin cambios
-    </span>
-    <button class="btn-sugoi" onclick="guardarManual()">
-        <i class="bi bi-floppy"></i> Guardar
-    </button>
-
-    <!-- MENÚ 3 PUNTOS -->
-    <div style="position:relative;">
-        <button id="btnMenu" onclick="toggleMenu()" class="btn-ghost" style="padding:8px 12px;font-size:1.2rem;">
-            <i class="bi bi-three-dots-vertical"></i>
-        </button>
-        <div id="menuOpciones" style="display:none;position:absolute;right:0;top:110%;background:var(--panel-bg, #0b0c10);border:1px solid var(--border-color, #1a1b26);border-radius:12px;padding:6px;min-width:160px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
-            <button onclick="abrirModalEliminar()" style="width:100%;background:none;border:none;color:#ff4d4f;padding:10px 14px;text-align:left;border-radius:8px;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;gap:8px;">
-                <i class="bi bi-trash"></i> Eliminar apunte
+<div class="block-editor-page">
+    <div class="editor-header d-flex align-items-center gap-3 mb-4">
+        <a href="/Apuntes/Index" class="btn-ghost flex-shrink-0" style="padding:8px 14px;" aria-label="Volver a mis apuntes">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+        </a>
+        <div class="editor-title-wrap flex-grow-1">
+            <label for="tituloEditor" class="visually-hidden">Título del apunte</label>
+            <input type="text" id="tituloEditor" name="titulo" class="editor-title-input form-control-plaintext"
+                   value="@Model?.TituloNota" placeholder="Sin título..." maxlength="200" />
+        </div>
+        <div class="editor-header-actions d-flex align-items-center gap-2 flex-shrink-0">
+            <span class="autosave-badge" id="autosaveBadge" role="status" aria-live="polite">
+                <i class="bi bi-circle" style="font-size:0.6rem;" aria-hidden="true"></i> Sin cambios
+            </span>
+            <button type="button" class="btn-sugoi" id="btnGuardarManual">
+                <i class="bi bi-floppy" aria-hidden="true"></i> Guardar
             </button>
+            <div class="editor-menu-wrap">
+                <button type="button" id="btnMenu" class="btn-ghost" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Más opciones" style="padding:8px 12px;font-size:1.2rem;">
+                    <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
+                </button>
+                <div id="menuOpciones" class="editor-dropdown">
+                    <button type="button" onclick="abrirModalEliminar()" class="dropdown-item-btn">
+                        <i class="bi bi-trash" aria-hidden="true"></i> Eliminar apunte
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="editor-wrapper">
-    <div class="editor-toolbar">
-        <button onclick="fmt('bold')"><b>B</b></button>
-        <button onclick="fmt('italic')"><i>I</i></button>
-        <button onclick="fmt('underline')"><u>U</u></button>
-        <div style="width:1px;height:20px;background:var(--border);margin:0 6px;"></div>
-        <button onclick="fmt('insertUnorderedList')"><i class="bi bi-list-ul"></i></button>
-        <button onclick="fmt('insertOrderedList')"><i class="bi bi-list-ol"></i></button>
-        <div style="width:1px;height:20px;background:var(--border);margin:0 6px;"></div>
-        <button onclick="fmt('formatBlock','H2')" style="font-size:0.75rem;font-weight:700;">H2</button>
-        <button onclick="fmt('formatBlock','H3')" style="font-size:0.75rem;font-weight:700;">H3</button>
-        <button onclick="fmt('formatBlock','P')" style="font-size:0.75rem;">¶</button>
-    </div>
-    <div id="editorContent"
-         class="editor-area"
-         contenteditable="true"
-         spellcheck="true">
-        @Html.Raw(Model?.ContenidoTexto ?? "")
+    <div class="editor-wrapper">
+        <div class="editor-floating-toolbar editor-toolbar-sticky" id="editorToolbar" role="toolbar" aria-label="Formato de texto">
+            <button type="button" data-cmd="undo" title="Deshacer (Ctrl+Z)" aria-label="Deshacer"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></button>
+            <button type="button" data-cmd="redo" title="Rehacer (Ctrl+Y)" aria-label="Rehacer"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i></button>
+            <span class="toolbar-divider"></span>
+            <button type="button" data-cmd="bold" title="Negrita" aria-label="Negrita"><i class="bi bi-type-bold" aria-hidden="true"></i></button>
+            <button type="button" data-cmd="italic" title="Cursiva" aria-label="Cursiva"><i class="bi bi-type-italic" aria-hidden="true"></i></button>
+            <button type="button" data-cmd="underline" title="Subrayado" aria-label="Subrayado"><i class="bi bi-type-underline" aria-hidden="true"></i></button>
+            <span class="toolbar-divider"></span>
+            <button type="button" data-cmd="formatBlock" data-val="H2" title="Encabezado 2" aria-label="Encabezado 2"><i class="bi bi-type-h2" aria-hidden="true"></i></button>
+            <button type="button" data-cmd="formatBlock" data-val="H3" title="Encabezado 3" aria-label="Encabezado 3"><i class="bi bi-type-h3" aria-hidden="true"></i></button>
+            <span class="toolbar-divider"></span>
+            <button type="button" data-cmd="insertUnorderedList" title="Lista" aria-label="Lista sin orden"><i class="bi bi-list-ul" aria-hidden="true"></i></button>
+            <button type="button" data-cmd="insertOrderedList" title="Lista numerada" aria-label="Lista ordenada"><i class="bi bi-list-ol" aria-hidden="true"></i></button>
+            <span class="toolbar-divider"></span>
+            <button type="button" data-cmd="link" title="Enlace" aria-label="Insertar enlace"><i class="bi bi-link-45deg" aria-hidden="true"></i></button>
+            <div class="toolbar-insert-wrap">
+                <button type="button" id="btnInsertMenu" class="toolbar-insert-btn" aria-haspopup="true" aria-expanded="false" title="Insertar">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> Insertar <i class="bi bi-chevron-down" style="font-size:0.65rem;" aria-hidden="true"></i>
+                </button>
+                <div class="insert-dropdown" id="insertMenu">
+                    <button type="button" data-insert="hr"><span class="insert-item-icon"><i class="bi bi-dash-lg" aria-hidden="true"></i></span><span class="insert-item-label">Regla horizontal</span></button>
+                    <button type="button" data-insert="pagebreak"><span class="insert-item-icon"><i class="bi bi-scissors" aria-hidden="true"></i></span><span class="insert-item-label">Salto de página</span></button>
+                    <button type="button" data-insert="image"><span class="insert-item-icon"><i class="bi bi-image" aria-hidden="true"></i></span><span class="insert-item-label">Imagen</span></button>
+                    <button type="button" data-insert="table"><span class="insert-item-icon"><i class="bi bi-table" aria-hidden="true"></i></span><span class="insert-item-label">Tabla</span></button>
+                    <button type="button" data-insert="columns2"><span class="insert-item-icon"><i class="bi bi-layout-three-columns" aria-hidden="true"></i></span><span class="insert-item-label">2 columnas</span></button>
+                    <button type="button" data-insert="columns3"><span class="insert-item-icon"><i class="bi bi-columns-gap" aria-hidden="true"></i></span><span class="insert-item-label">3 columnas</span></button>
+                    <button type="button" data-insert="checklist"><span class="insert-item-icon"><i class="bi bi-check2-square" aria-hidden="true"></i></span><span class="insert-item-label">Lista de verificación</span></button>
+                    <button type="button" data-insert="code"><span class="insert-item-icon"><i class="bi bi-code-slash" aria-hidden="true"></i></span><span class="insert-item-label">Bloque de código</span></button>
+                    <button type="button" data-insert="date"><span class="insert-item-icon"><i class="bi bi-calendar3" aria-hidden="true"></i></span><span class="insert-item-label">Fecha</span></button>
+                </div>
+            </div>
+        </div>
+
+        <input type="file" id="imageUploadInput" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+
+        @* El contenido ya fue saneado por el servidor (IHtmlSanitizer) antes de guardarse. *@
+        <div id="editorContent"
+             class="editor-area"
+             contenteditable="true"
+             role="textbox"
+             aria-multiline="true"
+             aria-label="Contenido del apunte"
+             spellcheck="true"></div>
+
+        @* Zona de error de importación: reemplaza los alert() genéricos. *@
+        <div id="importError" class="sugoi-inline-error" role="alert" tabindex="-1" hidden></div>
+
+        <div class="editor-util-bar">
+            <label for="fileUploadInput" class="visually-hidden">Elegir documento para importar</label>
+            <input type="file" id="fileUploadInput" accept=".pdf,.docx,.html,.htm,.txt" hidden />
+            <button type="button" class="util-btn" id="btnUploadDoc">
+                <i class="bi bi-upload" aria-hidden="true"></i> Subir documento
+            </button>
+            <button type="button" class="util-btn" id="btnDownloadDoc">
+                <i class="bi bi-download" aria-hidden="true"></i> Descargar
+            </button>
+        </div>
     </div>
 </div>
 
 <input type="hidden" id="apunteId" value="@Model?.ApunteId" />
 
-<!-- MODAL CONFIRMAR ELIMINAR -->
-<div id="modalEliminar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:999;align-items:center;justify-content:center;">
-    <div style="background:var(--panel-bg,#0b0c10);border:1px solid var(--border-color,#1a1b26);border-radius:20px;padding:30px;width:100%;max-width:400px;margin:0 16px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <h3 style="margin:0;color:#ff4d4f;font-size:1.1rem;"><i class="bi bi-exclamation-triangle"></i> Eliminar apunte</h3>
-            <button onclick="cerrarModalEliminar()" style="background:none;border:none;color:var(--text-muted,#808085);font-size:1.3rem;cursor:pointer;">&times;</button>
+@* El contenido guardado viaja como JSON, no como HTML crudo dentro del atributo: System.Text.Json
+   escapa <, >, &, ' y + por defecto, de modo que no puede cerrar el <script> ni inyectar marcado.
+   El servidor ya lo saneó con IHtmlSanitizer antes de persistirlo. *@
+<script id="contenidoInicial" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model?.ContenidoTexto ?? ""))</script>
+
+@* ── Modal: selector de tabla ── *@
+<div class="modal-overlay" id="tablePickerModal" role="dialog" aria-modal="true" aria-labelledby="tablePickerTitle">
+    <div class="modal-box">
+        <h3 class="modal-title" id="tablePickerTitle"><i class="bi bi-table" aria-hidden="true"></i> Insertar tabla</h3>
+        <p class="text-muted mb-3" style="font-size:0.85rem;">Selecciona el tamaño de la tabla</p>
+        <div class="table-picker-grid" id="tablePickerGrid"></div>
+        <p class="table-picker-label mt-2 mb-0" id="tablePickerLabel">1 × 1</p>
+        <button type="button" class="btn-ghost w-100 mt-3" id="tablePickerCancel">Cancelar</button>
+    </div>
+</div>
+
+@* ── Modal: enlace ── *@
+<div class="modal-overlay link-input-modal" id="linkModal" role="dialog" aria-modal="true" aria-labelledby="linkModalTitle">
+    <div class="modal-box">
+        <h3 class="modal-title" id="linkModalTitle"><i class="bi bi-link-45deg" aria-hidden="true"></i> Insertar enlace</h3>
+        <label class="sugoi-label" for="linkUrlInput">URL</label>
+        <input type="url" id="linkUrlInput" class="sugoi-input mb-3" placeholder="https://ejemplo.com" />
+        <div class="d-flex gap-2">
+            <button type="button" class="btn-sugoi flex-fill" id="linkConfirm">Insertar</button>
+            <button type="button" class="btn-ghost" id="linkCancel">Cancelar</button>
         </div>
-        <p style="color:var(--text-muted,#808085);font-size:0.9rem;margin-bottom:24px;">¿Estás seguro que deseas eliminar <strong style="color:white;">@Model?.TituloNota</strong>? Esta acción no se puede deshacer.</p>
-        <div style="display:flex;gap:8px;">
-            <button onclick="confirmarEliminar()" style="flex:1;background:#ff4d4f;color:white;border:none;padding:12px;border-radius:12px;font-size:0.95rem;font-weight:700;cursor:pointer;">
-                <i class="bi bi-trash"></i> Sí, eliminar
+    </div>
+</div>
+
+@* ── Modal: exportar ── *@
+<div class="modal-overlay export-modal" id="exportModal" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+    <div class="modal-box">
+        <h3 class="modal-title" id="exportTitle"><i class="bi bi-download" aria-hidden="true"></i> Descargar apunte</h3>
+        <p class="text-muted mb-4" style="font-size:0.88rem;">Elige el formato de exportación</p>
+        <div class="export-cards">
+            <button type="button" class="export-card" data-format="text">
+                <div class="export-card-icon"><i class="bi bi-filetype-txt" aria-hidden="true"></i></div>
+                <div class="export-card-label">TEXTO</div>
+                <div class="export-card-desc">.txt plano</div>
             </button>
-            <button onclick="cerrarModalEliminar()" class="btn-ghost">Cancelar</button>
+            <button type="button" class="export-card" data-format="pdf">
+                <div class="export-card-icon"><i class="bi bi-filetype-pdf" aria-hidden="true"></i></div>
+                <div class="export-card-label">PDF</div>
+                <div class="export-card-desc">Imprimir / guardar</div>
+            </button>
+            <button type="button" class="export-card" data-format="word">
+                <div class="export-card-icon"><i class="bi bi-filetype-doc" aria-hidden="true"></i></div>
+                <div class="export-card-label">WORD</div>
+                <div class="export-card-desc">.doc compatible</div>
+            </button>
+        </div>
+        <button type="button" class="btn-ghost w-100 mt-3" id="exportCancel">Cancelar</button>
+    </div>
+</div>
+
+@* ── Modal: eliminar ── *@
+<div id="modalEliminar" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalEliminarTitle">
+    <div class="modal-box">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="modal-title mb-0" id="modalEliminarTitle" style="color:var(--danger);">
+                <i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Eliminar apunte
+            </h3>
+            <button type="button" onclick="cerrarModalEliminar()" class="sugoi-modal-close" aria-label="Cerrar">&times;</button>
+        </div>
+        <p class="text-muted mb-4" style="font-size:0.9rem;">
+            ¿Estás seguro que deseas eliminar <strong>@Model?.TituloNota</strong>? Esta acción no se puede deshacer.
+        </p>
+        <div class="d-flex gap-2">
+            <button type="button" onclick="confirmarEliminar()" class="btn-sugoi flex-fill" style="background:var(--danger);">
+                <i class="bi bi-trash" aria-hidden="true"></i> Sí, eliminar
+            </button>
+            <button type="button" onclick="cerrarModalEliminar()" class="btn-ghost">Cancelar</button>
         </div>
     </div>
 </div>
 
 @section Scripts {
+    @* Librerías locales (D3): nada crítico depende de un CDN. *@
+    <script src="~/lib/mammoth/mammoth.browser.min.js"></script>
+    <script src="~/lib/dompurify/purify.min.js"></script>
+    <script type="module">
+        import * as pdfjsLib from '~/lib/pdfjs/pdf.min.mjs';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '~/lib/pdfjs/pdf.worker.min.mjs';
+        window.__pdfjs = pdfjsLib;
+    </script>
+    <script src="~/js/sugoi.js" asp-append-version="true"></script>
+    <script src="~/js/block-editor.js" asp-append-version="true"></script>
     <script>
-        let timer;
+        window.saveTimer = null;
         const badge = document.getElementById('autosaveBadge');
         const editor = document.getElementById('editorContent');
-
-        function fmt(cmd, val) {
-            document.execCommand(cmd, false, val || null);
-            editor.focus();
-        }
+        const menu = document.getElementById('menuOpciones');
+        const menuBtn = document.getElementById('btnMenu');
 
         function setBadge(estado) {
-            badge.className = 'autosave-badge' + (estado === 'saved' ? ' saved' : '');
+            badge.className = 'autosave-badge' + (estado === 'saved' ? ' saved' : '') +
+                (estado === 'error' ? ' error' : '');
             badge.innerHTML = estado === 'saved'
-                ? '<i class="bi bi-check-circle" style="font-size:0.75rem;"></i> Guardado'
-                : '<i class="bi bi-circle" style="font-size:0.6rem;"></i> Sin guardar';
+                ? '<i class="bi bi-check-circle" style="font-size:0.75rem;" aria-hidden="true"></i> Guardado'
+                : estado === 'error'
+                    ? '<i class="bi bi-exclamation-circle" style="font-size:0.75rem;" aria-hidden="true"></i> Error al guardar'
+                    : '<i class="bi bi-circle" style="font-size:0.6rem;" aria-hidden="true"></i> Sin guardar';
         }
 
+        /** Guardado real. Antes: catch (_) {} e `if (res.ok)` mudo, así que un fallo de red
+         *  o un 500 del servidor se veían igual que un guardado correcto. */
         async function guardar() {
             const id = document.getElementById('apunteId').value;
-            const titulo = document.getElementById('tituloEditor').value;
-            const contenido = editor.innerHTML;
+            if (!id) { setBadge('error'); return false; }
+
             try {
-                const res = await fetch('/Apuntes/AutoSave', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.querySelector('[name=__RequestVerificationToken]')?.value || '' },
-                    body: JSON.stringify({ apunteId: id, titulo: titulo, contenido: contenido })
+                await Sugoi.apiPost('/Apuntes/AutoSave', {
+                    apunteId: id,
+                    titulo: document.getElementById('tituloEditor').value,
+                    contenido: editor.innerHTML
                 });
-                if (res.ok) setBadge('saved');
-            } catch(e) {}
+                setBadge('saved');
+                return true;
+            } catch (err) {
+                setBadge('error');
+                Sugoi.toast.error('No se pudo guardar el apunte: ' + err.message);
+                return false;
+            }
         }
 
-        function guardarManual() { clearTimeout(timer); guardar(); }
-
-        editor.addEventListener('input', () => {
+        function triggerAutosave() {
             setBadge('unsaved');
-            clearTimeout(timer);
-            timer = setTimeout(guardar, 2000);
-        });
-
-        document.getElementById('tituloEditor').addEventListener('input', () => {
-            setBadge('unsaved');
-            clearTimeout(timer);
-            timer = setTimeout(guardar, 2000);
-        });
-
-        // MENÚ 3 PUNTOS
-        function toggleMenu() {
-            const menu = document.getElementById('menuOpciones');
-            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+            clearTimeout(window.saveTimer);
+            window.saveTimer = setTimeout(guardar, 2000);
         }
 
-        document.addEventListener('click', function(e) {
-            const btn = document.getElementById('btnMenu');
-            const menu = document.getElementById('menuOpciones');
-            if (!btn.contains(e.target) && !menu.contains(e.target)) {
-                menu.style.display = 'none';
+        // Aviso al intentar salir con cambios sin guardar.
+        window.addEventListener('beforeunload', e => {
+            if (badge.classList.contains('error') || !badge.classList.contains('saved')) {
+                if (badge.className.includes('autosave-badge') && !badge.className.includes(' saved')) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
             }
         });
 
-        // ELIMINAR
+        document.getElementById('btnGuardarManual').addEventListener('click', () => {
+            clearTimeout(window.saveTimer);
+            guardar();
+        });
+
+        document.getElementById('tituloEditor').addEventListener('input', triggerAutosave);
+
+        // Contenido guardado. Se asigna DESPUÉS de initBlockEditor para que reinitializeEditorBlocks()
+        // enganche imágenes, tablas y bloques de código que vienen del documento persistido.
+        try {
+            editor.innerHTML = JSON.parse(document.getElementById('contenidoInicial').textContent || '""');
+        } catch (_) {
+            editor.innerHTML = '';
+        }
+
+        initBlockEditor({ onContentChange: triggerAutosave });
+
+        if (!editor.innerHTML.trim() || editor.innerHTML.trim() === '<br>') editor.setAttribute('data-vacio', '1');
+
+        menuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const abierto = menu.classList.toggle('show');
+            menuBtn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.editor-menu-wrap')) {
+                menu.classList.remove('show');
+                menuBtn.setAttribute('aria-expanded', 'false');
+            }
+        });
+
         function abrirModalEliminar() {
-            document.getElementById('menuOpciones').style.display = 'none';
-            document.getElementById('modalEliminar').style.display = 'flex';
+            menu.classList.remove('show');
+            document.getElementById('modalEliminar').classList.add('open');
         }
 
         function cerrarModalEliminar() {
-            document.getElementById('modalEliminar').style.display = 'none';
+            document.getElementById('modalEliminar').classList.remove('open');
         }
 
         async function confirmarEliminar() {
             const id = document.getElementById('apunteId').value;
             try {
-                const res = await fetch('/Apuntes/Eliminar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ apunteId: id })
-                });
-                if (res.ok) {
-                    window.location.href = '/Apuntes/Index';
-                } else {
-                    alert('Error al eliminar. Intenta de nuevo.');
-                }
-            } catch(e) {
-                alert('Error al eliminar. Intenta de nuevo.');
+                await Sugoi.apiPost('/Apuntes/Eliminar?apunteId=' + encodeURIComponent(id), {});
+                window.location.href = '/Apuntes/Index';
+            } catch (err) {
+                Sugoi.toast.error('Error al eliminar: ' + err.message);
             }
         }
+
+        // Cerrar modales con Escape.
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+            menu.classList.remove('show');
+        });
     </script>
-    @Html.AntiForgeryToken()
 }

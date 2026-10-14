@@ -1,4 +1,4 @@
-﻿@model IEnumerable<SugoiNote.Models.Apunte>
+﻿@model IEnumerable<SugoiNote.Models.ViewModels.ApunteVM>
 @{
     ViewData["Title"] = "Inicio";
     var nombreUsuario = User.Identity?.Name ?? "Estudiante";
@@ -11,13 +11,13 @@
         <h1 style="font-weight:800;font-size:2rem;margin-bottom:6px;">Bienvenido de nuevo, @nombre!</h1>
         <p style="color:var(--text-muted);font-size:0.92rem;">Gestiona tus notas con elegancia e inteligencia.</p>
     </div>
-    <button class="btn-sugoi" onclick="abrirModal()">
-        <i class="bi bi-plus-lg"></i> Nueva Nota
+    <button type="button" class="btn-sugoi" onclick="abrirModal()">
+        <i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva Nota
     </button>
 </div>
 
 <div class="d-flex align-items-center gap-2 mb-4">
-    <div style="width:8px;height:8px;border-radius:50%;background:var(--neon-purple);"></div>
+    <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);"></div>
     <h5 style="margin:0;font-weight:700;font-size:1rem;">Apuntes Recientes</h5>
 </div>
 
@@ -29,24 +29,24 @@
             <div class="col-md-4 col-lg-3">
                 <a href="/Apuntes/Editor/@item.ApunteId" class="note-card">
                     <div class="note-card-icon">
-                        <i class="bi bi-journal-richtext"></i>
+                        <i class="bi bi-journal-richtext" aria-hidden="true"></i>
                     </div>
                     <div class="note-card-title">@item.TituloNota</div>
                     <div class="note-card-date">@(item.FechaRegistro?.ToString("dd MMM yyyy"))</div>
-                    <span class="note-card-link">Abrir →</span>
+                    <span class="note-card-link">Abrir ?</span>
                 </a>
             </div>
         }
         <div class="col-12 mt-2">
-            <a href="/Apuntes/Index" style="color:var(--neon-purple);font-size:0.85rem;font-weight:600;text-decoration:none;">
-                Ver todos mis apuntes →
+            <a href="/Apuntes/Index" style="color:var(--accent);font-size:0.85rem;font-weight:600;text-decoration:none;">
+                Ver todos mis apuntes ?
             </a>
         </div>
     }
     else
     {
         <div class="col-12 text-center py-5">
-            <i class="bi bi-journal-plus" style="font-size:2.5rem;color:var(--text-muted);display:block;margin-bottom:12px;"></i>
+            <i class="bi bi-journal-plus" style="font-size:2.5rem;color:var(--text-muted);display:block;margin-bottom:12px;" aria-hidden="true"></i>
             <p style="color:var(--text-muted);font-size:0.9rem;">Aún no tienes apuntes. ¡Crea tu primero!</p>
         </div>
     }
@@ -57,27 +57,26 @@
     <div class="modal-box">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <p class="modal-title" style="margin:0;">Nueva nota</p>
-            <button onclick="cerrarModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;line-height:1;">&times;</button>
+            <button type="button" aria-label="Cerrar" onclick="cerrarModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;line-height:1;">&times;</button>
         </div>
-        <form id="formCrearRapido" method="post" action="/Apuntes/CreateRapido">
-            @Html.AntiForgeryToken()
+        <form id="formCrearRapido">
             <div class="mb-3">
-                <label class="sugoi-label">Título</label>
-                <input type="text" name="TituloNota" class="sugoi-input" placeholder="Ej: Cálculo Diferencial..." required />
+                <label class="sugoi-label" for="modalTituloNota">Título</label>
+                <input type="text" id="modalTituloNota" name="tituloNota" class="sugoi-input" placeholder="Ej: Cálculo Diferencial..." required />
             </div>
             <div class="mb-3">
-                <label class="sugoi-label">Materia</label>
-                <select name="MateriaId" id="selectMateriaModal" class="sugoi-input" style="padding:10px 14px !important;">
+                <label class="sugoi-label" for="selectMateriaModal">Materia</label>
+                <select name="materiaId" id="selectMateriaModal" class="sugoi-input" style="padding:10px 14px !important;">
                     <option value="">-- Selecciona una materia --</option>
                 </select>
             </div>
             <div class="mb-4">
-                <label class="sugoi-label">O crea una nueva materia</label>
-                <input type="text" name="newMateriaName" class="sugoi-input" placeholder="Nombre de la materia" />
+                <label class="sugoi-label" for="modalNuevaMateria">O crea una nueva materia</label>
+                <input type="text" id="modalNuevaMateria" name="nuevaMateriaNombre" class="sugoi-input" placeholder="Nombre de la materia" />
             </div>
             <div class="d-flex gap-2">
                 <button type="submit" class="btn-sugoi flex-fill justify-content-center">
-                    <i class="bi bi-plus-lg"></i> Crear nota
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> Crear nota
                 </button>
                 <button type="button" onclick="cerrarModal()" class="btn-ghost">
                     Cancelar
@@ -100,15 +99,42 @@
             if (e.target === this) cerrarModal();
         });
         async function cargarMaterias() {
+            const sel = document.getElementById('selectMateriaModal');
             try {
-                const res = await fetch('/Apuntes/GetMaterias');
-                const data = await res.json();
-                const sel = document.getElementById('selectMateriaModal');
+                const data = await Sugoi.apiGet('/Apuntes/GetMaterias');
                 sel.innerHTML = '<option value="">-- Selecciona una materia --</option>';
-                data.forEach(m => {
-                    sel.innerHTML += `<option value="${m.materiaId}">${m.nombreMateria}</option>`;
+                (data || []).forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.materiaId;
+                    opt.textContent = m.nombreMateria;
+                    sel.appendChild(opt);
                 });
-            } catch(e) { console.log('Error cargando materias', e); }
+            } catch (err) {
+                Sugoi.toast.error(err.message);
+            }
         }
+
+        document.getElementById('formCrearRapido').addEventListener('submit', async e => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const materiaId = document.getElementById('selectMateriaModal').value;
+            const nuevaMateriaNombre = document.getElementById('modalNuevaMateria').value.trim();
+            const tituloNota = document.getElementById('modalTituloNota').value.trim();
+
+            btn.disabled = true;
+            try {
+                const data = await Sugoi.apiPost('/Apuntes/CrearRapido', {
+                    tituloNota: tituloNota,
+                    materiaId: materiaId || null,
+                    nuevaMateriaNombre: nuevaMateriaNombre || null,
+                    contenidoTexto: ''
+                });
+                window.location.href = `/Apuntes/Editor/${data.apunteId}`;
+            } catch (err) {
+                Sugoi.toast.error(err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        });
     </script>
 }

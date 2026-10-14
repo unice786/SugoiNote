@@ -1,0 +1,56 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@*
+    Layout compartido por Login / Register / OlvideClave / Restablecer.
+
+    Antes Login.cshtml y Register.cshtml tenían cada uno su propio bloque <style> de ~37
+    líneas con un :root paralelo (--text-main, --text-muted…) cuyos valores CONTRADECÍAN
+    los de site.css. Ninguna de las dos páginas respetaba el tema de la aplicación.
+
+    La hoja de estilos vive en wwwroot/css/auth.css para no incrustar CSS en el marcado.
+*@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SugoiNote</title>
+
+    @* Necesario para que sugoi.js pueda adjuntar el token a cualquier fetch POST. *@
+    <meta name="csrf-token" content="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
+
+    <script>
+        (function () {
+            var g = localStorage.getItem('sugoi-tema');
+            var t = g || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', t);
+            document.documentElement.setAttribute('data-sugoi-tema', g || 'auto');
+        })();
+    </script>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+</head>
+<body class="auth-body">
+
+    <div class="auth-theme-toggle theme-switcher" role="group" aria-label="Tema de color">
+        <button type="button" class="theme-btn" data-tema="light" title="Modo claro">
+            <i class="bi bi-sun" aria-hidden="true"></i><span class="visually-hidden">Modo claro</span>
+        </button>
+        <button type="button" class="theme-btn" data-tema="auto" title="Automático">
+            <i class="bi bi-circle-half" aria-hidden="true"></i><span class="visually-hidden">Automático</span>
+        </button>
+        <button type="button" class="theme-btn" data-tema="dark" title="Modo oscuro">
+            <i class="bi bi-moon-stars" aria-hidden="true"></i><span class="visually-hidden">Modo oscuro</span>
+        </button>
+    </div>
+
+    @RenderBody()
+
+    <script src="~/js/sugoi.js" asp-append-version="true"></script>
+    <script src="~/js/sidebar.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

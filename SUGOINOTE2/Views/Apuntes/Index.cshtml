@@ -1,4 +1,4 @@
-﻿@model IEnumerable<SugoiNote.Models.Apunte>
+﻿@model IEnumerable<SugoiNote.Models.ViewModels.ApunteVM>
 @{
     ViewData["Title"] = "Mis Apuntes";
 }
@@ -9,11 +9,11 @@
         <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">Organiza y gestiona todos tus apuntes</p>
     </div>
     <div class="d-flex gap-2">
-        <button class="btn-ghost" id="btnModoEliminar" onclick="toggleModoEliminar()">
-            <i class="bi bi-trash"></i> Eliminar
+        <button type="button" class="btn-ghost" id="btnModoEliminar" onclick="toggleModoEliminar()">
+            <i class="bi bi-trash" aria-hidden="true"></i> Eliminar
         </button>
-        <button class="btn-sugoi" onclick="abrirModal()">
-            <i class="bi bi-plus-lg"></i> Nuevo Apunte
+        <button type="button" class="btn-sugoi" onclick="abrirModal()">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo Apunte
         </button>
     </div>
 </div>
@@ -32,16 +32,18 @@
                 <div class="note-card-wrapper" style="position:relative;">
                     <a href="/Apuntes/Editor/@item.ApunteId" class="note-card" id="card-@item.ApunteId">
                         <div class="note-card-icon">
-                            <i class="bi bi-journal-richtext"></i>
+                            <i class="bi bi-journal-richtext" aria-hidden="true"></i>
                         </div>
                         <div class="note-card-title">@item.TituloNota</div>
                         <div class="note-card-date">@(item.FechaRegistro?.ToString("dd MMM yyyy"))</div>
-                        <span class="note-card-link">Abrir →</span>
+                        <span class="note-card-link">Abrir ?</span>
                     </a>
-                    <button class="btn-eliminar-apunte" id="del-@item.ApunteId"
-                            onclick="seleccionarEliminar('@item.ApunteId', '@item.TituloNota')"
-                            style="display:none;position:absolute;top:8px;right:8px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.3);color:#ff4d4f;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">
-                        <i class="bi bi-trash"></i>
+                    <button type="button" class="btn-eliminar-apunte" id="del-@item.ApunteId"
+                            data-apunte-id="@item.ApunteId"
+                            data-titulo="@item.TituloNota"
+                            aria-label="Eliminar apunte"
+                            style="display:none;position:absolute;top:8px;right:8px;background:color-mix(in srgb, var(--danger) 15%, transparent);border:1px solid color-mix(in srgb, var(--danger) 30%, transparent);color:var(--danger);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">
+                        <i class="bi bi-trash" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
@@ -50,7 +52,7 @@
     else
     {
         <div class="col-12 text-center py-5">
-            <i class="bi bi-journal-plus" style="font-size:2.5rem;color:var(--text-muted);display:block;margin-bottom:12px;"></i>
+            <i class="bi bi-journal-plus" style="font-size:2.5rem;color:var(--text-muted);display:block;margin-bottom:12px;" aria-hidden="true"></i>
             <p style="color:var(--text-muted);">Aún no tienes apuntes. ¡Crea tu primero!</p>
         </div>
     }
@@ -61,27 +63,26 @@
     <div class="modal-box">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <p class="modal-title" style="margin:0;">Nueva nota</p>
-            <button onclick="cerrarModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;line-height:1;">&times;</button>
+            <button type="button" aria-label="Cerrar" onclick="cerrarModal()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;line-height:1;">&times;</button>
         </div>
-        <form method="post" action="/Apuntes/CreateRapido">
-            @Html.AntiForgeryToken()
+        <form id="formCrearRapido">
             <div class="mb-3">
-                <label class="sugoi-label">Título</label>
-                <input type="text" name="TituloNota" class="sugoi-input" placeholder="Ej: Cálculo Diferencial..." required />
+                <label class="sugoi-label" for="modalTituloNota">Título</label>
+                <input type="text" id="modalTituloNota" name="tituloNota" class="sugoi-input" placeholder="Ej: Cálculo Diferencial..." required />
             </div>
             <div class="mb-3">
-                <label class="sugoi-label">Materia</label>
-                <select name="MateriaId" id="selectMateriaApuntes" class="sugoi-input" style="padding:10px 14px !important;">
+                <label class="sugoi-label" for="selectMateriaApuntes">Materia</label>
+                <select name="materiaId" id="selectMateriaApuntes" class="sugoi-input" style="padding:10px 14px !important;">
                     <option value="">-- Selecciona una materia --</option>
                 </select>
             </div>
             <div class="mb-4">
-                <label class="sugoi-label">O crea una nueva materia</label>
-                <input type="text" name="newMateriaName" class="sugoi-input" placeholder="Nombre de la materia" />
+                <label class="sugoi-label" for="modalNuevaMateria">O crea una nueva materia</label>
+                <input type="text" id="modalNuevaMateria" name="nuevaMateriaNombre" class="sugoi-input" placeholder="Nombre de la materia" />
             </div>
             <div class="d-flex gap-2">
                 <button type="submit" class="btn-sugoi flex-fill justify-content-center">
-                    <i class="bi bi-plus-lg"></i> Crear nota
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> Crear nota
                 </button>
                 <button type="button" onclick="cerrarModal()" class="btn-ghost">Cancelar</button>
             </div>
@@ -93,15 +94,15 @@
 <div class="modal-overlay" id="modalEliminar">
     <div class="modal-box" style="max-width:420px;">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <p class="modal-title" style="margin:0;color:#ff4d4f;"><i class="bi bi-exclamation-triangle"></i> Eliminar apunte</p>
-            <button onclick="cerrarModalEliminar()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">&times;</button>
+            <p class="modal-title" style="margin:0;color:var(--danger);"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i> Eliminar apunte</p>
+            <button type="button" aria-label="Cerrar" onclick="cerrarModalEliminar()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">&times;</button>
         </div>
-        <p style="color:var(--text-muted);font-size:0.9rem;">¿Estás seguro que deseas eliminar <strong id="nombreApunteEliminar" style="color:var(--text-main);"></strong>? Esta acción no se puede deshacer.</p>
+        <p style="color:var(--text-muted);font-size:0.9rem;">¿Estás seguro que deseas eliminar <strong id="nombreApunteEliminar" style="color:var(--text-primary);"></strong>? Esta acción no se puede deshacer.</p>
         <div class="d-flex gap-2 mt-4">
-            <button onclick="confirmarEliminar()" class="btn-sugoi flex-fill justify-content-center" style="background:#ff4d4f;">
-                <i class="bi bi-trash"></i> Sí, eliminar
+            <button type="button" onclick="confirmarEliminar()" class="btn-sugoi flex-fill justify-content-center" style="background:var(--danger);">
+                <i class="bi bi-trash" aria-hidden="true"></i> Sí, eliminar
             </button>
-            <button onclick="cerrarModalEliminar()" class="btn-ghost">Cancelar</button>
+            <button type="button" onclick="cerrarModalEliminar()" class="btn-ghost">Cancelar</button>
         </div>
     </div>
 </div>
@@ -118,16 +119,16 @@
             const cards = document.querySelectorAll('[id^="card-"]');
 
             if (modoEliminar) {
-                btn.innerHTML = '<i class="bi bi-arrow-left"></i> Cancelar';
-                btn.style.borderColor = '#ff4d4f';
-                btn.style.color = '#ff4d4f';
+                btn.innerHTML = '<i class="bi bi-arrow-left" aria-hidden="true"></i> Cancelar';
+                btn.style.borderColor = 'var(--danger)';
+                btn.style.color = 'var(--danger)';
                 botones.forEach(b => b.style.display = 'block');
                 cards.forEach(c => {
                     c.style.pointerEvents = 'none';
                     c.style.opacity = '0.6';
                 });
             } else {
-                btn.innerHTML = '<i class="bi bi-trash"></i> Eliminar';
+                btn.innerHTML = '<i class="bi bi-trash" aria-hidden="true"></i> Eliminar';
                 btn.style.borderColor = '';
                 btn.style.color = '';
                 botones.forEach(b => b.style.display = 'none');
@@ -152,19 +153,14 @@
         async function confirmarEliminar() {
             if (!apunteIdAEliminar) return;
             try {
-                const res = await fetch('/Apuntes/Eliminar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ apunteId: apunteIdAEliminar })
-                });
-                if (res.ok) {
-                    const item = document.querySelector(`.apunte-item[data-id="${apunteIdAEliminar}"]`);
-                    if (item) item.remove();
-                    cerrarModalEliminar();
-                    toggleModoEliminar();
-                }
-            } catch(e) {
-                alert('Error al eliminar. Intenta de nuevo.');
+                await Sugoi.apiPost(`/Apuntes/Eliminar?apunteId=${encodeURIComponent(apunteIdAEliminar)}`, {});
+                const item = document.querySelector(`.apunte-item[data-id="${apunteIdAEliminar}"]`);
+                if (item) item.remove();
+                cerrarModalEliminar();
+                toggleModoEliminar();
+                Sugoi.toast.ok('Apunte eliminado.');
+            } catch (err) {
+                Sugoi.toast.error(err.message);
             }
         }
 
@@ -183,19 +179,38 @@
         });
 
         async function cargarMaterias() {
+            const sel = document.getElementById('selectMateriaApuntes');
+            const filtros = document.getElementById('filtros-materia');
             try {
-                const res = await fetch('/Apuntes/GetMaterias');
-                const data = await res.json();
-                const sel = document.getElementById('selectMateriaApuntes');
-                const filtros = document.getElementById('filtros-materia');
+                const data = await Sugoi.apiGet('/Apuntes/GetMaterias');
                 sel.innerHTML = '<option value="">-- Selecciona una materia --</option>';
                 filtros.innerHTML = '';
-                data.forEach(m => {
-                    sel.innerHTML += `<option value="${m.materiaId}">${m.nombreMateria}</option>`;
-                    filtros.innerHTML += `<a href="#" class="filter-pill" onclick="filtrar('${m.materiaId}', this)">${m.nombreMateria}</a>`;
+                (data || []).forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.materiaId;
+                    opt.textContent = m.nombreMateria;
+                    sel.appendChild(opt);
+
+                    const pill = document.createElement('a');
+                    pill.href = '#';
+                    pill.className = 'filter-pill';
+                    pill.textContent = m.nombreMateria;
+                    pill.addEventListener('click', e => {
+                        e.preventDefault();
+                        filtrar(m.materiaId, pill);
+                    });
+                    filtros.appendChild(pill);
                 });
-            } catch(e) {}
+            } catch (err) {
+                Sugoi.toast.error(err.message);
+            }
         }
+
+        // El id y el título viajan por data-* y no incrustados en un onclick: un apóstrofe
+        // en el título rompía la cadena del atributo y abría la puerta a inyectar marcado.
+        document.querySelectorAll('.btn-eliminar-apunte').forEach(btn => {
+            btn.addEventListener('click', () => seleccionarEliminar(btn.dataset.apunteId, btn.dataset.titulo));
+        });
 
         function filtrar(materiaId, el) {
             document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
@@ -204,6 +219,30 @@
                 item.style.display = (!materiaId || item.dataset.materia === materiaId) ? '' : 'none';
             });
         }
+
+        document.getElementById('formCrearRapido').addEventListener('submit', async e => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const materiaId = document.getElementById('selectMateriaApuntes').value;
+            const nuevaMateriaNombre = document.getElementById('modalNuevaMateria').value.trim();
+            const tituloNota = document.getElementById('modalTituloNota').value.trim();
+
+            btn.disabled = true;
+            try {
+                await Sugoi.apiPost('/Apuntes/CrearRapido', {
+                    tituloNota: tituloNota,
+                    materiaId: materiaId || null,
+                    nuevaMateriaNombre: nuevaMateriaNombre || null,
+                    contenidoTexto: ''
+                });
+                window.location.href = '/Apuntes/Index';
+            } catch (err) {
+                Sugoi.toast.error(err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
         cargarMaterias();
     </script>
 }

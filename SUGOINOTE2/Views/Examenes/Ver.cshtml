@@ -1,12 +1,12 @@
-﻿@model SugoiNote.Controllers.ExamenDetalleVM
+﻿@model SugoiNote.Models.ViewModels.ExamenDetalleVM
 @{
     ViewData["Title"] = "Examen";
     bool yaEntregado = Model.Calificacion.HasValue;
 }
 
 <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
-    <a href="/Examenes/Index" class="btn-ghost" style="padding:8px 14px;">
-        <i class="bi bi-arrow-left"></i>
+    <a href="/Examenes/Index" class="btn-ghost" aria-label="Volver a mis exámenes" style="padding:8px 14px;">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i>
     </a>
     <div style="flex:1;">
         <h2 style="font-weight:800;font-size:1.3rem;margin:0;">@Model.TituloApunte</h2>
@@ -14,20 +14,20 @@
             @Model.Preguntas.Count preguntas —
             @if (yaEntregado)
             {
-                <span style="color:#22c55e;">Examen entregado</span>
+                <span style="color:var(--success);">Examen entregado</span>
             }
             else
             {
-                <span style="color:#a78bfa;">Pendiente de entrega</span>
+                <span style="color:var(--accent);">Pendiente de entrega</span>
             }
         </p>
     </div>
 
     @if (yaEntregado)
     {
-        var color = Model.Calificacion >= 70 ? "#22c55e" : Model.Calificacion >= 50 ? "#f59e0b" : "#ef4444";
-        var bg = Model.Calificacion >= 70 ? "rgba(34,197,94,0.08)" : Model.Calificacion >= 50 ? "rgba(245,158,11,0.08)" : "rgba(239,68,68,0.08)";
-        var border = Model.Calificacion >= 70 ? "rgba(34,197,94,0.25)" : Model.Calificacion >= 50 ? "rgba(245,158,11,0.25)" : "rgba(239,68,68,0.25)";
+        var color = Model.Calificacion >= 70 ? "var(--success)" : Model.Calificacion >= 50 ? "var(--warning)" : "var(--danger)";
+        var bg = Model.Calificacion >= 70 ? "color-mix(in srgb, var(--success) 8%, transparent)" : Model.Calificacion >= 50 ? "color-mix(in srgb, var(--warning) 8%, transparent)" : "color-mix(in srgb, var(--danger) 8%, transparent)";
+        var border = Model.Calificacion >= 70 ? "color-mix(in srgb, var(--success) 25%, transparent)" : Model.Calificacion >= 50 ? "color-mix(in srgb, var(--warning) 25%, transparent)" : "color-mix(in srgb, var(--danger) 25%, transparent)";
         var label = Model.Calificacion >= 70 ? "Aprobado" : Model.Calificacion >= 50 ? "Regular" : "Reprobado";
         <div style="background:@bg;border:1px solid @border;border-radius:14px;padding:12px 24px;text-align:center;">
             <div style="font-size:1.8rem;font-weight:800;color:@color;line-height:1;">@Model.Calificacion%</div>
@@ -41,17 +41,17 @@
     var correctas = Model.Preguntas.Count(p => p.Opciones.Any(o => o.EsCorrecta && o.OpcionId == p.RespuestaSeleccionadaId));
     <div class="glass-card p-3 mb-4 d-flex gap-4 align-items-center">
         <div style="text-align:center;flex:1;">
-            <div style="font-size:1.3rem;font-weight:800;color:#22c55e;">@correctas</div>
+            <div style="font-size:1.3rem;font-weight:800;color:var(--success);">@correctas</div>
             <div style="font-size:0.75rem;color:var(--text-muted);">Correctas</div>
         </div>
-        <div style="width:1px;height:40px;background:var(--border);"></div>
+        <div style="width:1px;height:40px;background:var(--border-default);"></div>
         <div style="text-align:center;flex:1;">
-            <div style="font-size:1.3rem;font-weight:800;color:#ef4444;">@(Model.Preguntas.Count - correctas)</div>
+            <div style="font-size:1.3rem;font-weight:800;color:var(--danger);">@(Model.Preguntas.Count - correctas)</div>
             <div style="font-size:0.75rem;color:var(--text-muted);">Incorrectas</div>
         </div>
-        <div style="width:1px;height:40px;background:var(--border);"></div>
+        <div style="width:1px;height:40px;background:var(--border-default);"></div>
         <div style="text-align:center;flex:1;">
-            <div style="font-size:1.3rem;font-weight:800;color:var(--text-main);">@Model.Preguntas.Count</div>
+            <div style="font-size:1.3rem;font-weight:800;color:var(--text-primary);">@Model.Preguntas.Count</div>
             <div style="font-size:0.75rem;color:var(--text-muted);">Total</div>
         </div>
     </div>
@@ -65,17 +65,17 @@
 
         <div class="glass-card p-4 mb-3">
             <div class="d-flex align-items-start gap-3 mb-3">
-                <span style="background:rgba(139,92,246,0.12);color:var(--neon-purple);border-radius:8px;padding:4px 10px;font-size:0.8rem;font-weight:700;flex-shrink:0;">@(i + 1)</span>
+                <span style="background:color-mix(in srgb, var(--accent) 12%, transparent);color:var(--accent);border-radius:8px;padding:4px 10px;font-size:0.8rem;font-weight:700;flex-shrink:0;">@(i + 1)</span>
                 <p style="font-weight:600;margin:0;font-size:0.93rem;line-height:1.5;">@preg.Texto</p>
                 @if (yaEntregado)
                 {
                     if (respondioCorrect)
                     {
-                        <i class="bi bi-check-circle-fill" style="color:#22c55e;font-size:1.1rem;flex-shrink:0;margin-left:auto;"></i>
+                        <i class="bi bi-check-circle-fill" aria-hidden="true" style="color:var(--success);font-size:1.1rem;flex-shrink:0;margin-left:auto;"></i>
                     }
                     else
                     {
-                        <i class="bi bi-x-circle-fill" style="color:#ef4444;font-size:1.1rem;flex-shrink:0;margin-left:auto;"></i>
+                        <i class="bi bi-x-circle-fill" aria-hidden="true" style="color:var(--danger);font-size:1.1rem;flex-shrink:0;margin-left:auto;"></i>
                     }
                 }
             </div>
@@ -83,35 +83,38 @@
             <div class="d-flex flex-column gap-2">
                 @foreach (var op in preg.Opciones)
                 {
-                    string estilo = "border-radius:10px;padding:11px 16px;font-size:0.88rem;border:1px solid var(--border);transition:all 0.2s;";
+                    string estilo = "border-radius:10px;padding:11px 16px;font-size:0.88rem;border:1px solid var(--border-default);transition:all 0.2s;";
                     string icono = "";
 
                     if (yaEntregado)
                     {
                         if (op.EsCorrecta)
                         {
-                            estilo += "background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.35);color:#22c55e;";
-                            icono = "<i class='bi bi-check-circle-fill' style='margin-right:8px;'></i>";
+                            estilo += "background:color-mix(in srgb, var(--success) 8%, transparent);border-color:color-mix(in srgb, var(--success) 35%, transparent);color:var(--success);";
+                            icono = "<i class='bi bi-check-circle-fill' aria-hidden='true' style='margin-right:8px;'></i>";
                         }
                         else if (op.OpcionId == preg.RespuestaSeleccionadaId)
                         {
-                            estilo += "background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.35);color:#ef4444;";
-                            icono = "<i class='bi bi-x-circle-fill' style='margin-right:8px;'></i>";
+                            estilo += "background:color-mix(in srgb, var(--danger) 8%, transparent);border-color:color-mix(in srgb, var(--danger) 35%, transparent);color:var(--danger);";
+                            icono = "<i class='bi bi-x-circle-fill' aria-hidden='true' style='margin-right:8px;'></i>";
                         }
                         else
                         {
-                            estilo += "background:rgba(255,255,255,0.02);color:var(--text-muted);";
+                            estilo += "background:var(--on-surface-02);color:var(--text-muted);";
                         }
                         <div style="@estilo">@Html.Raw(icono)@op.Texto</div>
                     }
                     else
                     {
-                        estilo += "background:rgba(255,255,255,0.03);cursor:pointer;";
+                        estilo += "background:var(--on-surface-03);cursor:pointer;";
                         <div class="opcion-btn"
                              data-pregunta="@preg.PreguntaId"
                              data-opcion="@op.OpcionId"
                              style="@estilo"
-                             onclick="seleccionar(this)">
+                             role="radio"
+                             tabindex="0"
+                             onclick="seleccionar(this)"
+                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();seleccionar(this);}">
                             @op.Texto
                         </div>
                     }
@@ -126,9 +129,9 @@
             <span style="color:var(--text-muted);font-size:0.85rem;">
                 <span id="contador">0</span> de @Model.Preguntas.Count respondidas
             </span>
-            <button class="btn-sugoi" onclick="enviarExamen()" id="btnEnviar"
-                    style="background:#22c55e;padding:11px 28px;">
-                <i class="bi bi-send-check"></i> Entregar Examen
+            <button type="button" class="btn-sugoi" onclick="enviarExamen()" id="btnEnviar"
+                    style="background:var(--success);padding:11px 28px;">
+                <i class="bi bi-send-check" aria-hidden="true"></i> Entregar Examen
             </button>
         </div>
     }
@@ -136,7 +139,7 @@
     {
         <div class="d-flex justify-content-center mt-3">
             <a href="/Examenes/Index" class="btn-ghost">
-                <i class="bi bi-arrow-left"></i> Volver a mis exámenes
+                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver a mis exámenes
             </a>
         </div>
     }
@@ -150,14 +153,14 @@
         function seleccionar(el) {
             const pregId = el.dataset.pregunta;
             document.querySelectorAll(`[data-pregunta="${pregId}"]`).forEach(o => {
-                o.style.background = 'rgba(255,255,255,0.03)';
-                o.style.borderColor = 'var(--border)';
-                o.style.color = 'var(--text-main)';
+                o.style.background = 'var(--on-surface-03)';
+                o.style.borderColor = 'var(--border-default)';
+                o.style.color = 'var(--text-primary)';
                 o.classList.remove('selected');
             });
-            el.style.background = 'rgba(139,92,246,0.12)';
-            el.style.borderColor = 'rgba(139,92,246,0.4)';
-            el.style.color = '#a78bfa';
+            el.style.background = 'color-mix(in srgb, var(--accent) 12%, transparent)';
+            el.style.borderColor = 'color-mix(in srgb, var(--accent) 40%, transparent)';
+            el.style.color = 'var(--accent)';
             el.classList.add('selected');
             actualizarContador();
         }
@@ -169,44 +172,35 @@
         }
 
         async function enviarExamen() {
-            const total = parseInt(document.getElementById('totalPreguntas').value);
+            const total = parseInt(document.getElementById('totalPreguntas').value, 10);
             const seleccionadas = document.querySelectorAll('.opcion-btn.selected');
 
             if (seleccionadas.length < total) {
-                alert(`Faltan ${total - seleccionadas.length} pregunta(s) por responder`);
+                Sugoi.toast.error(`Faltan ${total - seleccionadas.length} pregunta(s) por responder`);
                 return;
             }
 
             const btn = document.getElementById('btnEnviar');
+            const restaurar = () => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-send-check" aria-hidden="true"></i> Entregar Examen';
+            };
             btn.disabled = true;
-            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Calificando...';
+            btn.innerHTML = '<i class="bi bi-hourglass-split" aria-hidden="true"></i> Calificando...';
 
-            const respuestas = Array.from(seleccionadas).map(el => ({
-                preguntaId: el.dataset.pregunta,
-                opcionId: el.dataset.opcion
-            }));
+            // El DTO espera un diccionario preguntaId -> opcionId, no una lista.
+            const respuestas = {};
+            seleccionadas.forEach(el => { respuestas[el.dataset.pregunta] = el.dataset.opcion; });
 
             try {
-                const res = await fetch('/Examenes/Calificar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        examenId: document.getElementById('examenId').value,
-                        respuestas
-                    })
+                await Sugoi.apiPost('/Examenes/Calificar', {
+                    examenId: document.getElementById('examenId').value,
+                    respuestas: respuestas
                 });
-
-                if (res.ok) {
-                    location.reload();
-                } else {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-send-check"></i> Entregar Examen';
-                    alert('Error al calificar. Intenta de nuevo.');
-                }
-            } catch(e) {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-send-check"></i> Entregar Examen';
-                alert('Error de conexión.');
+                location.reload();
+            } catch (err) {
+                restaurar();
+                Sugoi.toast.error(err.message);
             }
         }
     </script>
