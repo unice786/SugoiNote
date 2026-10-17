@@ -39,7 +39,11 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "d2947af5-685a-40d3-8211-1b9a077da826"
       }
-    }
+    },
+    "owner": "unice7"
   }
 }
