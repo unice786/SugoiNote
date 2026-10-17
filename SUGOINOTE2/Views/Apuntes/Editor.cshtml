@@ -178,8 +178,11 @@
     <script src="~/lib/mammoth/mammoth.browser.min.js"></script>
     <script src="~/lib/dompurify/purify.min.js"></script>
     <script type="module">
-        import * as pdfjsLib from '~/lib/pdfjs/pdf.min.mjs';
-        pdfjsLib.GlobalWorkerOptions.workerSrc = '~/lib/pdfjs/pdf.worker.min.mjs';
+        // OJO: "~/" solo lo resuelve Razor en atributos HTML. Dentro de un <script>
+        // quedaba literal y el navegador pedia /Apuntes/~/lib/... (404), por eso la
+        // importacion de PDF fallaba. Url.Content() emite la ruta real.
+        import * as pdfjsLib from '@Url.Content("~/lib/pdfjs/pdf.min.mjs")';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '@Url.Content("~/lib/pdfjs/pdf.worker.min.mjs")';
         window.__pdfjs = pdfjsLib;
     </script>
     <script src="~/js/sugoi.js" asp-append-version="true"></script>
