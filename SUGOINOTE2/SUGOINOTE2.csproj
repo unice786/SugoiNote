@@ -57,4 +57,11 @@
     <Folder Include="Data\" />
   </ItemGroup>
 
+  <!-- El proyecto de pruebas (SUGOINOTE2.Tests) necesita ver los miembros internal para
+       poder probarlos directamente: GeminiClient.ExtraerJson, AuthService.EmailValido,
+       AuthService.GenerarToken y AuthService.HashToken. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="SUGOINOTE2.Tests" />
+  </ItemGroup>
+
 </Project>
