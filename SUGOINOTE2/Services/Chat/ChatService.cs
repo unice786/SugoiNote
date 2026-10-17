@@ -1,7 +1,7 @@
 using SugoiNote.Services.Resumenes;
 using SugoiNote.Models;
 using Microsoft.EntityFrameworkCore;
-using SugoiNote.Services.Anthropic;
+using SugoiNote.Services.Ia;
 
 namespace SugoiNote.Services.Chat;
 
@@ -11,7 +11,7 @@ public interface IChatService
         Guid estudianteId, string mensaje, string? imagenDataUri, CancellationToken ct = default);
 }
 
-public class ChatService(Sugoinotee2Context db, IAnthropicClient ia, ILogger<ChatService> logger) : IChatService
+public class ChatService(Sugoinotee2Context db, IIaClient ia, ILogger<ChatService> logger) : IChatService
 {
     public async Task<(bool, string, string?)> ResponderAsync(
         Guid estudianteId, string mensaje, string? imagenDataUri, CancellationToken ct = default)
@@ -51,7 +51,7 @@ public class ChatService(Sugoinotee2Context db, IAnthropicClient ia, ILogger<Cha
 
             return (true, respuesta, null);
         }
-        catch (AnthropicException ex)
+        catch (IaException ex)
         {
             // Antes devolvia Ok() con HTTP 200 y el texto "Error técnico: {ex.Message}",
             // de modo que el cliente nunca detectaba el fallo.

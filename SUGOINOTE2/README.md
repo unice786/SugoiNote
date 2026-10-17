@@ -10,7 +10,8 @@ capas**:
 | Frontend web | ASP.NET Core MVC + Bootstrap 5 | `Views/`, `wwwroot/` |
 | Móvil | Expo SDK 57 / React Native 0.86 | `mobile/` |
 
-La base de datos es **Azure SQL** y ya está desplegada en la nube.
+La base de datos es **MonsterASP SQL** y ya está
+desplegada en la nube. Las funciones de IA usan **Google Gemini** (Google AI Studio).
 
 ---
 
@@ -167,17 +168,20 @@ Falta ejecutar `eas build`/`eas submit`, que requieren cuenta de Expo y la API p
 | 15 | **Lint rompía el `Skeleton`** | `useRef(...).current` leído durante el render dispara `react-hooks/refs` | El `Animated.Value` se crea con `useState` perezoso |
 | 16 | **Listado de exámenes no tipaba** | `ExamenResumenDto` expone `tituloApunte`, no `tituloNota` | Se corrigió el `accessibilityLabel` |
 | 17 | **`expo-doctor` con 2 fallos** | Faltaba el peer `expo-font` de `@expo/vector-icons` y los parches de `expo`/`expo-router` | `npx expo install expo-font` + `npx expo install --fix` |
+| 18 | **La IA no funcionaba** | La cuenta de Anthropic no tenía saldo y los modelos configurados (`claude-sonnet-5`) no existían | Se reemplazó la capa de IA por **Google Gemini** (`Services/Ia/GeminiClient.cs`): misma interfaz, modelos `gemini-3.8-flash` y `gemini-3.1-flash-lite`, plan gratuito, y traducción de errores 429/404/clave inválida |
+| 19 | **Los resúmenes salían vacíos** (`La IA devolvió un resumen vacío`) | En HtmlSanitizer v9 las colecciones de `HtmlSanitizerOptions` arrancan **vacías**, no con los valores por defecto: el saneador borraba todas las etiquetas y su contenido. Solo sobrevivían `div`/`table`/`span` (las que se añadían a mano), por eso pasó desapercibido | `SugoiHtmlSanitizer` parte ahora de `HtmlSanitizerDefaults` y luego añade lo propio del editor |
+| 20 | **XSS almacenado en el alta de apuntes** | `ApunteService.CrearRapidoAsync` (la que usa la API móvil) guardaba el HTML **sin sanear**, a diferencia de `CrearAsync`/`AutoSaveAsync` | Se añadió `sanitizer.Sanitize(...)` en `CrearRapidoAsync` |
 
 ---
 
 ## Pendientes
 
-- **Rotar secretos.** La contraseña de Azure SQL y la API key de Anthropic
-  estuvieron en el historial de git. Hay que regenerarlas.
-- Publicar la API en MonsterASP (`sugoinote.runasp.net`, ya creado): falta
-  autorizar la IP del servidor en el firewall de Azure SQL y definir las
-  variables de entorno.
-- La cuenta de Anthropic sin saldo bloquea las funciones de IA.
+- **Rotar secretos.** La contraseña de MonsterASP SQL y la API key de IA estuvieron
+  en el historial de git (el repositorio es público). Hay que regenerarlas.
+- Publicar la API en MonsterASP (`sugoinote.runasp.net`, ya creado) con **Git deploy**:
+  falta definir las variables de entorno (`ConnectionStrings__DefaultConnection`,
+  `IA__ApiKey`, `Jwt__Key`, `App__UrlBase` y `Email__*`) y confirmar que el sitio
+  corre sobre .NET 10.
 - El editor de bloques de la web se embebe en el móvil vía **WebView**, por lo que
   se conserva el formato rich-text (no se degrada a texto plano).
 - La app móvil tiene las **Fases 0 a 8** terminadas (la Fase 8 deja `eas.json` y la

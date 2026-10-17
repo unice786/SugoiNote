@@ -11,12 +11,28 @@
          miembros públicos auxiliares y no todos merecen documentación. -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+
+    <!-- Hosting en IIS/MonsterASP: en proceso (recomendado). Al ejecutarse dentro del
+         proceso de IIS no hace falta reenviar cabeceras (UseForwardedHeaders). -->
+    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
   </PropertyGroup>
+
+  <!-- La app móvil (React Native/Expo) vive en mobile/. No forma parte de la API y no
+       debe publicarse con ella: el Web SDK incluía por defecto sus *.json (package.json,
+       package-lock.json de 440 KB, tsconfig.json, app.json, eas.json). -->
+  <ItemGroup>
+    <Compile Remove="mobile\**" />
+    <Content Remove="mobile\**" />
+    <None Remove="mobile\**" />
+    <EmbeddedResource Remove="mobile\**" />
+
+    <!-- La plantilla de configuración es solo para el desarrollador; no debe subirse al
+         servidor (allí van por variables de entorno). -->
+    <Content Remove="appsettings.Production.example.json" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
-    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.25" />
-    <PackageReference Include="Hangfire.SqlServer" Version="1.8.25" />
     <PackageReference Include="HtmlSanitizer" Version="9.2.1039" />
     <PackageReference Include="MailKit" Version="4.18.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />

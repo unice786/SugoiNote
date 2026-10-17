@@ -145,6 +145,11 @@ public class ApunteService(Sugoinotee2Context db, IHtmlSanitizer sanitizer, ILog
 
         apunte.ApunteId = Guid.NewGuid();
         apunte.TituloNota = titulo.Length > 200 ? titulo[..200] : titulo;
+
+        // Faltaba sanear aquí: el alta rápida (la que usa la API movil) guardaba el HTML
+        // tal cual, lo que permitia inyectar <script>/onerror desde el cliente. Se alinea
+        // con CrearAsync y AutoSaveAsync.
+        apunte.ContenidoTexto = sanitizer.Sanitize(apunte.ContenidoTexto);
         apunte.FechaRegistro = DateTime.UtcNow;
 
         db.Apuntes.Add(apunte);

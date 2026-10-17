@@ -17,7 +17,3 @@ global using Microsoft.Extensions.Options;
 
 // EF Core
 global using Microsoft.EntityFrameworkCore;
-
-// Hangfire (panel de jobs)
-global using Hangfire;
-global using Hangfire.Dashboard;

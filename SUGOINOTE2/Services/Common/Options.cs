@@ -15,19 +15,21 @@ public class LimitesOptions
     public int MaxCantidadPreguntas { get; set; } = 50;
 }
 
-public class AnthropicOptions
+public class IaOptions
 {
-    public const string SectionName = "Anthropic";
+    public const string SectionName = "IA";
 
     public string ApiKey { get; set; } = string.Empty;
 
-    // Modelos validados contra GET /v1/models. Los valores anteriores
-    // (claude-sonnet-4-5 / claude-haiku-4-5) no existen y hacian fallar la IA.
-    public string Model { get; set; } = "claude-sonnet-5";
-    public string ModelFast { get; set; } = "claude-haiku-5-5";
+    // Modelos validados contra GET /v1beta/models de Google AI Studio (plan gratuito).
+    // Si Google retira un modelo, la API responde 404 con "no longer available":
+    // GeminiClient lo traduce a un mensaje claro para el usuario.
+    public string Model { get; set; } = "gemini-3.8-flash";
+    public string ModelFast { get; set; } = "gemini-3.1-flash-lite";
 
-    /// <summary>Timeout total por llamada a la API.</summary>
-    public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(90);
+    /// <summary>Timeout total por llamada a la API. Es el tope del HttpClient, por encima
+    /// de los timeouts de Polly: se midió un resumen real tardando 79 s.</summary>
+    public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(180);
 
     /// <summary>Máximo de tokens de la respuesta.</summary>
     public int MaxTokens { get; set; } = 8000;

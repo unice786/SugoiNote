@@ -1,7 +1,7 @@
 using SugoiNote.Models;
 using SugoiNote.Services.Common;
 using Microsoft.EntityFrameworkCore;
-using SugoiNote.Services.Anthropic;
+using SugoiNote.Services.Ia;
 using SugoiNote.Services.Apuntes;
 
 namespace SugoiNote.Services.Resumenes;
@@ -20,7 +20,7 @@ public interface IResumenService
     Task<string?> ObtenerAsync(Guid apunteId, Guid estudianteId, CancellationToken ct = default);
 }
 
-public class ResumenService(Sugoinotee2Context db, IAnthropicClient ia, IHtmlSanitizer sanitizer, ILogger<ResumenService> logger) : IResumenService
+public class ResumenService(Sugoinotee2Context db, IIaClient ia, IHtmlSanitizer sanitizer, ILogger<ResumenService> logger) : IResumenService
 {
     public async Task<IReadOnlyList<(Guid, string, DateTime?, bool)>> ListarAsync(Guid estudianteId, CancellationToken ct = default)
     {
@@ -87,7 +87,7 @@ public class ResumenService(Sugoinotee2Context db, IAnthropicClient ia, IHtmlSan
         {
             html = await ia.TextoAsync(system, prompt, ct);
         }
-        catch (AnthropicException ex)
+        catch (IaException ex)
         {
             // FIX C10: antes se devolvia $"<p>Error interno: {ex.Message}</p>" como si fuera el resumen
             // y ese texto se guardaba en la BD de forma permanente.
@@ -99,7 +99,14 @@ public class ResumenService(Sugoinotee2Context db, IAnthropicClient ia, IHtmlSan
         var sanitizado = sanitizer.Sanitize(html);
 
         if (string.IsNullOrWhiteSpace(sanitizado))
+        {
+            // Antes esto fallaba en silencio y era imposible saber si la IA no devolvió
+            // nada o si fue el saneador quien lo dejó vacío.
+            logger.LogWarning(
+                "El resumen del apunte {ApunteId} quedó vacío tras el saneado. Texto de la IA ({Largo} chars): {Crudo}",
+                apunteId, html.Length, html.Length <= 800 ? html : html[..800]);
             return (false, "", "La IA devolvió un resumen vacío.");
+        }
 
         apunte.ResumenGeneradoIA = sanitizado;
         await db.SaveChangesAsync(ct);

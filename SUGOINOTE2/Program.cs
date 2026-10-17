@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Serilog;
 using SugoiNote.Models;
-using SugoiNote.Services.Anthropic;
+using SugoiNote.Services.Ia;
 using SugoiNote.Services.Apuntes;
 using SugoiNote.Services.Auth;
 using SugoiNote.Services.Chat;
@@ -51,10 +51,10 @@ if (string.IsNullOrWhiteSpace(connStr))
     return 1;
 }
 
-builder.Services.AddOptions<AnthropicOptions>()
-    .Bind(builder.Configuration.GetSection(AnthropicOptions.SectionName))
+builder.Services.AddOptions<IaOptions>()
+    .Bind(builder.Configuration.GetSection(IaOptions.SectionName))
     .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey),
-              "Anthropic:ApiKey no está configurada. Las funciones de IA quedarán deshabilitadas.")
+              "IA:ApiKey no está configurada. Las funciones de IA quedarán deshabilitadas.")
     .ValidateOnStart();
 
 builder.Services.AddOptions<EmailOptions>()
@@ -104,32 +104,43 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
-// Cliente de Anthropic con timeout, reintentos y circuit breaker (Polly).
-// Sustituye las 4 copias de `new HttpClient()` que habia en los controladores.
-builder.Services.AddHttpClient<IAnthropicClient, AnthropicClient>((sp, http) =>
+// Cliente de Google Gemini (Google AI Studio) con timeout, reintentos y circuit
+// breaker (Polly). Sustituye a la capa de Anthropic, que quedó sin saldo y dejaba
+// los resúmenes, exámenes y el chat sin IA.
+builder.Services.AddHttpClient<IIaClient, GeminiClient>((sp, http) =>
 {
-    var opt = sp.GetRequiredService<IOptions<AnthropicOptions>>().Value;
-    http.BaseAddress = new Uri("https://api.anthropic.com/");
+    var opt = sp.GetRequiredService<IOptions<IaOptions>>().Value;
+    http.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
     http.Timeout = opt.Timeout;
     http.DefaultRequestHeaders.UserAgent.ParseAdd("SugoiNote/1.0");
 })
 .AddStandardResilienceHandler(o =>
 {
-    o.Retry.MaxRetryAttempts = 3;
+    o.Retry.MaxRetryAttempts = 2;
     o.Retry.Delay = TimeSpan.FromSeconds(2);
     o.Retry.UseJitter = true;
 
-    // La IA puede tardar: 60 s por intento.
-    o.AttemptTimeout.Timeout = TimeSpan.FromSeconds(60);
+    // Solo reintentamos errores de red y respuestas 5xx.
+    //  - Un 429 significa que el plan gratuito ya se agotó: reintentarlo gasta más cuota,
+    //    así que se devuelve el mensaje "límite alcanzado" al usuario de inmediato.
+    //  - Un timeout NO se reintenta: si una llamada ya tardó 120 s, hacer esperar al
+    //    usuario otros 120 s es peor que devolverle el error.
+    o.Retry.ShouldHandle = args => ValueTask.FromResult(
+        args.Outcome.Exception is HttpRequestException
+        || (args.Outcome.Result is { IsSuccessStatusCode: false } r && (int)r.StatusCode >= 500));
 
-    // Con 3 reintentos a 60 s, el peor caso ronda los 4 minutos.
-    o.TotalRequestTimeout.Timeout = TimeSpan.FromMinutes(4);
+    // Los modelos con razonamiento pueden tardar: se midió un resumen real en 79 s.
+    o.AttemptTimeout.Timeout = TimeSpan.FromSeconds(120);
+
+    // Tope global de la operación (incluidos los reintentos). Ligeramente por debajo del
+    // HttpClient.Timeout (IaOptions.Timeout) para que el error lo dé Polly con su mensaje.
+    o.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(175);
 
     // Polly exige que la ventana de muestreo sea al menos el doble del timeout de
-    // intento; con 60 s de intento hacen falta 120 s o más.
+    // intento; con 120 s de intento hacen falta 240 s o más.
     o.CircuitBreaker.FailureRatio = 0.5;
     o.CircuitBreaker.MinimumThroughput = 8;
-    o.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(150);
+    o.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(240);
     o.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(30);
 });
 
@@ -273,18 +284,6 @@ builder.Services.AddRateLimiter(o =>
 });
 
 // ─────────────────────────────────────────────────────────────
-// Hangfire (jobs en segundo plano)
-// ─────────────────────────────────────────────────────────────
-builder.Services.AddHangfire(cfg => cfg
-    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-    .UseSimpleAssemblyNameTypeSerializer()
-    .UseRecommendedSerializerSettings()
-    .UseSqlServerStorage(connStr, new Hangfire.SqlServer.SqlServerStorageOptions
-    {
-        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-    }));
-
-// ─────────────────────────────────────────────────────────────
 // Health checks
 // ─────────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks()
@@ -333,7 +332,7 @@ app.Use(async (ctx, next) =>
         // default-src 'self', que NO admite blob:, y el navegador lo bloquea: la
         // importacion de PDF falla con "No se pudo cargar el lector de PDF".
         "worker-src 'self' blob:; " +
-        "connect-src 'self' https://api.anthropic.com; " +
+        "connect-src 'self' https://generativelanguage.googleapis.com; " +
         "frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
     await next();
 });

@@ -29,9 +29,23 @@ public sealed partial class SugoiHtmlSanitizer : IHtmlSanitizer
 
     public SugoiHtmlSanitizer()
     {
-        // HtmlSanitizerOptions ya viene con los valores por defecto de la librería.
+        // OJO: en HtmlSanitizer v9 las colecciones de HtmlSanitizerOptions arrancan VACIAS,
+        // NO traen los valores por defecto de la librería. Con las listas vacías el saneador
+        // elimina todas las etiquetas y, además, su contenido: los resúmenes de la IA
+        // (<h2>, <p>, <ul>, <strong>...) quedaban en blanco. Por eso se parte de
+        // HtmlSanitizerDefaults y luego se añade lo propio del editor de bloques.
         var opciones = new Ganss.Xss.HtmlSanitizerOptions
         {
+            AllowedTags = new HashSet<string>(Ganss.Xss.HtmlSanitizerDefaults.AllowedTags, StringComparer.OrdinalIgnoreCase),
+            AllowedAttributes = new HashSet<string>(Ganss.Xss.HtmlSanitizerDefaults.AllowedAttributes, StringComparer.OrdinalIgnoreCase),
+            AllowedSchemes = new HashSet<string>(Ganss.Xss.HtmlSanitizerDefaults.AllowedSchemes, StringComparer.OrdinalIgnoreCase),
+            AllowedCssProperties = new HashSet<string>(Ganss.Xss.HtmlSanitizerDefaults.AllowedCssProperties, StringComparer.OrdinalIgnoreCase),
+            UriAttributes = new HashSet<string>(Ganss.Xss.HtmlSanitizerDefaults.UriAttributes, StringComparer.OrdinalIgnoreCase),
+            UriListAttributes = new HashSet<string>(Ganss.Xss.HtmlSanitizerDefaults.UriListAttributes, StringComparer.OrdinalIgnoreCase),
+
+            // AllowedCssClasses se deja vacío a propósito: un conjunto vacío significa
+            // "todas las clases permitidas", y el editor usa clases propias (editor-table...).
+
             // El editor de bloques marca sus bloques con atributos data-*.
             AllowDataAttributes = true,
         };

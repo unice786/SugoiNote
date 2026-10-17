@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SugoiNote.Models;
-using SugoiNote.Services.Anthropic;
+using SugoiNote.Services.Ia;
 using SugoiNote.Services.Apuntes;
 using SugoiNote.Services.Common;
 
@@ -50,7 +50,7 @@ public interface IExamenService
 
 public class ExamenService(
     Sugoinotee2Context db,
-    IAnthropicClient ia,
+    IIaClient ia,
     IHtmlSanitizer sanitizer,
     IOptions<LimitesOptions> limites,
     ILogger<ExamenService> logger) : IExamenService
@@ -103,7 +103,7 @@ public class ExamenService(
         {
             generadas = await GenerarPreguntasIAAsync(contenido, tipo, cantidad, ct);
         }
-        catch (AnthropicException ex)
+        catch (IaException ex)
         {
             logger.LogWarning(ex, "IA no pudo generar preguntas para el apunte {ApunteId}", apunteId);
             return (false, null, ex.Message);
