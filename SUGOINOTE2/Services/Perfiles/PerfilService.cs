@@ -21,6 +21,8 @@ public class PerfilDatos
     public DateTime? FechaCreacion { get; set; }
 
     public int TotalApuntes { get; set; }
+    public int TotalResumenes { get; set; }
+    public int TotalPublicaciones { get; set; }
     public int ApuntesEsteMes { get; set; }
     public int TotalMaterias { get; set; }
     public int TotalExamenes { get; set; }
@@ -60,6 +62,8 @@ public class PerfilService(
                 e.FotoPerfil,
                 e.FechaCreacion,
                 TotalApuntes = e.Apuntes.Count,
+                TotalResumenes = e.Apuntes.Count(a => a.ResumenGeneradoIA != null && a.ResumenGeneradoIA != ""),
+                TotalPublicaciones = e.ForoComunidades.Count,
                 TotalMaterias = e.Materias.Count,
                 TotalExamenes = e.Apuntes.Sum(a => a.Examenes.Count),
                 ExamenesAprobados = e.Apuntes.Sum(a => a.Examenes.Count(x => x.CalificacionFinal >= 60)),
@@ -107,6 +111,8 @@ public class PerfilService(
             FechaCreacion = estudiante.FechaCreacion,
 
             TotalApuntes = estudiante.TotalApuntes,
+            TotalResumenes = estudiante.TotalResumenes,
+            TotalPublicaciones = estudiante.TotalPublicaciones,
             ApuntesEsteMes = apuntesEsteMes,
             TotalMaterias = estudiante.TotalMaterias,
             TotalExamenes = estudiante.TotalExamenes,

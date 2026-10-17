@@ -22,10 +22,10 @@ Write-Host ''
 # Avisa si la IP guardada en el cliente movil ya no es la tuya.
 $archivoApi = Join-Path $carpetaMovil 'src\api\client.ts'
 if ((Test-Path $archivoApi) -and $ip) {
-    $configurada = ([regex]::Match((Get-Content $archivoApi -Raw), "API_BASE\s*=\s*'http://([\d\.]+):\d+'")).Groups[1].Value
+    $configurada = ([regex]::Match((Get-Content $archivoApi -Raw), "API_BASE_POR_DEFECTO\s*=\s*'http://([\d\.]+):\d+'")).Groups[1].Value
     if ($configurada -and $configurada -ne $ip) {
         Write-Host "  AVISO: el celular apunta a $configurada pero tu IP ahora es $ip." -ForegroundColor Yellow
-        Write-Host "         Edita mobile\src\api\client.ts (linea API_BASE) o la app no encontrara la API." -ForegroundColor Yellow
+        Write-Host "         Edita mobile\src\api\client.ts (API_BASE_POR_DEFECTO) o la app no encontrara la API." -ForegroundColor Yellow
         Write-Host ''
     }
 }

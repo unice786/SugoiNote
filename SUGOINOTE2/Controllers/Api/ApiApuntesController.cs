@@ -25,6 +25,15 @@ public class ApiApuntesController(IApunteService apuntes, ICurrentUser usuario) 
         return Ok(lista.Select(ApunteDto.Desde).ToList());
     }
 
+    /// <summary>Lista las materias del estudiante para el selector del movil.</summary>
+    [HttpGet("materias")]
+    [ProducesResponseType(typeof(MateriaDto[]), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Materias(CancellationToken ct)
+    {
+        var materias = await apuntes.ListarMateriasAsync(usuario.RequireId(), ct);
+        return Ok(materias.Select(m => new MateriaDto(m.MateriaId, m.NombreMateria)).ToList());
+    }
+
     /// <summary>Crea un apunte nuevo.</summary>
     [HttpPost]
     [IgnoreAntiforgeryToken]
@@ -106,6 +115,9 @@ public class ApiApuntesController(IApunteService apuntes, ICurrentUser usuario) 
 public record CrearApunteRequest(string? TituloNota, string? ContenidoTexto, Guid? MateriaId, string? NuevaMateriaNombre);
 
 public record AutoSaveRequest(string? Titulo, string? Contenido);
+
+/// <summary>Materia del estudiante, para poblar el selector al crear un apunte.</summary>
+public record MateriaDto(Guid MateriaId, string NombreMateria);
 
 /// <summary>
 /// Forma que consume la app movil. No se serializa la entidad <see cref="Apunte"/>

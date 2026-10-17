@@ -29,8 +29,9 @@ public class ApiPerfilController(IPerfilService perfil, ICurrentUser usuario) : 
             FotoPerfil = vm.FotoPerfil,
             FechaCreacion = vm.FechaCreacion,
             TotalApuntes = vm.TotalApuntes,
-            TotalResumenes = vm.TotalApuntes,
+            TotalResumenes = vm.TotalResumenes,
             TotalExamenes = vm.TotalExamenes,
+            TotalPublicaciones = vm.TotalPublicaciones,
             TotalMaterias = vm.TotalMaterias,
             Promedio = vm.Promedio,
         });

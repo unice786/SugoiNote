@@ -2,31 +2,44 @@
   "expo": {
     "name": "SugoiNote",
     "slug": "sugoinote",
-    "scheme": "sugoinote",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "plugins": ["expo-router", "expo-secure-store"],
-    "experiments": {
-      "typedRoutes": true
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.sugoinote.app"
     },
     "android": {
-      "package": "com.sugoinote.app",
       "adaptiveIcon": {
-        "backgroundColor": "#7c3aed",
+        "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "package": "com.sugoinote.app",
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "La app necesita acceso a tus fotos para adjuntar imágenes en el chat y la comunidad."
+        }
+      ],
+      "expo-font"
+    ],
+    "scheme": "sugoinote",
+    "extra": {
+      "router": {
+        "origin": false
+      }
     }
   }
 }

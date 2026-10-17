@@ -1,21 +1,41 @@
-# Dependencias y artefactos de la app movil: nunca se versionan.
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
 node_modules/
+
+# Expo
 .expo/
 dist/
 web-build/
-*.apk
-*.aab
-*.ipa
+expo-env.d.ts
 
-# Configuracion local de EAS
-eas.json
-.env
-.env.local
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
 
-# Metro / caches
+# Metro
 .metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
 *.tsbuildinfo
 
-# Sistema
-.DS_Store
-Thumbs.db
+# generated native folders
+/ios
+/android

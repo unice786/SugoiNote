@@ -27,6 +27,8 @@ public class ApiComunidadController(IComunidadService comunidad, ICurrentUser us
             Autor = p.Autor.Nombre,
             FotoUrl = p.Autor.FotoUrl,
             EsEncuesta = p.TipoPost == "Encuesta",
+            ImagenUrl = p.ImagenUrl,
+            EsMio = p.EsMio,
             Fecha = p.FechaPublicacion,
             TotalRespuestas = p.TotalRespuestas,
             TotalVotos = p.TotalVotos,
@@ -50,6 +52,8 @@ public class ApiComunidadController(IComunidadService comunidad, ICurrentUser us
             Autor = post.Autor.Nombre,
             Fecha = post.FechaPublicacion,
             EsEncuesta = post.TipoPost == "Encuesta",
+            ImagenUrl = post.ImagenUrl,
+            EsMio = post.EsMio,
             SoloUnaOpcion = post.SoloUna,
             TotalVotos = post.TotalVotos,
             Opciones = post.Opciones.Select(o => new PostOpcionDto
@@ -165,6 +169,8 @@ public record PostDto
     public string Autor { get; init; } = string.Empty;
     public string? FotoUrl { get; init; }
     public bool EsEncuesta { get; init; }
+    public string? ImagenUrl { get; init; }
+    public bool EsMio { get; init; }
     public DateTime? Fecha { get; init; }
     public int TotalRespuestas { get; init; }
     public int TotalVotos { get; init; }
@@ -178,6 +184,8 @@ public record PostDetalleDto
     public string Autor { get; init; } = string.Empty;
     public DateTime? Fecha { get; init; }
     public bool EsEncuesta { get; init; }
+    public string? ImagenUrl { get; init; }
+    public bool EsMio { get; init; }
     public bool SoloUnaOpcion { get; init; }
     public int TotalVotos { get; init; }
     public List<PostOpcionDto> Opciones { get; init; } = [];

@@ -25,8 +25,10 @@ La base de datos es **Azure SQL** y ya está desplegada en la nube.
 Para la web y la API: <http://localhost:5199> · Documentación: `/swagger`
 
 Para el móvil, en Expo Go escribe `exp://<TU-IP-DE-RED>:8081` (celular y PC en
-la misma WiFi). La URL de la API se cambia en `mobile/src/api/client.ts`
-(constante `API_BASE`).
+la misma WiFi). En desarrollo la URL de la API se ajusta en
+`mobile/src/api/client.ts` (constante `API_BASE_POR_DEFECTO`; `iniciar.ps1` avisa
+si tu IP cambió); en builds de EAS se define con la variable de entorno
+`EXPO_PUBLIC_API_URL`.
 
 ---
 
@@ -38,9 +40,9 @@ la misma WiFi). La URL de la API se cambia en `mobile/src/api/client.ts`
   guarda con *User Secrets* (`dotnet user-secrets`). Se creó
   `appsettings.Production.example.json` como plantilla para desplegar con
   variables de entorno.
-- **Librerías vendorizadas** en `wwwroot/lib/`: `Mammoth` (DOCX), `pdf.js`,
-  `DOMPurify` y `Alpine.js`. Se quitaron jQuery y el JS duplicado de Bootstrap
-  (−3.5 MB).
+- **Librerías vendorizadas** en `wwwroot/lib/`: `Mammoth` (DOCX), `pdf.js` y
+  `DOMPurify`. Se quitaron jQuery, el JS duplicado de Bootstrap y `Alpine.js`
+  (no referenciado) (−3.5 MB).
 - **Migración baseline** de EF Core contra Azure SQL **sin perder datos**:
   2 estudiantes, 1 apunte y 1 materia intactos.
 
@@ -99,8 +101,48 @@ Documentados en `/swagger`.
 ### App móvil
 
 Expo SDK 57 con **Expo Router** (rutas por archivos en `mobile/src/app/`),
-7 pestañas, tema claro/oscuro, sesión con JWT en `expo-secure-store` y autoguardado
-con retardo. El APK se genera en la nube con EAS, sin Android Studio.
+7 pestañas, tema claro/oscuro, sesión con JWT en `expo-secure-store` y React Query
+para datos remotos.
+
+Completado (F0): sistema de diseño con tokens de la web, cliente API tipado,
+componentes UI base, layouts de sesión/pestañas y pantalla de Inicio.
+
+Completado (F1): módulo de **Apuntes** completo — listado con búsqueda y filtro por
+materia, creación (materia existente o nueva), editor rich-text embebido vía
+**WebView** (`/Apuntes/Editor/{id}`) con autoguardado y eliminación con confirmación.
+
+Completado (F2): módulo de **Resúmenes IA** — listado, generación desde un apunte
+(con estado de carga de la IA), detalle con HTML renderizado en WebView y export a PDF.
+
+Completado (F3): módulo de **Exámenes** — listado con nota, generación (tipo, cantidad
+y apunte), resolución con calificación y resultado con respuestas correctas resaltadas.
+
+Completado (F4): módulo de **Chat IA** — conversación con burbujas, indicador
+"Escribiendo…", historial en memoria, limpiar y manejo de errores.
+
+Completado (F5): módulo de **Comunidad** — feed paginado, crear pregunta/encuesta
+(con opciones e imagen de portada vía `expo-image-picker`), detalle con votar/responder
+y eliminación de publicaciones propias.
+
+Completado (F6): módulo de **Perfil** — datos y edición del estudiante, cambio de
+avatar vía `expo-image-picker`, estadísticas + gráfico de barras
+(`react-native-chart-kit`), selector de tema (claro/oscuro/sistema) y cierre de sesión.
+
+Completado (F7): **rutas de detalle y pulido** — el Perfil pasó a carpeta con Stack y
+la edición a su propia pantalla (`perfil/editar`); componentes compartidos de estado
+(`Skeleton`/`ListSkeleton`, `EmptyState`, `ErrorState`); estados de carga/error/vacío
+unificados en todas las pantallas y pull-to-refresh real en Inicio; accesibilidad
+(`accessibilityLabel`/`accessibilityRole` y `hitSlop`) en tarjetas y botones solo-icono.
+
+Completado (F8): **build y publicación (configurada)** — `eas.json` con perfiles
+`development` (dev client + APK interno), `preview` (APK interno) y `production`
+(`autoIncrement`), `ios.bundleIdentifier`/`android.package = com.sugoinote.app` y la
+URL de la API parametrizada por `EXPO_PUBLIC_API_URL`. Dependencias alineadas con el
+SDK 57 (`expo-font`, parches de `expo`/`expo-router`); `npx expo-doctor` pasa 21/21.
+Falta ejecutar `eas build`/`eas submit`, que requieren cuenta de Expo y la API publicada.
+
+> El detalle de todas las fases del móvil (hechas y la configuración de build) está en
+> [`mobile/README.md`](mobile/README.md).
 
 ---
 
@@ -122,6 +164,9 @@ con retardo. El APK se genera en la nube con EAS, sin Android Studio.
 | 12 | **Spinner infinito en el móvil** | Si el almacenamiento se colgaba, `cargando` nunca se apagaba | Tope de 8 s con `Promise.race` |
 | 13 | **Consola inundada de SQL** | Serilog ignoraba la sección `Logging` y escupía cada comando EF | Niveles mínimos por categoría |
 | 14 | **El móvil no arrancaba en Expo Go** | En iOS con SDK 57 hay que iniciar sesión en Expo Go **y** en la CLI con la misma cuenta | Documentado en el README |
+| 15 | **Lint rompía el `Skeleton`** | `useRef(...).current` leído durante el render dispara `react-hooks/refs` | El `Animated.Value` se crea con `useState` perezoso |
+| 16 | **Listado de exámenes no tipaba** | `ExamenResumenDto` expone `tituloApunte`, no `tituloNota` | Se corrigió el `accessibilityLabel` |
+| 17 | **`expo-doctor` con 2 fallos** | Faltaba el peer `expo-font` de `@expo/vector-icons` y los parches de `expo`/`expo-router` | `npx expo install expo-font` + `npx expo install --fix` |
 
 ---
 
@@ -133,8 +178,11 @@ con retardo. El APK se genera en la nube con EAS, sin Android Studio.
   autorizar la IP del servidor en el firewall de Azure SQL y definir las
   variables de entorno.
 - La cuenta de Anthropic sin saldo bloquea las funciones de IA.
-- El editor de bloques de la web es texto plano en el móvil: se conserva el
-  contenido, no el formato.
+- El editor de bloques de la web se embebe en el móvil vía **WebView**, por lo que
+  se conserva el formato rich-text (no se degrada a texto plano).
+- La app móvil tiene las **Fases 0 a 8** terminadas (la Fase 8 deja `eas.json` y la
+  URL de API configurables; falta ejecutar los builds, que requieren cuenta de Expo)
+  según [`mobile/README.md`](mobile/README.md).
 
 ---
 
@@ -148,11 +196,13 @@ SUGOINOTE2/
 ├─ Migrations/        migración baseline
 ├─ Views/             vistas Razor
 ├─ wwwroot/           css, js, librerías vendorizadas
-├─ mobile/            app Expo
-│  ├─ src/app/        rutas (Expo Router)
-│  ├─ src/screens/    pantallas
-│  ├─ src/api/        cliente HTTP con JWT
-│  └─ src/theme/      paleta compartida con la web
+├─ mobile/            app Expo (ver mobile/README.md)
+│  ├─ eas.json        perfiles EAS (development/preview/production)
+│  ├─ src/app/        rutas (Expo Router): (auth), (tabs)
+│  ├─ src/api/        cliente HTTP con JWT y DTOs
+│  ├─ src/components/ componentes UI base
+│  ├─ src/hooks/      useAuth (sesión JWT)
+│  └─ src/theme/      tokens y ThemeProvider (claro/oscuro)
 ├─ iniciar.ps1 · reiniciar.ps1 · detener.ps1
 └─ Program.cs
 ```
