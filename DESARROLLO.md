@@ -30,11 +30,11 @@
 
 | Bloque | Descripción | Estado |
 |---|---|:---:|
-| 1.1 | Secretos fuera del repositorio y plantilla de producción | ✅ Hecho |
-| 1.2 | Migración de la IA de Anthropic a Google Gemini | ✅ Hecho |
-| 1.3 | Configuración de producción (Hangfire, hosting, exclusiones) | ✅ Hecho |
-| 1.4 | Adelgazar `wwwroot` (Bootstrap sobrante, ~5.8 MB) | ⏸️ Omitido a propósito |
-| 1.5 | Despliegue en MonsterASP (Git deploy) | 🟡 En curso |
+| 1.1 | Secretos fuera del repositorio y plantilla de producción | Hecho |
+| 1.2 | Migración de la IA de Anthropic a Google Gemini | Hecho |
+| 1.3 | Configuración de producción (Hangfire, hosting, exclusiones) | Hecho |
+| 1.4 | Adelgazar `wwwroot` (Bootstrap sobrante, ~5.8 MB) | Omitido a propósito |
+| 1.5 | Despliegue en MonsterASP (Git deploy) | En curso |
 
 > **Por qué se omitió 1.4:** el recorte de archivos de `wwwroot/lib/bootstrap`
 > tiene riesgo de romper estilos con poca ganancia funcional. Se deja para un
@@ -44,9 +44,23 @@
 
 | Bloque | Descripción | Estado |
 |---|---|:---:|
-| 2.1 | Instalación/alineación de dependencias (`npm install --legacy-peer-deps`) | ⏳ Pendiente |
-| 2.3 | Build de la APK con EAS (`mobile/eas.json`) | ⏳ Pendiente |
-| 2.4 | Pruebas en dispositivo | ⏳ Pendiente |
+| 2.1 | Instalación/alineación de dependencias (`npm install --legacy-peer-deps`) | Pendiente |
+| 2.3 | Build de la APK con EAS (`mobile/eas.json`) | Pendiente |
+| 2.4 | Pruebas en dispositivo | Pendiente |
+
+### Fases anteriores (completadas)
+
+Contexto de dónde venimos, para quien se incorpora al proyecto:
+
+| Fase | Ámbito | Qué dejó |
+|---|---|---|
+| **F0** | Base y datos | Secretos fuera del repositorio (*User Secrets*) · librerías vendorizadas (Mammoth para DOCX, pdf.js, DOMPurify) quitando jQuery, el JS duplicado de Bootstrap y Alpine.js (**−3.5 MB**) · migración baseline de EF Core **sin pérdida de datos** |
+| **F1** | Seguridad | Autenticación dual (cookie para la web, JWT para el móvil) · lockout · rate limiting · antifalsificación global · IDOR cerrado · CSP y HSTS · restablecimiento de contraseña por token de un solo uso con MailKit |
+| **F2** | Arquitectura | Modelos reescritos contra el esquema real de la BD · capa de servicios completa · cliente de IA con Polly · saneado de HTML con HtmlSanitizer |
+| **F4** | Modo claro | 57 tokens de color (`wwwroot/css/_tokens.css`) · `site.css` sin un solo color literal · tema aplicado antes del primer pintado (sin parpadeo) |
+| **F5** | Accesibilidad y responsive | Enlace de salto, foco visible, `aria-current`, `prefers-reduced-motion`, hoja de impresión y **botón de menú móvil** (antes el sidebar desaparecía sin forma de reabrirlo) |
+| **F6** | API REST del móvil | Controladores en `Controllers/Api/` con attribute routing (hoy **28 endpoints**), documentados en `/swagger` |
+| **F0–F8** | App móvil (Expo) | Sistema de diseño, y los módulos de Apuntes, Resúmenes IA, Exámenes, Chat, Comunidad y Perfil, más el pulido de rutas de detalle y estados de carga/error/vacío. El build (EAS) quedó configurado. **Detalle completo en [`SUGOINOTE2/mobile/README.md`](SUGOINOTE2/mobile/README.md)** |
 
 ---
 
@@ -145,11 +159,11 @@ Configurada en `Program.cs` con `AddStandardResilienceHandler`:
 
 **Decisión clave — qué se reintenta y qué no:**
 
-- ❌ **No se reintenta `429`.** Cada reintento **consume más cuota** del plan
+- **No se reintenta `429`.** Cada reintento **consume más cuota** del plan
   gratuito. Se devuelve el mensaje *"límite alcanzado"* al usuario de inmediato.
-- ❌ **No se reintentan los timeouts.** Si una llamada ya tardó 120 s, hacer
+- **No se reintentan los timeouts.** Si una llamada ya tardó 120 s, hacer
   esperar 120 s más es peor que devolver el error.
-- ✅ Solo se reintentan **errores de red** (`HttpRequestException`) y **`5xx`**.
+- Solo se reintentan **errores de red** (`HttpRequestException`) y **`5xx`**.
 
 > **Deuda conocida:** los modelos con razonamiento son lentos. Una mejora futura
 > es limitar `thinkingConfig` para reducir la latencia (no aplicado aún).
@@ -199,10 +213,10 @@ recomendado para MonsterASP y evita tener que reenviar cabeceras.
 
 | Comprobación | Resultado |
 |---|---|
-| `mobile/` en el publish | ❌ ausente ✅ |
-| DLLs de Hangfire | ❌ ausentes ✅ |
-| `web.config` | `hostingModel="InProcess"` ✅ |
-| `appsettings.json` presente | ✅ |
+| `mobile/` en el publish | Ausente |
+| DLLs de Hangfire | Ausentes |
+| `web.config` | `hostingModel="InProcess"` |
+| `appsettings.json` presente | Sí |
 | Peso total del publish | **43.44 MB** |
 | `dotnet build` Debug y Release | 0 errores / 0 advertencias |
 
@@ -270,11 +284,11 @@ app no arranca** (a propósito, para no fallar en caliente).
 
 | Clave | Obligatoria | Notas |
 |---|:---:|---|
-| `ConnectionStrings:DefaultConnection` | ✅ | Si falta, el proceso termina con código 1 |
-| `IA:ApiKey` | ✅ | Necesaria para cualquier función de IA |
-| `Jwt:Key` | ✅ | Mínimo **32 caracteres** (HMAC-SHA256) |
-| `App:UrlBase` | ➖ | Para construir enlaces absolutos (correos) |
-| `Email:*` | ➖ | Ver aviso abajo |
+| `ConnectionStrings:DefaultConnection` | Sí | Si falta, el proceso termina con código 1 |
+| `IA:ApiKey` | Sí | Necesaria para cualquier función de IA |
+| `Jwt:Key` | Sí | Mínimo **32 caracteres** (HMAC-SHA256) |
+| `App:UrlBase` | No | Para construir enlaces absolutos (correos) |
+| `Email:*` | No | Ver aviso abajo |
 
 ### Aviso sobre el correo
 
@@ -390,7 +404,7 @@ anteriores, para no perder el contexto):
 
 ## 12. Deuda técnica y pendientes
 
-### 🔴 Crítico (bloquea la seguridad)
+### Crítico (bloquea la seguridad)
 
 - **Rotar secretos expuestos.** La contraseña de MonsterASP SQL y la API key de IA
   estuvieron en el historial de Git (repositorio público). Hay que **regenerarlas**:
@@ -398,7 +412,7 @@ anteriores, para no perder el contexto):
   2. Crear una **API key nueva** de Gemini.
   3. Actualizarlas en *User Secrets* y en las variables de entorno del servidor.
 
-### 🟡 En curso / pendiente
+### En curso / pendiente
 
 - **Despliegue (1.5):** confirmar runtime .NET 10 y **permisos DDL** del usuario de
   SQL (la app ejecuta `MigrateAsync()` al arrancar).
@@ -407,7 +421,7 @@ anteriores, para no perder el contexto):
 - **Build a producción:** el móvil apunta a `EXPO_PUBLIC_API_URL`, que debe
   apuntar a `https://sugoinote.runasp.net` en el perfil de producción.
 
-### 🟢 Mejoras futuras (no urgentes)
+### Mejoras futuras (no urgentes)
 
 - **Latencia de IA:** limitar `thinkingConfig` para reducir los ~79 s de un
   resumen largo.
@@ -416,7 +430,7 @@ anteriores, para no perder el contexto):
 - **Cobertura de pruebas:** no hay proyecto de tests automatizados; la verificación
   actual es manual (build + smoke test + prueba funcional).
 
-### ⚠️ Notas de entorno
+### Notas de entorno
 
 - El **editor de bloques** de la web se embebe en el móvil vía **WebView**, por lo
   que se conserva el rich-text (no se degrada a texto plano).

@@ -12,7 +12,7 @@ REST (`/api/*`). **No incluye módulos de administración** (eso es solo de la w
 
 ## Cómo levantar el entorno
 
-Requisitos: Node.js y la API del backend corriendo (ver `../README.md`).
+Requisitos: Node.js y la API del backend corriendo (ver la puesta en marcha en `../../README.md`).
 
 ```powershell
 # 1. Instalar dependencias

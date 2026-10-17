@@ -6,13 +6,6 @@
 
 Apuntes con editor enriquecido · resúmenes y exámenes generados por IA · chat de estudio · comunidad.
 
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![ASP.NET Core](https://img.shields.io/badge/ASP.NET%20Core-MVC%20%2B%20API-512BD4?logo=dotnet&logoColor=white)](https://learn.microsoft.com/aspnet/core)
-[![Expo](https://img.shields.io/badge/Expo-SDK%2057-000020?logo=expo&logoColor=white)](https://expo.dev/)
-[![React Native](https://img.shields.io/badge/React%20Native-0.86-61DAFB?logo=react&logoColor=black)](https://reactnative.dev/)
-[![SQL Server](https://img.shields.io/badge/SQL%20Server-EF%20Core-CC2927?logo=microsoftsqlserver&logoColor=white)](https://learn.microsoft.com/ef/core/)
-[![Google Gemini](https://img.shields.io/badge/IA-Google%20Gemini-8E75B2?logo=googlegemini&logoColor=white)](https://ai.google.dev/)
-
 </div>
 
 ---
@@ -56,24 +49,24 @@ los mismos controladores y la misma capa de servicios.
 
 ## Características
 
-### 📝 Apuntes
+### Apuntes
 - Editor de bloques (rich-text) con importación de **PDF** y **DOCX**.
 - Organización por **materias**, creadas al vuelo desde el propio formulario.
 - Autoguardado y **sanitizado del HTML** antes de persistir (anti-XSS).
 
-### 🤖 Inteligencia artificial (Google Gemini)
+### Inteligencia artificial (Google Gemini)
 - **Resúmenes** de un apunte a partir de su contenido.
 - **Exámenes** de opción múltiple (tipo, cantidad y apunte configurables),
   con calificación automática y explicación por respuesta.
 - **Chat de estudio** con contexto.
 - Análisis de **imágenes** adjuntas (visión) para generar contenido.
 
-### 👥 Comunidad
+### Comunidad
 - Feed paginado de **preguntas** y **encuestas**.
 - Respuestas, votación única por estudiante e imagen de portada.
 - Cada estudiante puede eliminar sus propias publicaciones.
 
-### 🔐 Seguridad
+### Seguridad
 - Autenticación dual (cookie + JWT) con los **mismos `[Authorize]`**.
 - **Lockout** tras 5 intentos fallidos (10 minutos).
 - **Rate limiting**: login 10/5 min · IA 20/min · global 120/min por IP.
@@ -81,7 +74,7 @@ los mismos controladores y la misma capa de servicios.
 - Contraseñas con **bcrypt**; restablecimiento por token de un solo uso.
 - Aislamiento por propietario (un recurso ajeno devuelve **404**, no 403).
 
-### 📱 App móvil (Expo)
+### App móvil (Expo)
 7 pestañas — Inicio, Apuntes, Resúmenes, Exámenes, Chat, Comunidad y Perfil — con
 tema claro/oscuro, sesión en `expo-secure-store`, React Query para datos remotos y
 el editor rich-text embebido vía **WebView**.
@@ -93,8 +86,8 @@ el editor rich-text embebido vía **WebView**.
 ```mermaid
 flowchart LR
     subgraph CLIENTES["Clientes"]
-        W["🌐 Web MVC<br/><small>Razor + Bootstrap 5</small>"]
-        M["📱 App móvil<br/><small>Expo / React Native</small>"]
+        W["Web MVC<br/><small>Razor + Bootstrap 5</small>"]
+        M["App móvil<br/><small>Expo / React Native</small>"]
     end
 
     subgraph BACKEND["Backend · ASP.NET Core 10"]
@@ -103,8 +96,8 @@ flowchart LR
         IA["GeminiClient<br/><small>capa de IA</small>"]
     end
 
-    DB[("🗄️ SQL Server<br/><small>EF Core</small>")]
-    G["✨ Google Gemini API"]
+    DB[("SQL Server<br/><small>EF Core</small>")]
+    G["Google Gemini API"]
 
     W -- "cookie de sesión" --> C
     M -- "JWT (Bearer)" --> C
@@ -422,12 +415,12 @@ producción se inyecta por **variables de entorno** (formato `Sección__Clave`):
 
 | Variable | Obligatoria | Descripción |
 |---|:---:|---|
-| `ASPNETCORE_ENVIRONMENT` | ✅ | `Production` |
-| `ConnectionStrings__DefaultConnection` | ✅ | Cadena de conexión a SQL Server |
-| `IA__ApiKey` | ✅ | API key de Google Gemini |
-| `Jwt__Key` | ✅ | Clave de firma JWT (32+ caracteres) |
-| `App__UrlBase` | ➖ | URL pública (p. ej. `https://sugoinote.runasp.net`) |
-| `Email__*` | ➖ | Datos SMTP para el correo de restablecimiento |
+| `ASPNETCORE_ENVIRONMENT` | Sí | `Production` |
+| `ConnectionStrings__DefaultConnection` | Sí | Cadena de conexión a SQL Server |
+| `IA__ApiKey` | Sí | API key de Google Gemini |
+| `Jwt__Key` | Sí | Clave de firma JWT (32+ caracteres) |
+| `App__UrlBase` | No | URL pública (p. ej. `https://sugoinote.runasp.net`) |
+| `Email__*` | No | Datos SMTP para el correo de restablecimiento |
 
 La plantilla `SUGOINOTE2/appsettings.Production.example.json` documenta la forma
 de cada valor (sin credenciales reales). **No se sube al servidor.**
@@ -467,12 +460,12 @@ SugoiNote/
 
 | Componente | Estado |
 |---|:---:|
-| Backend + Web (MVC) | 🟢 Operativo (local) |
-| API REST para el móvil | 🟢 Operativa (28 endpoints) |
-| App móvil (Expo) | 🟢 Fases 0–8 completadas |
-| Migración de IA a Google Gemini | 🟢 Completada |
-| Despliegue en producción (MonsterASP) | 🟡 En preparación |
-| Build de la APK (EAS) | 🟡 Pendiente de ejecutar |
+| Backend + Web (MVC) | Operativo (local) |
+| API REST para el móvil | Operativa (28 endpoints) |
+| App móvil (Expo) | Fases 0–8 completadas |
+| Migración de IA a Google Gemini | Completada |
+| Despliegue en producción (MonsterASP) | En preparación |
+| Build de la APK (EAS) | Pendiente de ejecutar |
 
 ---
 
