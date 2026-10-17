@@ -208,14 +208,28 @@ export async function borrarToken() {
   await SecureStore.deleteItemAsync(TOKEN_KEY);
 }
 
+/**
+ * Permite que la capa de autenticacion reaccione cuando el servidor responde 401
+ * (por ejemplo, token caducado) para cerrar la sesion y volver al login.
+ */
+let alExpirarSesionHandler: (() => void) | null = null;
+
+export function alExpirarSesion(handler: (() => void) | null) {
+  alExpirarSesionHandler = handler;
+}
+
 export async function api<T>(ruta: string, init: RequestInit = {}, sinSesion = false): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
   if (init.body) headers.set('Content-Type', 'application/json');
 
+  let envioToken = false;
   if (!sinSesion) {
     const token = await leerToken();
-    if (token) headers.set('Authorization', `Bearer ${token}`);
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+      envioToken = true;
+    }
   }
 
   let response: Response;
@@ -234,7 +248,15 @@ export async function api<T>(ruta: string, init: RequestInit = {}, sinSesion = f
   }
 
   if (!response.ok) {
-    if (response.status === 401) await borrarToken();
+    // Solo se destruye la sesión si de verdad enviamos un token: un 401 en una
+    // petición SIN token no debe borrar una sesión recién creada. Antes esto
+    // ocurría por una carrera al iniciar sesión (la primera consulta de las
+    // pestañas salía antes de que el token quedara guardado) y dejaba la app
+    // con "Error 401" en todas las secciones de forma permanente.
+    if (response.status === 401 && envioToken) {
+      await borrarToken();
+      alExpirarSesionHandler?.();
+    }
     throw new ErrorApi(response.status, data?.error ?? `Error ${response.status}`);
   }
   return data as T;

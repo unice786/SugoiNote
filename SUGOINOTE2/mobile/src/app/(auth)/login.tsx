@@ -18,7 +18,9 @@ export default function LoginScreen() {
     setBusy(true);
     try {
       const res = await auth.login(email, password);
-      login(res.estudiante, res.token);
+      // Se espera a guardar el token ANTES de navegar. Si no, las peticiones de
+      // las pestañas salian sin Authorization y devolvian 401.
+      await login(res.estudiante, res.token);
       router.replace('/(tabs)');
     } catch (e) {
       const err = e as ErrorApi;

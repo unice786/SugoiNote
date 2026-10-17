@@ -19,7 +19,8 @@ export default function RegisterScreen() {
     setBusy(true);
     try {
       const res = await auth.registrar(name, email, password);
-      login(res.estudiante, res.token);
+      // Ver el comentario equivalente en login.tsx: hay que esperar el guardado.
+      await login(res.estudiante, res.token);
       router.replace('/(tabs)');
     } catch (e) {
       const err = e as ErrorApi;
