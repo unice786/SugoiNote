@@ -1245,7 +1245,22 @@
                 if (typeof mammoth === 'undefined') {
                     throw new Error('No se pudo cargar el conversor de Word. Revisa tu conexión a internet.');
                 }
-                const result = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() });
+                const arrayBuffer = await file.arrayBuffer();
+                // Un .docx es un ZIP. Si no empieza con la firma "PK", mammoth/jsZip
+                // lanza un error técnico ("Can't find end of central directory") que no
+                // dice nada útil. Suele pasar cuando el archivo tiene la extensión
+                // cambiada (p. ej. un PDF renombrado a .docx).
+                if (!firmaZip(arrayBuffer)) {
+                    const real = await detectarFormatoReal(file);
+                    let pista = ' Asegúrate de exportarlo como .docx desde Word.';
+                    if (real === 'pdf') {
+                        pista = ' En realidad es un PDF: cámbiale la extensión a .pdf (o expórtalo de Word como .docx).';
+                    } else if (real === 'doc') {
+                        pista = ' Es un .doc antiguo; guárdalo como .docx o PDF.';
+                    }
+                    throw new Error('El archivo no es un Word (.docx) válido.' + pista);
+                }
+                const result = await mammoth.convertToHtml({ arrayBuffer });
                 return normalizarHtml(result.value);
             }
 
@@ -1271,6 +1286,24 @@
         }
     }
 
+    /** true si el buffer empieza con la firma de un ZIP ("PK"). Un .docx lo es. */
+    function firmaZip(arrayBuffer) {
+        const b = new Uint8Array(arrayBuffer.slice(0, 4));
+        return b[0] === 0x50 && b[1] === 0x4b && (b[2] === 0x03 || b[2] === 0x05);
+    }
+
+    /**
+     * Detecta el formato real por los bytes de cabecera, sin fiarse de la extensión.
+     * Devuelve 'pdf' | 'docx' | 'doc' | null.
+     */
+    async function detectarFormatoReal(file) {
+        const b = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+        if (b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46) return 'pdf';  // %PDF
+        if (b[0] === 0x50 && b[1] === 0x4b) return 'docx';                                   // PK (ZIP)
+        if (b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0) return 'doc';  // OLE2
+        return null;
+    }
+
     /** Recorta el documento HTML para que no arrastre su propio <html>/<body>/<style>. */
     function normalizarHtml(html) {
         let h = (html || '').trim();
@@ -1290,6 +1323,10 @@
     async function extraerTextoPdf(file) {
         const pdfjsLib = window.__pdfjs;
         const buffer = await file.arrayBuffer();
+        const b = new Uint8Array(buffer.slice(0, 4));
+        if (!(b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46)) {
+            throw new Error('El archivo no es un PDF válido (su contenido no empieza con %PDF). Puede tener la extensión cambiada.');
+        }
         const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
 
         const paginas = [];
