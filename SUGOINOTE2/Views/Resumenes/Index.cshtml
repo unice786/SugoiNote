@@ -107,8 +107,8 @@ else
 </style>
 
 @section Scripts {
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
     let resumenActualTitulo = '';
 
@@ -190,6 +190,12 @@ else
     }
 
     async function descargarPDF() {
+        // Si el CDN no cargó (bloqueado por la CSP o sin conexion), avisamos en
+        // lugar de fallar en silencio al pulsar el boton.
+        if (!window.jspdf || typeof html2canvas !== 'function') {
+            alert('No se pudo cargar el generador de PDF. Revisa tu conexión y recarga la página.');
+            return;
+        }
         const { jsPDF } = window.jspdf;
         const el = document.getElementById('contenidoResumen');
         // El fondo se toma del tema activo: con un color fijo el PDF salía negro
