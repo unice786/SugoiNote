@@ -1,0 +1,166 @@
+# ─────────────────────────────────────────────────────────────
+# Entorno de PRUEBAS aislado para SugoiNote.
+#
+# Levanta dos contenedores:
+#   sqlserver -> SQL Server 2022 desechable, SOLO para pruebas
+#   api       -> la API de SugoiNote apuntando a ese SQL Server
+#
+# Objetivo: probar sin tocar la base de datos de producción
+# (db72259.public.databaseasp.net) y sin saturar el equipo.
+#
+# Uso:
+#   docker compose up --build     levanta todo
+#   docker compose logs -f api    ve los logs de la API
+#   docker compose down           apaga (los datos se conservan)
+#   docker compose down -v        apaga y BORRA la base de datos
+# ─────────────────────────────────────────────────────────────
+
+name: sugoinote-pruebas
+
+services:
+
+  # ── Base de datos desechable ───────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sugoinote-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${SQL_SA_PASSWORD:-SugoiNote_Pruebas_2026!}"
+      MSSQL_PID: "Developer"
+    ports:
+      # Se expone solo en localhost para inspeccionar la BD desde SSMS/Azure Data Studio.
+      - "127.0.0.1:14333:1433"
+    volumes:
+      # Volumen persistente: los datos sobreviven a un "down" (se borran con "down -v").
+      - datos-sqlserver:/var/opt/mssql
+    healthcheck:
+      # sqlcmd no existe en la imagen: se comprueba que el puerto responda.
+      # sqlserver-tools tampoco está disponible por defecto en 2022, así que
+      # se usa una prueba de conectividad TCP simple.
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/1433' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks:
+      - red-pruebas
+    deploy:
+      resources:
+        limits:
+          # Límite para no saturar el host.
+          cpus: "2.0"
+          memory: 2g
+    restart: unless-stopped
+
+  # ── Creación de la base de datos ───────────────────────────
+  # SQL Server arranca sin ninguna base creada. La API usa MigrateAsync(),
+  # pero CanConnect() sobre una base inexistente devuelve false y las
+  # migraciones se saltan (error 4060: Cannot open database).
+  # Este servicio crea la base una sola vez y termina.
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sugoinote-sqlserver-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: "${SQL_SA_PASSWORD:-SugoiNote_Pruebas_2026!}"
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q \
+          "IF DB_ID('SugoiNote') IS NULL CREATE DATABASE SugoiNote;" \
+        || /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P "$$MSSQL_SA_PASSWORD" -Q \
+          "IF DB_ID('SugoiNote') IS NULL CREATE DATABASE SugoiNote;"
+    networks:
+      - red-pruebas
+    restart: "no"
+
+  # ── API de SugoiNote ───────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: SUGOINOTE2/Dockerfile
+    image: sugoinote-api:pruebas
+    container_name: sugoinote-api
+    depends_on:
+      sqlserver:
+        # No arranca hasta que SQL Server esté realmente escuchando.
+        condition: service_healthy
+      sqlserver-init:
+        # Y hasta que la base SugoiNote exista.
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+
+      # Cadena de conexión al SQL Server DEL COMPOSE (no a producción).
+      # "TrustServerCertificate" es necesario: el contenedor usa certificado autofirmado.
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=SugoiNote;User Id=sa;Password=${SQL_SA_PASSWORD:-SugoiNote_Pruebas_2026!};TrustServerCertificate=True;Encrypt=False;MultipleActiveResultSets=True"
+
+      # Valores de relleno: Program.cs los exige al arrancar (ValidateOnStart),
+      # pero las pruebas no usan IA ni envío real de correo.
+      IA__ApiKey: "clave-de-pruebas-no-real"
+      IA__Model: "gemini-3.8-flash"
+      IA__ModelFast: "gemini-3.1-flash-lite"
+      Jwt__Key: "clave-de-pruebas-sugoinote-32-caracteres-minimo"
+
+      # Sin esto, UseHttpsRedirection() intentaría mandar a HTTPS y no hay
+      # certificado dentro del contenedor: las peticiones fallarían.
+      App__HttpsRedirection: "false"
+
+      # La base nace vacía: se crea el esquema desde el modelo de EF Core,
+      # porque la migración "Baseline" está hecha para la BD ya existente
+      # en producción y no puede crear el esquema desde cero.
+      App__CrearEsquemaDesdeModelo: "true"
+
+      Email__SoloLog: "true"
+    ports:
+      # 5265 en tu PC -> 8080 en el contenedor: la coleccion de Postman
+      # (baseUrl = http://localhost:5265) sigue funcionando sin cambios.
+      - "127.0.0.1:5265:8080"
+    networks:
+      - red-pruebas
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1g
+    restart: unless-stopped
+
+  # ── Pruebas unitarias ──────────────────────────────────────
+  # No se levanta con "up": se ejecuta a demanda con
+  #   docker compose run --rm tests
+  #
+  # Corre las pruebas dentro de un contenedor Linux porque en el equipo
+  # anfitrión Smart App Control bloquea los ensamblados no firmados que
+  # genera "dotnet test" (FileLoadException 0x800711C7).
+  # Usan SQLite en memoria: no necesitan SQL Server ni tocan producción.
+  tests:
+    build:
+      context: .
+      dockerfile: SUGOINOTE2.Tests/Dockerfile
+    image: sugoinote-tests:pruebas
+    container_name: sugoinote-tests
+    profiles:
+      - pruebas
+    networks:
+      - red-pruebas
+    deploy:
+      resources:
+        limits:
+          # Dos núcleos bastan para las 159 pruebas y evitan saturar el host.
+          cpus: "2.0"
+          memory: 2g
+    environment:
+      # Las pruebas unitarias no arrancan la API, pero si alguna dependencia
+      # lee configuración, estos valores evitan que falle por falta de clave.
+      IA__ApiKey: "clave-de-pruebas-no-real"
+      Jwt__Key: "clave-de-pruebas-sugoinote-32-caracteres-minimo"
+
+networks:
+  red-pruebas:
+    driver: bridge
+
+volumes:
+  datos-sqlserver:

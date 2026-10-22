@@ -1,0 +1,39 @@
+# Archivos que NO se copian a la imagen de Docker.
+# Sin esto, el build arrastraría mobile/node_modules (cientos de MB) y
+# tardaría minutos; además bin/obj de Windows no sirven en Linux.
+
+# App movil: no forma parte de la API.
+**/mobile/node_modules
+**/mobile/.expo
+mobile
+
+# Salidas de compilación locales (se recompilan dentro de la imagen).
+**/bin
+**/obj
+
+# Control de versiones y configuración del editor
+**/.git
+**/.gitignore
+**/.gitattributes
+**/.vs
+**/.vscode
+**/.idea
+
+# Documentación e informes (no hacen falta para ejecutar la API).
+artifacts
+*.md
+
+# Pruebas: la imagen de la API no las compila, pero la imagen de pruebas
+# (SUGOINOTE2.Tests/Dockerfile) sí necesita el proyecto: por eso se excluye
+# solo su salida de compilación, no el código fuente.
+SUGOINOTE2.Tests/bin
+SUGOINOTE2.Tests/obj
+
+# Secretos locales: nunca deben entrar a la imagen.
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/secrets.json
+
+# Basura del sistema
+**/.DS_Store
+**/Thumbs.db

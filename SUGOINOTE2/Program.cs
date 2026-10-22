@@ -311,7 +311,14 @@ else
 
 app.UseStatusCodePagesWithReExecute("/Home/CodigoError", "?codigo={0}");
 
-app.UseHttpsRedirection();
+// La redirección a HTTPS se puede desactivar con App:HttpsRedirection = false.
+// Hace falta al ejecutar la API en un contenedor de pruebas (docker compose):
+// ahí no hay certificado y el redirect a https://localhost hace que todas las
+// llamadas fallen. En producción (MonsterASP) se deja activada por defecto.
+if (builder.Configuration.GetValue("App:HttpsRedirection", true))
+{
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles();
 
 // Cabeceras de seguridad. Solo se activan fuera de desarrollo para no romper la depuración.
@@ -363,7 +370,18 @@ try
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<Sugoinotee2Context>();
 
-    if (db.Database.CanConnect())
+    // Con App:CrearEsquemaDesdeModelo = true se crea el esquema a partir del
+    // modelo de EF Core en lugar de aplicar las migraciones. Se usa en el
+    // entorno de pruebas con contenedores, donde la base nace vacía: la
+    // migración "Baseline" está pensada para la base que ya existía en
+    // producción (empieza con ALTER TABLE sobre tablas ya creadas) y no sirve
+    // para levantar el esquema desde cero.
+    if (builder.Configuration.GetValue("App:CrearEsquemaDesdeModelo", false))
+    {
+        await db.Database.EnsureCreatedAsync();
+        Log.Information("Esquema de base de datos creado desde el modelo (entorno de pruebas).");
+    }
+    else if (db.Database.CanConnect())
     {
         await db.Database.MigrateAsync();
         Log.Information("Esquema de base de datos actualizado.");

@@ -68,8 +68,13 @@ public partial class Sugoinotee2Context(DbContextOptions<Sugoinotee2Context> opt
             e.Property(x => x.EstudianteId).HasColumnName("EstudianteID");
             e.Property(x => x.FechaRegistro).HasColumnName("FechaRegistro").HasDefaultValueSql("getdate()");
 
+            // Materia -> Apuntes se declara NO ACTION (no SET NULL) porque SQL Server
+            // rechaza el esquema con "may cause cycles or multiple cascade paths":
+            // Apuntes llegaba a Estudiantes por dos caminos (directo con CASCADE y por
+            // Materias con CASCADE). La aplicacion nunca elimina materias, por lo que
+            // el SET NULL no se usaba en la practica y NO ACTION no cambia el comportamiento.
             e.HasOne(x => x.Materia).WithMany(x => x.Apuntes)
-             .HasForeignKey(x => x.MateriaId).OnDelete(DeleteBehavior.SetNull);
+             .HasForeignKey(x => x.MateriaId).OnDelete(DeleteBehavior.NoAction);
             e.HasOne(x => x.Estudiante).WithMany(x => x.Apuntes)
              .HasForeignKey(x => x.EstudianteId).OnDelete(DeleteBehavior.Cascade);
 
