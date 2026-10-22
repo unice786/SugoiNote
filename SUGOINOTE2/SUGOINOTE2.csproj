@@ -17,9 +17,11 @@
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
   </PropertyGroup>
 
-  <!-- La app móvil (React Native/Expo) vive en mobile/. No forma parte de la API y no
-       debe publicarse con ella: el Web SDK incluía por defecto sus *.json (package.json,
-       package-lock.json de 440 KB, tsconfig.json, app.json, eas.json). -->
+  <!-- La app movil (React Native/Expo) vive ahora en la raiz del repositorio
+       (../mobile), fuera de este proyecto, asi que el Web SDK ya no la incluye.
+       Se conservan estas exclusiones como red de seguridad por si alguien vuelve
+       a copiarla dentro de SUGOINOTE2/: el publish no debe arrastrar sus *.json
+       (package.json, package-lock.json de 440 KB, tsconfig.json, app.json, eas.json). -->
   <ItemGroup>
     <Compile Remove="mobile\**" />
     <Content Remove="mobile\**" />

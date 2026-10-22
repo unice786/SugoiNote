@@ -394,7 +394,7 @@ Las migraciones se aplican solas al arrancar (`MigrateAsync()`).
 ### 3. Levantar la app móvil
 
 ```bash
-cd SUGOINOTE2/mobile
+cd mobile
 npm install
 npx expo start
 ```
@@ -403,7 +403,7 @@ Con **Expo Go**, escribe `exp://<TU-IP-DE-RED>:8081` (el celular y la PC en la
 misma red WiFi). En builds de EAS la URL de la API se define con la variable de
 entorno `EXPO_PUBLIC_API_URL`.
 
-> El detalle del móvil está en [`SUGOINOTE2/mobile/README.md`](SUGOINOTE2/mobile/README.md).
+> El detalle del móvil está en [`mobile/README.md`](mobile/README.md).
 
 ---
 
@@ -442,14 +442,18 @@ SugoiNote/
 │  ├─ Migrations/           migraciones de EF Core
 │  ├─ Views/                vistas Razor
 │  ├─ wwwroot/              css, js, librerías vendorizadas
-│  ├─ mobile/               app Expo (ver mobile/README.md)
-│  │  ├─ src/app/           rutas (Expo Router): (auth), (tabs)
-│  │  ├─ src/api/           cliente HTTP con JWT y DTOs
-│  │  ├─ src/components/    componentes UI base
-│  │  ├─ src/hooks/         useAuth y otros hooks
-│  │  └─ src/theme/         tokens y ThemeProvider (claro/oscuro)
+│  ├─ Dockerfile            imagen de la API para pruebas
 │  ├─ Program.cs            arranque y configuración de servicios
 │  └─ iniciar.ps1 · reiniciar.ps1 · detener.ps1
+├─ mobile/                  app Expo (ver mobile/README.md)
+│  ├─ src/app/              rutas (Expo Router): (auth), (tabs)
+│  ├─ src/api/              cliente HTTP con JWT y DTOs
+│  ├─ src/components/       componentes UI base
+│  ├─ src/hooks/            useAuth y otros hooks
+│  └─ src/theme/            tokens y ThemeProvider (claro/oscuro)
+├─ SUGOINOTE2.Tests/        pruebas unitarias (159) + Dockerfile
+├─ docker-compose.yml       entorno de pruebas (API + SQL Server)
+├─ DOCKER.md                guía del entorno de pruebas con Docker
 ├─ DESARROLLO.md            informe técnico para el equipo
 └─ SUGOINOTE2.slnx
 ```
@@ -475,7 +479,7 @@ SugoiNote/
 |---|---|---|
 | **`README.md`** | Usuarios y revisores | Visión general, arquitectura, diagramas y puesta en marcha |
 | [`DESARROLLO.md`](DESARROLLO.md) | Equipo de desarrollo | Informe técnico: qué se hizo, decisiones, despliegue y pendientes |
-| [`SUGOINOTE2/mobile/README.md`](SUGOINOTE2/mobile/README.md) | Equipo móvil | Detalle de las fases de la app Expo |
+| [`mobile/README.md`](mobile/README.md) | Equipo móvil | Detalle de las fases de la app Expo |
 
 ---
 

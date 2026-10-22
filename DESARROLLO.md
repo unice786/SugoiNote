@@ -60,7 +60,7 @@ Contexto de dónde venimos, para quien se incorpora al proyecto:
 | **F4** | Modo claro | 57 tokens de color (`wwwroot/css/_tokens.css`) · `site.css` sin un solo color literal · tema aplicado antes del primer pintado (sin parpadeo) |
 | **F5** | Accesibilidad y responsive | Enlace de salto, foco visible, `aria-current`, `prefers-reduced-motion`, hoja de impresión y **botón de menú móvil** (antes el sidebar desaparecía sin forma de reabrirlo) |
 | **F6** | API REST del móvil | Controladores en `Controllers/Api/` con attribute routing (hoy **28 endpoints**), documentados en `/swagger` |
-| **F0–F8** | App móvil (Expo) | Sistema de diseño, y los módulos de Apuntes, Resúmenes IA, Exámenes, Chat, Comunidad y Perfil, más el pulido de rutas de detalle y estados de carga/error/vacío. El build (EAS) quedó configurado. **Detalle completo en [`SUGOINOTE2/mobile/README.md`](SUGOINOTE2/mobile/README.md)** |
+| **F0–F8** | App móvil (Expo) | Sistema de diseño, y los módulos de Apuntes, Resúmenes IA, Exámenes, Chat, Comunidad y Perfil, más el pulido de rutas de detalle y estados de carga/error/vacío. El build (EAS) quedó configurado. **Detalle completo en [`mobile/README.md`](mobile/README.md)** |
 
 ---
 
@@ -260,8 +260,10 @@ Services/            TODA la lógica de negocio
 Models/              entidades EF Core + DbContext
 Views/               Razor (web)
 wwwroot/             css, js, librerías vendorizadas
-mobile/              app Expo (no forma parte del publish de la API)
 ```
+
+La app Expo vive en `mobile/`, en la **raíz del repositorio**, separada del proyecto
+de la API para que no interfiera en la compilación ni en las pruebas.
 
 ### Convenciones
 

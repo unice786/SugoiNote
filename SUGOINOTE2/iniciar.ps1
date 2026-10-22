@@ -6,7 +6,9 @@
 $ErrorActionPreference = 'Continue'
 
 $raiz    = $PSScriptRoot
-$carpetaMovil = Join-Path $raiz 'mobile'
+# La app movil vive en la raiz del repositorio (../mobile), separada del
+# proyecto de la API para que ambas cosas no interfieran entre si.
+$carpetaMovil = Join-Path (Split-Path $raiz -Parent) 'mobile'
 $ip      = (Get-NetIPAddress -AddressFamily IPv4 |
             Where-Object { $_.IPAddress -like '192.168.*' -and $_.IPAddress -notlike '169.254*' } |
             Select-Object -First 1).IPAddress
