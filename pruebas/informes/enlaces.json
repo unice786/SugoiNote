@@ -1,0 +1,6 @@
+{
+  "repositorio": "https://github.com/unice786/SugoiNote/tree/pruebas",
+  "jira": "https://manuelangelcarias.atlassian.net/issues/?jql=project%20%3D%20PDPS%20ORDER%20BY%20key%20ASC",
+  "postman": "",
+  "openapi": "https://sugoinote.runasp.net/swagger/v1/swagger.json"
+}

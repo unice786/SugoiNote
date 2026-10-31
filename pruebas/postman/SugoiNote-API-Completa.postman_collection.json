@@ -1,0 +1,4151 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-1111-4222-8333-94455a66b77c",
+    "name": "SugoiNote API - Pruebas completas",
+    "description": "Coleccion generada automaticamente desde el OpenAPI de la API (Swagger).\nCubre las 28 operaciones documentadas, mas casos negativos de seguridad.\n\nLa carpeta 00 deja listo el token JWT; el resto de peticiones lo heredan.\nVariables: baseUrl (por defecto http://localhost:5265).\n\nEjecucion por consola:\n  newman run <archivo> --env-var baseUrl=http://localhost:5265",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5265",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "estudianteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "apunteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "materiaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "examenId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "postId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "encuestaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "opcionIdsJson",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "respuestasExamenJson",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "correoPrueba",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clavePrueba",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 · Autenticacion",
+      "item": [
+        {
+          "name": "Registrar estudiante (crea el usuario de la corrida)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Correo unico por corrida: el registro falla si el correo ya existe.",
+                  "const sello = `${Date.now()}.${Math.floor(Math.random() * 100000)}`;",
+                  "pm.collectionVariables.set('correoPrueba', `qa.${sello}@sugoinote.test`);",
+                  "pm.collectionVariables.set('clavePrueba', 'PruebaSegura.2026');",
+                  "console.log('Correo de la corrida:', pm.collectionVariables.get('correoPrueba'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve un token JWT', () => pm.expect(b.token).to.be.a('string').and.not.empty);",
+                  "pm.test('El token tiene tres segmentos (JWT)', () => pm.expect(b.token.split('.')).to.have.lengthOf(3));",
+                  "pm.test('Devuelve el estudiante creado', () => pm.expect(b.estudiante.correoElectronico).to.eql(pm.collectionVariables.get('correoPrueba')));",
+                  "pm.test('El identificador del estudiante es un GUID', () => pm.expect(b.estudiante.estudianteId).to.match(/^[0-9a-f-]{36}$/i));",
+                  "pm.collectionVariables.set('token', b.token);",
+                  "pm.collectionVariables.set('estudianteId', b.estudiante.estudianteId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/registrar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "registrar"
+              ]
+            },
+            "description": "Alta de estudiante. Devuelve el token para no obligar a iniciar sesion.\n\nCrea un estudiante con correo unico por ejecucion. Deja listo el token para el resto de la coleccion.\n\nEndpoint del OpenAPI: POST /api/auth/registrar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Estudiante de Pruebas {{$timestamp}}\",\n  \"correoElectronico\": \"{{correoPrueba}}\",\n  \"claveAcceso\": \"{{clavePrueba}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/registrar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "registrar"
+                  ]
+                },
+                "description": "Alta de estudiante. Devuelve el token para no obligar a iniciar sesion.\n\nCrea un estudiante con correo unico por ejecucion. Deja listo el token para el resto de la coleccion.\n\nEndpoint del OpenAPI: POST /api/auth/registrar",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombreCompleto\": \"Estudiante de Pruebas {{$timestamp}}\",\n  \"correoElectronico\": \"{{correoPrueba}}\",\n  \"claveAcceso\": \"{{clavePrueba}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:38 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YjQzMzMwZC02NGI3LTQ4NzQtYjJlMy0xYzQ4MGUwYTI3MGQiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjViNDMzMzBkLTY0YjctNDg3NC1iMmUzLTFjNDgwZTBhMjcwZCIsImVtYWlsIjoicWEuMTc5MzQyNjkxODY3Ny41ODcwM0BzdWdvaW5vdGUudGVzdCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJFc3R1ZGlhbnRlIGRlIFBydWViYXMgMTc5MzQyNjkxOSIsImp0aSI6IjExNzg4YjIwLWJhNGYtNDQ1OC1hZDJlLTVhY2VlZjllOGNjNiIsIm5iZiI6MTc5MzQyNjkxOSwiZXhwIjoxNzk0MDMxNzE5LCJpc3MiOiJTdWdvaU5vdGUiLCJhdWQiOiJTdWdvaU5vdGVNb2JpbGUifQ.jHPnCgOfabq54LJuoENxAVeV3hjIfM_HOWYudCJHsQE\",\n  \"estudiante\": {\n    \"estudianteId\": \"5b43330d-64b7-4874-b2e3-1c480e0a270d\",\n    \"nombreCompleto\": \"Estudiante de Pruebas 1793426919\",\n    \"correoElectronico\": \"qa.1793426918677.58703@sugoinote.test\",\n    \"fotoPerfil\": null\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Iniciar sesion y guardar el token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve un token JWT', () => pm.expect(b.token).to.be.a('string').and.not.empty);",
+                  "pm.test('El correo coincide con el registrado', () => pm.expect(b.estudiante.correoElectronico).to.eql(pm.collectionVariables.get('correoPrueba')));",
+                  "pm.collectionVariables.set('token', b.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicio de sesion. Devuelve el token JWT que se envia en cada peticion.\n\nAutentica con las credenciales creadas arriba y guarda {{token}} para las demas peticiones.\n\nEndpoint del OpenAPI: POST /api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correoElectronico\": \"{{correoPrueba}}\",\n  \"claveAcceso\": \"{{clavePrueba}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "description": "Inicio de sesion. Devuelve el token JWT que se envia en cada peticion.\n\nAutentica con las credenciales creadas arriba y guarda {{token}} para las demas peticiones.\n\nEndpoint del OpenAPI: POST /api/auth/login",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"correoElectronico\": \"{{correoPrueba}}\",\n  \"claveAcceso\": \"{{clavePrueba}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:38 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1YjQzMzMwZC02NGI3LTQ4NzQtYjJlMy0xYzQ4MGUwYTI3MGQiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjViNDMzMzBkLTY0YjctNDg3NC1iMmUzLTFjNDgwZTBhMjcwZCIsImVtYWlsIjoicWEuMTc5MzQyNjkxODY3Ny41ODcwM0BzdWdvaW5vdGUudGVzdCIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJFc3R1ZGlhbnRlIGRlIFBydWViYXMgMTc5MzQyNjkxOSIsImp0aSI6IjA1ZTUxZDNlLTAyOWYtNDU4Yi05YTBjLTc2ZmI1NzBjNGNmOCIsIm5iZiI6MTc5MzQyNjkxOSwiZXhwIjoxNzk0MDMxNzE5LCJpc3MiOiJTdWdvaU5vdGUiLCJhdWQiOiJTdWdvaU5vdGVNb2JpbGUifQ.cOuNqW2tj0qscNBrLUwtnXJhVYA8A12GrIMwgrgifRQ\",\n  \"estudiante\": {\n    \"estudianteId\": \"5b43330d-64b7-4874-b2e3-1c480e0a270d\",\n    \"nombreCompleto\": \"Estudiante de Pruebas 1793426919\",\n    \"correoElectronico\": \"qa.1793426918677.58703@sugoinote.test\",\n    \"fotoPerfil\": null\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar la sesion actual",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve el identificador del estudiante autenticado', () => pm.expect(b.estudianteId).to.match(/^[0-9a-f-]{36}$/i));",
+                  "pm.test('Es el mismo estudiante del registro', () => pm.expect(b.estudianteId).to.eql(pm.collectionVariables.get('estudianteId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Comprueba el token y devuelve su identificador de estudiante.\n\nValida que el Bearer identifica al estudiante autenticado.\n\nEndpoint del OpenAPI: GET /api/auth/me"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "me"
+                  ]
+                },
+                "description": "Comprueba el token y devuelve su identificador de estudiante.\n\nValida que el Bearer identifica al estudiante autenticado.\n\nEndpoint del OpenAPI: GET /api/auth/me"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:38 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"estudianteId\": \"5b43330d-64b7-4874-b2e3-1c480e0a270d\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 · Apuntes",
+      "item": [
+        {
+          "name": "Crear apunte con materia nueva",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve el identificador del apunte', () => pm.expect(b.apunteId).to.match(/^[0-9a-f-]{36}$/i));",
+                  "pm.collectionVariables.set('apunteId', b.apunteId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/apuntes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "apuntes"
+              ]
+            },
+            "description": "Crea un apunte nuevo.\n\nCrea el apunte de la corrida. Incluye una etiqueta <script> para comprobar el saneado del HTML.\n\nEndpoint del OpenAPI: POST /api/apuntes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tituloNota\": \"Apunte de pruebas {{$timestamp}}\",\n  \"contenidoTexto\": \"<h2>Contenedores Docker</h2><p>Un contenedor es una unidad ligera que empaqueta una aplicacion con sus dependencias. A diferencia de una maquina virtual, comparte el nucleo del sistema operativo del anfitrion, por eso arranca en segundos y consume menos memoria.</p><p>Una imagen es la plantilla de solo lectura a partir de la cual se crean los contenedores. Se construye por capas: cada instruccion del Dockerfile agrega una capa y las capas se reutilizan entre imagenes, lo que acelera las construcciones posteriores.</p><p>Un volumen permite que los datos sobrevivan cuando el contenedor se destruye. Los datos del contenedor son efimeros: si se elimina la instancia, la informacion escrita dentro de su sistema de archivos se pierde.</p><ul><li>La red bridge permite que los contenedores se comuniquen por nombre de servicio.</li><li>Las variables de entorno configuran el contenedor sin reconstruir la imagen.</li><li>Las politicas de reinicio reinician el servicio si el proceso falla.</li></ul><p>Docker Compose describe varios servicios en un solo archivo y los levanta con un comando, respetando el orden de dependencias y las comprobaciones de salud.</p><script>alert('xss')</script>\",\n  \"materiaId\": null,\n  \"nuevaMateriaNombre\": \"Docker y Contenedores\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/apuntes",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "apuntes"
+                  ]
+                },
+                "description": "Crea un apunte nuevo.\n\nCrea el apunte de la corrida. Incluye una etiqueta <script> para comprobar el saneado del HTML.\n\nEndpoint del OpenAPI: POST /api/apuntes",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tituloNota\": \"Apunte de pruebas {{$timestamp}}\",\n  \"contenidoTexto\": \"<h2>Contenedores Docker</h2><p>Un contenedor es una unidad ligera que empaqueta una aplicacion con sus dependencias. A diferencia de una maquina virtual, comparte el nucleo del sistema operativo del anfitrion, por eso arranca en segundos y consume menos memoria.</p><p>Una imagen es la plantilla de solo lectura a partir de la cual se crean los contenedores. Se construye por capas: cada instruccion del Dockerfile agrega una capa y las capas se reutilizan entre imagenes, lo que acelera las construcciones posteriores.</p><p>Un volumen permite que los datos sobrevivan cuando el contenedor se destruye. Los datos del contenedor son efimeros: si se elimina la instancia, la informacion escrita dentro de su sistema de archivos se pierde.</p><ul><li>La red bridge permite que los contenedores se comuniquen por nombre de servicio.</li><li>Las variables de entorno configuran el contenedor sin reconstruir la imagen.</li><li>Las politicas de reinicio reinician el servicio si el proceso falla.</li></ul><p>Docker Compose describe varios servicios en un solo archivo y los levanta con un comando, respetando el orden de dependencias y las comprobaciones de salud.</p><script>alert('xss')</script>\",\n  \"materiaId\": null,\n  \"nuevaMateriaNombre\": \"Docker y Contenedores\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:38 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"apunteId\": \"e13657b6-e453-4efc-ac24-50f3258676b2\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar apuntes del estudiante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve un arreglo', () => pm.expect(b).to.be.an('array'));",
+                  "pm.test('Incluye el apunte recien creado', () => pm.expect(b.map((x) => x.apunteId)).to.include(pm.collectionVariables.get('apunteId')));",
+                  "pm.test('Cada apunte trae titulo y materia', () => { const a = b.find((x) => x.apunteId === pm.collectionVariables.get('apunteId')); pm.expect(a.tituloNota).to.be.a('string').and.not.empty; pm.expect(a.materiaNombre).to.eql('Docker y Contenedores'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/apuntes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "apuntes"
+              ]
+            },
+            "description": "Lista los apuntes del estudiante autenticado.\n\nListado propio: no debe traer apuntes de otros usuarios.\n\nEndpoint del OpenAPI: GET /api/apuntes"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/apuntes",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "apuntes"
+                  ]
+                },
+                "description": "Lista los apuntes del estudiante autenticado.\n\nListado propio: no debe traer apuntes de otros usuarios.\n\nEndpoint del OpenAPI: GET /api/apuntes"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:38 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"apunteId\": \"e13657b6-e453-4efc-ac24-50f3258676b2\",\n    \"tituloNota\": \"Apunte de pruebas 1793426919\",\n    \"contenidoTexto\": null,\n    \"fechaRegistro\": \"2026-10-31T06:08:39.4866437\",\n    \"materiaNombre\": \"Docker y Contenedores\",\n    \"tieneResumen\": false,\n    \"totalExamenes\": 0\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Obtener apunte y verificar el saneado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve el apunte solicitado', () => pm.expect(b.apunteId).to.eql(pm.collectionVariables.get('apunteId')));",
+                  "pm.test('El contenido conserva el HTML permitido', () => pm.expect(b.contenidoTexto).to.include('<h2>Contenedores Docker</h2>'));",
+                  "pm.test('El saneador elimina los scripts', () => pm.expect(b.contenidoTexto).to.not.include('<script'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/apuntes/{{apunteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "apuntes",
+                "{{apunteId}}"
+              ]
+            },
+            "description": "Devuelve un apunte con su contenido, para abrirlo en el editor.\n\nEl contenido guardado no debe conservar la etiqueta <script> enviada al crear.\n\nEndpoint del OpenAPI: GET /api/apuntes/{id}"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/apuntes/{{apunteId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "apuntes",
+                    "{{apunteId}}"
+                  ]
+                },
+                "description": "Devuelve un apunte con su contenido, para abrirlo en el editor.\n\nEl contenido guardado no debe conservar la etiqueta <script> enviada al crear.\n\nEndpoint del OpenAPI: GET /api/apuntes/{id}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:38 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"apunteId\": \"e13657b6-e453-4efc-ac24-50f3258676b2\",\n  \"tituloNota\": \"Apunte de pruebas 1793426919\",\n  \"contenidoTexto\": \"<h2>Contenedores Docker</h2><p>Un contenedor es una unidad ligera que empaqueta una aplicacion con sus dependencias. A diferencia de una maquina virtual, comparte el nucleo del sistema operativo del anfitrion, por eso arranca en segundos y consume menos memoria.</p><p>Una imagen es la plantilla de solo lectura a partir de la cual se crean los contenedores. Se construye por capas: cada instruccion del Dockerfile agrega una capa y las capas se reutilizan entre imagenes, lo que acelera las construcciones posteriores.</p><p>Un volumen permite que los datos sobrevivan cuando el contenedor se destruye. Los datos del contenedor son efimeros: si se elimina la instancia, la informacion escrita dentro de su sistema de archivos se pierde.</p><ul><li>La red bridge permite que los contenedores se comuniquen por nombre de servicio.</li><li>Las variables de entorno configuran el contenedor sin reconstruir la imagen.</li><li>Las politicas de reinicio reinician el servicio si el proceso falla.</li></ul><p>Docker Compose describe varios servicios en un solo archivo y los levanta con un comando, respetando el orden de dependencias y las comprobaciones de salud.</p>\",\n  \"fechaRegistro\": \"2026-10-31T06:08:39.4866437\",\n  \"materiaNombre\": null,\n  \"tieneResumen\": false,\n  \"totalExamenes\": 0\n}"
+            }
+          ]
+        },
+        {
+          "name": "Guardado automatico del editor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Confirma el guardado', () => pm.expect(b.guardado).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/apuntes/{{apunteId}}/autosave",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "apuntes",
+                "{{apunteId}}",
+                "autosave"
+              ]
+            },
+            "description": "Guardado automático del editor.\n\nGuarda titulo y contenido como lo hace el editor del movil.\n\nEndpoint del OpenAPI: POST /api/apuntes/{id}/autosave",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Apunte de pruebas (autoguardado)\",\n  \"contenido\": \"<h2>Contenedores Docker</h2><p>Un contenedor es una unidad ligera que empaqueta una aplicacion con sus dependencias. A diferencia de una maquina virtual, comparte el nucleo del sistema operativo del anfitrion, por eso arranca en segundos y consume menos memoria.</p><p>Una imagen es la plantilla de solo lectura a partir de la cual se crean los contenedores. Se construye por capas: cada instruccion del Dockerfile agrega una capa y las capas se reutilizan entre imagenes, lo que acelera las construcciones posteriores.</p><p>Un volumen permite que los datos sobrevivan cuando el contenedor se destruye. Los datos del contenedor son efimeros: si se elimina la instancia, la informacion escrita dentro de su sistema de archivos se pierde.</p><ul><li>La red bridge permite que los contenedores se comuniquen por nombre de servicio.</li><li>Las variables de entorno configuran el contenedor sin reconstruir la imagen.</li><li>Las politicas de reinicio reinician el servicio si el proceso falla.</li></ul><p>Docker Compose describe varios servicios en un solo archivo y los levanta con un comando, respetando el orden de dependencias y las comprobaciones de salud.</p><p>Parrafo agregado por el autoguardado.</p>\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/apuntes/{{apunteId}}/autosave",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "apuntes",
+                    "{{apunteId}}",
+                    "autosave"
+                  ]
+                },
+                "description": "Guardado automático del editor.\n\nGuarda titulo y contenido como lo hace el editor del movil.\n\nEndpoint del OpenAPI: POST /api/apuntes/{id}/autosave",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"titulo\": \"Apunte de pruebas (autoguardado)\",\n  \"contenido\": \"<h2>Contenedores Docker</h2><p>Un contenedor es una unidad ligera que empaqueta una aplicacion con sus dependencias. A diferencia de una maquina virtual, comparte el nucleo del sistema operativo del anfitrion, por eso arranca en segundos y consume menos memoria.</p><p>Una imagen es la plantilla de solo lectura a partir de la cual se crean los contenedores. Se construye por capas: cada instruccion del Dockerfile agrega una capa y las capas se reutilizan entre imagenes, lo que acelera las construcciones posteriores.</p><p>Un volumen permite que los datos sobrevivan cuando el contenedor se destruye. Los datos del contenedor son efimeros: si se elimina la instancia, la informacion escrita dentro de su sistema de archivos se pierde.</p><ul><li>La red bridge permite que los contenedores se comuniquen por nombre de servicio.</li><li>Las variables de entorno configuran el contenedor sin reconstruir la imagen.</li><li>Las politicas de reinicio reinician el servicio si el proceso falla.</li></ul><p>Docker Compose describe varios servicios en un solo archivo y los levanta con un comando, respetando el orden de dependencias y las comprobaciones de salud.</p><p>Parrafo agregado por el autoguardado.</p>\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:38 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"guardado\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar materias del estudiante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve un arreglo de materias', () => pm.expect(b).to.be.an('array').and.not.empty);",
+                  "pm.test('Incluye la materia nueva', () => pm.expect(b.map((m) => m.nombreMateria)).to.include('Docker y Contenedores'));",
+                  "pm.collectionVariables.set('materiaId', (b.find((m) => m.nombreMateria === 'Docker y Contenedores') || {}).materiaId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/apuntes/materias",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "apuntes",
+                "materias"
+              ]
+            },
+            "description": "Lista las materias del estudiante para el selector del movil.\n\nDebe incluir la materia creada junto con el apunte.\n\nEndpoint del OpenAPI: GET /api/apuntes/materias"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/apuntes/materias",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "apuntes",
+                    "materias"
+                  ]
+                },
+                "description": "Lista las materias del estudiante para el selector del movil.\n\nDebe incluir la materia creada junto con el apunte.\n\nEndpoint del OpenAPI: GET /api/apuntes/materias"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:38 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"materiaId\": \"ff8f879c-d6fe-4429-9cb2-85f74468585b\",\n    \"nombreMateria\": \"Docker y Contenedores\"\n  }\n]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 · Resumenes",
+      "item": [
+        {
+          "name": "Apuntes disponibles para resumir",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve un arreglo', () => pm.expect(b).to.be.an('array'));",
+                  "pm.test('Incluye el apunte de la corrida', () => pm.expect(b.map((x) => String(x.apunteId).toLowerCase())).to.include(String(pm.collectionVariables.get('apunteId')).toLowerCase()));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/resumenes/apuntes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resumenes",
+                "apuntes"
+              ]
+            },
+            "description": "Apuntes que se pueden resumir, para el selector del movil.\n\nSelector que usa el movil antes de generar un resumen.\n\nEndpoint del OpenAPI: GET /api/resumenes/apuntes"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/resumenes/apuntes",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "resumenes",
+                    "apuntes"
+                  ]
+                },
+                "description": "Apuntes que se pueden resumir, para el selector del movil.\n\nSelector que usa el movil antes de generar un resumen.\n\nEndpoint del OpenAPI: GET /api/resumenes/apuntes"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:38 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"apunteId\": \"e13657b6-e453-4efc-ac24-50f3258676b2\",\n    \"tituloNota\": \"Apunte de pruebas (autoguardado)\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Generar resumen con IA (Gemini)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve el resumen generado', () => pm.expect(b.resumen).to.be.a('string').and.not.empty);",
+                  "pm.test('El resumen trae texto, no solo etiquetas HTML', () => pm.expect(b.resumen.replace(/<[^>]+>/g, '').trim().length).to.be.above(40));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/resumenes/generar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resumenes",
+                "generar"
+              ]
+            },
+            "description": "Genera el resumen con IA. Si la IA falla no se guarda nada.\n\nLlama al servicio de IA. Puede tardar decenas de segundos: el runner usa timeout de 180 s.\n\nEndpoint del OpenAPI: POST /api/resumenes/generar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apunteId\": \"{{apunteId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/resumenes/generar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "resumenes",
+                    "generar"
+                  ]
+                },
+                "description": "Genera el resumen con IA. Si la IA falla no se guarda nada.\n\nLlama al servicio de IA. Puede tardar decenas de segundos: el runner usa timeout de 180 s.\n\nEndpoint del OpenAPI: POST /api/resumenes/generar",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"apunteId\": \"{{apunteId}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:45 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"resumen\": \"<h2>Resumen: Contenedores Docker</h2>\\n\\n<h3>1. Conceptos clave</h3>\\n<ul>\\n    <li>Contenedor</li>\\n    <li>Imagen</li>\\n    <li>Volumen</li>\\n    <li>Red bridge</li>\\n    <li>Variables de entorno</li>\\n    <li>Políticas de reinicio</li>\\n    <li>Docker Compose</li>\\n</ul>\\n\\n<h3>2. Explicación de bloques principales</h3>\\n<p><strong>Contenedores e Imágenes:</strong> Un contenedor es una unidad ligera y eficiente que incluye una aplicación y sus dependencias, compartiendo el núcleo del sistema operativo anfitrión. La imagen actúa como una plantilla de solo lectura construida por capas, optimizando su reutilización y velocidad de creación.</p>\\n<p><strong>Persistencia y Configuración:</strong> Los datos dentro de un contenedor son efímeros y se pierden al eliminar la instancia, a menos que se utilice un volumen para preservarlos. La configuración se gestiona mediante variables de entorno, evitando la necesidad de reconstruir la imagen.</p>\\n<p><strong>Orquestación y Red:</strong> La red bridge facilita la comunicación entre servicios mediante nombres. Por su parte, Docker Compose permite definir y ejecutar múltiples servicios coordinados, gestionando dependencias y comprobaciones de salud desde un único archivo.</p>\\n\\n<h3>3. Datos para memorizar</h3>\\n<ul>\\n    <li><strong>Naturaleza del contenedor:</strong> Unidad ligera que comparte el núcleo del sistema operativo.</li>\\n    <li><strong>Imágenes:</strong> Plantillas de solo lectura formadas por capas que se reutilizan.</li>\\n    <li><strong>Volumen:</strong> Único mecanismo para asegurar que los datos sobrevivan a la destrucción del contenedor.</li>\\n    <li><strong>Comportamiento ante fallos:</strong> Las políticas de reinicio aseguran que el servicio se recupere si el proceso falla.</li>\\n</ul>\\n\\n<h3>4. Resumen de cierre</h3>\\n<p>Docker optimiza el despliegue de aplicaciones mediante el uso de contenedores ligeros e imágenes por capas. Gracias a herramientas como Docker Compose y el uso de volúmenes, permite gestionar entornos complejos con persistencia de datos y alta disponibilidad.</p>\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Obtener el resumen guardado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('El resumen pertenece al apunte de la corrida', () => pm.expect(String(b.apunteId).toLowerCase()).to.eql(String(pm.collectionVariables.get('apunteId')).toLowerCase()));",
+                  "pm.test('El resumen guardado no esta vacio', () => pm.expect(b.resumen).to.be.a('string').and.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/resumenes/{{apunteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resumenes",
+                "{{apunteId}}"
+              ]
+            },
+            "description": "Detalle del resumen de un apunte.\n\nConfirma que el resumen generado quedo persistido.\n\nEndpoint del OpenAPI: GET /api/resumenes/{apunteId}"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/resumenes/{{apunteId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "resumenes",
+                    "{{apunteId}}"
+                  ]
+                },
+                "description": "Detalle del resumen de un apunte.\n\nConfirma que el resumen generado quedo persistido.\n\nEndpoint del OpenAPI: GET /api/resumenes/{apunteId}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:45 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"apunteId\": \"e13657b6-e453-4efc-ac24-50f3258676b2\",\n  \"tituloNota\": \"Apunte de pruebas (autoguardado)\",\n  \"resumen\": \"<h2>Resumen: Contenedores Docker</h2>\\n\\n<h3>1. Conceptos clave</h3>\\n<ul>\\n    <li>Contenedor</li>\\n    <li>Imagen</li>\\n    <li>Volumen</li>\\n    <li>Red bridge</li>\\n    <li>Variables de entorno</li>\\n    <li>Políticas de reinicio</li>\\n    <li>Docker Compose</li>\\n</ul>\\n\\n<h3>2. Explicación de bloques principales</h3>\\n<p><strong>Contenedores e Imágenes:</strong> Un contenedor es una unidad ligera y eficiente que incluye una aplicación y sus dependencias, compartiendo el núcleo del sistema operativo anfitrión. La imagen actúa como una plantilla de solo lectura construida por capas, optimizando su reutilización y velocidad de creación.</p>\\n<p><strong>Persistencia y Configuración:</strong> Los datos dentro de un contenedor son efímeros y se pierden al eliminar la instancia, a menos que se utilice un volumen para preservarlos. La configuración se gestiona mediante variables de entorno, evitando la necesidad de reconstruir la imagen.</p>\\n<p><strong>Orquestación y Red:</strong> La red bridge facilita la comunicación entre servicios mediante nombres. Por su parte, Docker Compose permite definir y ejecutar múltiples servicios coordinados, gestionando dependencias y comprobaciones de salud desde un único archivo.</p>\\n\\n<h3>3. Datos para memorizar</h3>\\n<ul>\\n    <li><strong>Naturaleza del contenedor:</strong> Unidad ligera que comparte el núcleo del sistema operativo.</li>\\n    <li><strong>Imágenes:</strong> Plantillas de solo lectura formadas por capas que se reutilizan.</li>\\n    <li><strong>Volumen:</strong> Único mecanismo para asegurar que los datos sobrevivan a la destrucción del contenedor.</li>\\n    <li><strong>Comportamiento ante fallos:</strong> Las políticas de reinicio aseguran que el servicio se recupere si el proceso falla.</li>\\n</ul>\\n\\n<h3>4. Resumen de cierre</h3>\\n<p>Docker optimiza el despliegue de aplicaciones mediante el uso de contenedores ligeros e imágenes por capas. Gracias a herramientas como Docker Compose y el uso de volúmenes, permite gestionar entornos complejos con persistencia de datos y alta disponibilidad.</p>\",\n  \"fechaRegistro\": \"2026-10-31T06:08:39.4866437\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar resumenes del estudiante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve un arreglo', () => pm.expect(b).to.be.an('array'));",
+                  "pm.test('Incluye el resumen recien generado', () => pm.expect(b.map((x) => String(x.apunteId).toLowerCase())).to.include(String(pm.collectionVariables.get('apunteId')).toLowerCase()));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/resumenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "resumenes"
+              ]
+            },
+            "description": "Todos los apuntes del estudiante con su resumen (vacío si no lo tiene).\n\nSolo devuelve apuntes que ya tienen resumen.\n\nEndpoint del OpenAPI: GET /api/resumenes"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/resumenes",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "resumenes"
+                  ]
+                },
+                "description": "Todos los apuntes del estudiante con su resumen (vacío si no lo tiene).\n\nSolo devuelve apuntes que ya tienen resumen.\n\nEndpoint del OpenAPI: GET /api/resumenes"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:45 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"apunteId\": \"e13657b6-e453-4efc-ac24-50f3258676b2\",\n    \"tituloNota\": \"Apunte de pruebas (autoguardado)\",\n    \"resumen\": \"<h2>Resumen: Contenedores Docker</h2>\\n\\n<h3>1. Conceptos clave</h3>\\n<ul>\\n    <li>Contenedor</li>\\n    <li>Imagen</li>\\n    <li>Volumen</li>\\n    <li>Red bridge</li>\\n    <li>Variables de entorno</li>\\n    <li>Políticas de reinicio</li>\\n    <li>Docker Compose</li>\\n</ul>\\n\\n<h3>2. Explicación de bloques principales</h3>\\n<p><strong>Contenedores e Imágenes:</strong> Un contenedor es una unidad ligera y eficiente que incluye una aplicación y sus dependencias, compartiendo el núcleo del sistema operativo anfitrión. La imagen actúa como una plantilla de solo lectura construida por capas, optimizando su reutilización y velocidad de creación.</p>\\n<p><strong>Persistencia y Configuración:</strong> Los datos dentro de un contenedor son efímeros y se pierden al eliminar la instancia, a menos que se utilice un volumen para preservarlos. La configuración se gestiona mediante variables de entorno, evitando la necesidad de reconstruir la imagen.</p>\\n<p><strong>Orquestación y Red:</strong> La red bridge facilita la comunicación entre servicios mediante nombres. Por su parte, Docker Compose permite definir y ejecutar múltiples servicios coordinados, gestionando dependencias y comprobaciones de salud desde un único archivo.</p>\\n\\n<h3>3. Datos para memorizar</h3>\\n<ul>\\n    <li><strong>Naturaleza del contenedor:</strong> Unidad ligera que comparte el núcleo del sistema operativo.</li>\\n    <li><strong>Imágenes:</strong> Plantillas de solo lectura formadas por capas que se reutilizan.</li>\\n    <li><strong>Volumen:</strong> Único mecanismo para asegurar que los datos sobrevivan a la destrucción del contenedor.</li>\\n    <li><strong>Comportamiento ante fallos:</strong> Las políticas de reinicio aseguran que el servicio se recupere si el proceso falla.</li>\\n</ul>\\n\\n<h3>4. Resumen de cierre</h3>\\n<p>Docker optimiza el despliegue de aplicaciones mediante el uso de contenedores ligeros e imágenes por capas. Gracias a herramientas como Docker Compose y el uso de volúmenes, permite gestionar entornos complejos con persistencia de datos y alta disponibilidad.</p>\",\n    \"fechaRegistro\": \"2026-10-31T06:08:39.4866437\"\n  }\n]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 · Examenes",
+      "item": [
+        {
+          "name": "Generar examen con IA (3 preguntas)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve el identificador del examen', () => pm.expect(b.examenId).to.match(/^[0-9a-f-]{36}$/i));",
+                  "pm.collectionVariables.set('examenId', b.examenId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/examenes/generar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "examenes",
+                "generar"
+              ]
+            },
+            "description": "Genera un examen a partir de un apunte.\n\nGenera un examen de opcion multiple a partir del apunte.\n\nEndpoint del OpenAPI: POST /api/examenes/generar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apunteId\": \"{{apunteId}}\",\n  \"tipo\": \"opcion_multiple\",\n  \"cantidadPreguntas\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/examenes/generar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "examenes",
+                    "generar"
+                  ]
+                },
+                "description": "Genera un examen a partir de un apunte.\n\nGenera un examen de opcion multiple a partir del apunte.\n\nEndpoint del OpenAPI: POST /api/examenes/generar",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"apunteId\": \"{{apunteId}}\",\n  \"tipo\": \"opcion_multiple\",\n  \"cantidadPreguntas\": 3\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:49 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"examenId\": \"05f2093a-e225-443e-a5e7-ad7efb628e45\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Obtener examen sin calificar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('El examen pertenece a la corrida', () => pm.expect(String(b.examenId).toLowerCase()).to.eql(String(pm.collectionVariables.get('examenId')).toLowerCase()));",
+                  "pm.test('Trae 3 preguntas', () => pm.expect(b.preguntas).to.have.lengthOf(3));",
+                  "pm.test('Cada pregunta trae al menos 2 opciones', () => b.preguntas.forEach((p) => pm.expect(p.opciones.length).to.be.at.least(2)));",
+                  "pm.test('No revela la respuesta correcta antes de calificar', () => pm.expect(b.calificado).to.eql(false));",
+                  "pm.test('Ninguna opcion viene marcada como correcta', () => b.preguntas.forEach((p) => p.opciones.forEach((o) => pm.expect(o.esLaCorrecta === true).to.eql(false))));",
+                  "const respuestas = {}; b.preguntas.forEach((p) => { respuestas[p.preguntaId] = p.opciones[0].opcionId; });",
+                  "pm.collectionVariables.set('respuestasExamenJson', JSON.stringify(respuestas));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/examenes/{{examenId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "examenes",
+                "{{examenId}}"
+              ]
+            },
+            "description": "Examen completo con sus preguntas.\n\nAntes de calificar NO debe revelarse cual opcion es la correcta.\n\nEndpoint del OpenAPI: GET /api/examenes/{id}"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/examenes/{{examenId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "examenes",
+                    "{{examenId}}"
+                  ]
+                },
+                "description": "Examen completo con sus preguntas.\n\nAntes de calificar NO debe revelarse cual opcion es la correcta.\n\nEndpoint del OpenAPI: GET /api/examenes/{id}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:49 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"examenId\": \"05f2093a-e225-443e-a5e7-ad7efb628e45\",\n  \"tituloApunte\": \"Apunte de pruebas (autoguardado)\",\n  \"calificado\": false,\n  \"nota\": null,\n  \"preguntas\": [\n    {\n      \"preguntaId\": \"7cfcfe00-0287-47d9-b704-116fa5e6776b\",\n      \"texto\": \"¿Qué componente de Docker permite que los datos persistan tras la destrucción de un contenedor?\",\n      \"respuestaSeleccionadaId\": null,\n      \"opciones\": [\n        {\n          \"opcionId\": \"07f48c00-3522-4348-bde9-56abb094a1c6\",\n          \"texto\": \"Un volumen\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"19904952-41b9-4417-80b3-7211cb36c415\",\n          \"texto\": \"Una red bridge\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"d2455e16-b547-4a29-be63-9715b7dc51e8\",\n          \"texto\": \"Las variables de entorno\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"291b1c69-e682-4960-820c-f85d0bef28ff\",\n          \"texto\": \"El Dockerfile\",\n          \"esLaCorrecta\": false\n        }\n      ]\n    },\n    {\n      \"preguntaId\": \"4f98cab7-a8e1-436a-8ef7-553cefef47d1\",\n      \"texto\": \"¿Cómo se construye una imagen de Docker según el apunte?\",\n      \"respuestaSeleccionadaId\": null,\n      \"opciones\": [\n        {\n          \"opcionId\": \"c1a53bd8-6f86-4fea-8792-5c7a41e989c6\",\n          \"texto\": \"Se construye por capas, donde cada instrucción del Dockerfile añade una\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"71cec661-a9c3-4837-a1c2-93552c1682fb\",\n          \"texto\": \"Se reescribe completamente cada vez que se necesita una actualización\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"8a782a0c-88b4-4e1a-84e2-b799985263d1\",\n          \"texto\": \"Se genera automáticamente al ejecutar el comando Docker Compose\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"23132c2a-a65b-4f06-bdbe-eb84fbf44643\",\n          \"texto\": \"Se crea a partir de una única capa final que no puede ser modificada\",\n          \"esLaCorrecta\": false\n        }\n      ]\n    },\n    {\n      \"preguntaId\": \"0ddd50d8-e7b1-4b48-8b39-88534a4a6c65\",\n      \"texto\": \"¿Cuál es una ventaja principal de un contenedor Docker en comparación con una máquina virtual?\",\n      \"respuestaSeleccionadaId\": null,\n      \"opciones\": [\n        {\n          \"opcionId\": \"daf82c48-4c03-41e1-94ba-18a5efed1dd1\",\n          \"texto\": \"Tiene un sistema de archivos persistente por defecto\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"965a48b1-0b8f-4e8f-9da4-1bca94e13184\",\n          \"texto\": \"Funciona de manera aislada sin consumir memoria del anfitrión\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"008d09fc-937c-4ce4-92ef-489c5dacbc9a\",\n          \"texto\": \"Comparte el núcleo del sistema operativo del anfitrión\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"f9cbc3eb-3d7a-4cee-96e6-fa4413dde4cb\",\n          \"texto\": \"No requiere de una imagen para ejecutarse\",\n          \"esLaCorrecta\": false\n        }\n      ]\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Calificar el examen",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve la nota calculada', () => pm.expect(b.nota).to.be.a('number'));",
+                  "pm.test('El total coincide con las 3 preguntas', () => pm.expect(b.total).to.eql(3));",
+                  "pm.test('Las correctas no superan el total', () => pm.expect(b.correctas).to.be.within(0, 3));",
+                  "pm.test('La nota esta en la escala 0-100', () => pm.expect(b.nota).to.be.within(0, 100));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/examenes/{{examenId}}/calificar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "examenes",
+                "{{examenId}}",
+                "calificar"
+              ]
+            },
+            "description": "Califica el examen. Las respuestas van como mapa pregunta -> opción.\n\nEnvia un mapa pregunta -> opcion elegida y devuelve la nota.\n\nEndpoint del OpenAPI: POST /api/examenes/{id}/calificar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"respuestas\": {{respuestasExamenJson}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/examenes/{{examenId}}/calificar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "examenes",
+                    "{{examenId}}",
+                    "calificar"
+                  ]
+                },
+                "description": "Califica el examen. Las respuestas van como mapa pregunta -> opción.\n\nEnvia un mapa pregunta -> opcion elegida y devuelve la nota.\n\nEndpoint del OpenAPI: POST /api/examenes/{id}/calificar",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"respuestas\": {{respuestasExamenJson}}}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:49 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"nota\": 66.67,\n  \"total\": 3,\n  \"correctas\": 2\n}"
+            }
+          ]
+        },
+        {
+          "name": "Obtener examen ya calificado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('El examen figura como calificado', () => pm.expect(b.calificado).to.eql(true));",
+                  "pm.test('Trae la nota final', () => pm.expect(b.nota).to.be.a('number'));",
+                  "pm.test('Ahora si marca las opciones correctas', () => { const total = b.preguntas.reduce((s, p) => s + p.opciones.filter((o) => o.esLaCorrecta === true).length, 0); pm.expect(total).to.be.at.least(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/examenes/{{examenId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "examenes",
+                "{{examenId}}"
+              ]
+            },
+            "description": "Despues de calificar si se expone cual era la opcion correcta.\n\nCaso adicional (no forma parte del contrato OpenAPI)."
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/examenes/{{examenId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "examenes",
+                    "{{examenId}}"
+                  ]
+                },
+                "description": "Despues de calificar si se expone cual era la opcion correcta.\n\nCaso adicional (no forma parte del contrato OpenAPI)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:49 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"examenId\": \"05f2093a-e225-443e-a5e7-ad7efb628e45\",\n  \"tituloApunte\": \"Apunte de pruebas (autoguardado)\",\n  \"calificado\": true,\n  \"nota\": 66.67,\n  \"preguntas\": [\n    {\n      \"preguntaId\": \"7cfcfe00-0287-47d9-b704-116fa5e6776b\",\n      \"texto\": \"¿Qué componente de Docker permite que los datos persistan tras la destrucción de un contenedor?\",\n      \"respuestaSeleccionadaId\": \"07f48c00-3522-4348-bde9-56abb094a1c6\",\n      \"opciones\": [\n        {\n          \"opcionId\": \"07f48c00-3522-4348-bde9-56abb094a1c6\",\n          \"texto\": \"Un volumen\",\n          \"esLaCorrecta\": true\n        },\n        {\n          \"opcionId\": \"19904952-41b9-4417-80b3-7211cb36c415\",\n          \"texto\": \"Una red bridge\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"d2455e16-b547-4a29-be63-9715b7dc51e8\",\n          \"texto\": \"Las variables de entorno\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"291b1c69-e682-4960-820c-f85d0bef28ff\",\n          \"texto\": \"El Dockerfile\",\n          \"esLaCorrecta\": false\n        }\n      ]\n    },\n    {\n      \"preguntaId\": \"4f98cab7-a8e1-436a-8ef7-553cefef47d1\",\n      \"texto\": \"¿Cómo se construye una imagen de Docker según el apunte?\",\n      \"respuestaSeleccionadaId\": \"c1a53bd8-6f86-4fea-8792-5c7a41e989c6\",\n      \"opciones\": [\n        {\n          \"opcionId\": \"c1a53bd8-6f86-4fea-8792-5c7a41e989c6\",\n          \"texto\": \"Se construye por capas, donde cada instrucción del Dockerfile añade una\",\n          \"esLaCorrecta\": true\n        },\n        {\n          \"opcionId\": \"71cec661-a9c3-4837-a1c2-93552c1682fb\",\n          \"texto\": \"Se reescribe completamente cada vez que se necesita una actualización\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"8a782a0c-88b4-4e1a-84e2-b799985263d1\",\n          \"texto\": \"Se genera automáticamente al ejecutar el comando Docker Compose\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"23132c2a-a65b-4f06-bdbe-eb84fbf44643\",\n          \"texto\": \"Se crea a partir de una única capa final que no puede ser modificada\",\n          \"esLaCorrecta\": false\n        }\n      ]\n    },\n    {\n      \"preguntaId\": \"0ddd50d8-e7b1-4b48-8b39-88534a4a6c65\",\n      \"texto\": \"¿Cuál es una ventaja principal de un contenedor Docker en comparación con una máquina virtual?\",\n      \"respuestaSeleccionadaId\": \"daf82c48-4c03-41e1-94ba-18a5efed1dd1\",\n      \"opciones\": [\n        {\n          \"opcionId\": \"daf82c48-4c03-41e1-94ba-18a5efed1dd1\",\n          \"texto\": \"Tiene un sistema de archivos persistente por defecto\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"965a48b1-0b8f-4e8f-9da4-1bca94e13184\",\n          \"texto\": \"Funciona de manera aislada sin consumir memoria del anfitrión\",\n          \"esLaCorrecta\": false\n        },\n        {\n          \"opcionId\": \"008d09fc-937c-4ce4-92ef-489c5dacbc9a\",\n          \"texto\": \"Comparte el núcleo del sistema operativo del anfitrión\",\n          \"esLaCorrecta\": true\n        },\n        {\n          \"opcionId\": \"f9cbc3eb-3d7a-4cee-96e6-fa4413dde4cb\",\n          \"texto\": \"No requiere de una imagen para ejecutarse\",\n          \"esLaCorrecta\": false\n        }\n      ]\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar examenes del estudiante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve un arreglo', () => pm.expect(b).to.be.an('array'));",
+                  "pm.test('Incluye el examen de la corrida', () => pm.expect(b.map((x) => String(x.examenId).toLowerCase())).to.include(String(pm.collectionVariables.get('examenId')).toLowerCase()));",
+                  "pm.test('El examen ya tiene nota', () => { const e = b.find((x) => String(x.examenId).toLowerCase() === String(pm.collectionVariables.get('examenId')).toLowerCase()); pm.expect(e.nota).to.be.a('number'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/examenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "examenes"
+              ]
+            },
+            "description": "Lista los exámenes del estudiante.\n\nIncluye el examen generado y su nota.\n\nEndpoint del OpenAPI: GET /api/examenes"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/examenes",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "examenes"
+                  ]
+                },
+                "description": "Lista los exámenes del estudiante.\n\nIncluye el examen generado y su nota.\n\nEndpoint del OpenAPI: GET /api/examenes"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:49 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"examenId\": \"05f2093a-e225-443e-a5e7-ad7efb628e45\",\n    \"apunteId\": \"e13657b6-e453-4efc-ac24-50f3258676b2\",\n    \"tituloApunte\": \"Apunte de pruebas (autoguardado)\",\n    \"fecha\": \"2026-10-31T06:08:49.9380884\",\n    \"nota\": 66.67,\n    \"total\": 3\n  }\n]"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 · Chat",
+      "item": [
+        {
+          "name": "Enviar mensaje al asistente de IA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve una respuesta del asistente', () => pm.expect(b.respuesta).to.be.a('string').and.not.empty);",
+                  "pm.test('La respuesta menciona el tema consultado', () => pm.expect(b.respuesta.toLowerCase()).to.match(/contenedor|docker/));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/enviar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "chat",
+                "enviar"
+              ]
+            },
+            "description": "Envía un mensaje y recibe la respuesta de la IA.\n\nChat academico basado en Gemini.\n\nEndpoint del OpenAPI: POST /api/chat/enviar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mensaje\": \"Explica en dos frases que es un contenedor de Docker.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/chat/enviar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "chat",
+                    "enviar"
+                  ]
+                },
+                "description": "Envía un mensaje y recibe la respuesta de la IA.\n\nChat academico basado en Gemini.\n\nEndpoint del OpenAPI: POST /api/chat/enviar",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"mensaje\": \"Explica en dos frases que es un contenedor de Docker.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:52 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"respuesta\": \"Un contenedor Docker es una unidad ligera que empaqueta una aplicación junto con todas sus dependencias necesarias para ejecutarse. A diferencia de una máquina virtual, comparte el núcleo del sistema operativo del anfitrión, lo que le permite arrancar rápidamente y consumir menos recursos.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 · Comunidad",
+      "item": [
+        {
+          "name": "Publicar una pregunta en la comunidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve el identificador de la publicacion', () => pm.expect(b.postId).to.match(/^[0-9a-f-]{36}$/i));",
+                  "pm.collectionVariables.set('postId', b.postId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comunidad/posts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comunidad",
+                "posts"
+              ]
+            },
+            "description": "Publica una pregunta.\n\nCrea una publicacion de tipo pregunta.\n\nEndpoint del OpenAPI: POST /api/comunidad/posts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Como aislar la base de datos en pruebas\",\n  \"detalle\": \"Publicacion creada por la coleccion automatizada de Postman.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/comunidad/posts",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "comunidad",
+                    "posts"
+                  ]
+                },
+                "description": "Publica una pregunta.\n\nCrea una publicacion de tipo pregunta.\n\nEndpoint del OpenAPI: POST /api/comunidad/posts",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"titulo\": \"Como aislar la base de datos en pruebas\",\n  \"detalle\": \"Publicacion creada por la coleccion automatizada de Postman.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:52 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"postId\": \"2c22317b-97e1-440e-ab91-7691fb6e832e\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Publicar una encuesta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve el identificador de la encuesta', () => pm.expect(b.postId).to.match(/^[0-9a-f-]{36}$/i));",
+                  "pm.collectionVariables.set('encuestaId', b.postId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comunidad/encuestas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comunidad",
+                "encuestas"
+              ]
+            },
+            "description": "Publica una encuesta.\n\nCrea una encuesta con tres opciones.\n\nEndpoint del OpenAPI: POST /api/comunidad/encuestas",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Que herramienta usas para pruebas de carga\",\n  \"detalle\": \"Encuesta creada por la coleccion automatizada de Postman.\",\n  \"opciones\": [\n    \"k6\",\n    \"JMeter\",\n    \"Locust\"\n  ],\n  \"soloUnaOpcion\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/comunidad/encuestas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "comunidad",
+                    "encuestas"
+                  ]
+                },
+                "description": "Publica una encuesta.\n\nCrea una encuesta con tres opciones.\n\nEndpoint del OpenAPI: POST /api/comunidad/encuestas",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"titulo\": \"Que herramienta usas para pruebas de carga\",\n  \"detalle\": \"Encuesta creada por la coleccion automatizada de Postman.\",\n  \"opciones\": [\n    \"k6\",\n    \"JMeter\",\n    \"Locust\"\n  ],\n  \"soloUnaOpcion\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:52 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"postId\": \"05dec9eb-3331-4b83-be34-2138960f73a7\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar publicaciones (paginado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve un arreglo', () => pm.expect(b).to.be.an('array'));",
+                  "pm.test('Incluye la pregunta publicada', () => pm.expect(b.map((x) => String(x.postId).toLowerCase())).to.include(String(pm.collectionVariables.get('postId')).toLowerCase()));",
+                  "pm.test('Incluye la encuesta publicada', () => pm.expect(b.map((x) => String(x.postId).toLowerCase())).to.include(String(pm.collectionVariables.get('encuestaId')).toLowerCase()));",
+                  "pm.test('Marca como propias las publicaciones de la corrida', () => { const p = b.find((x) => String(x.postId).toLowerCase() === String(pm.collectionVariables.get('postId')).toLowerCase()); pm.expect(p.esMio).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/comunidad",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comunidad"
+              ]
+            },
+            "description": "Listado paginado de publicaciones.\n\nPagina 0, 20 elementos por pagina.\n\nEndpoint del OpenAPI: GET /api/comunidad"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/comunidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "comunidad"
+                  ]
+                },
+                "description": "Listado paginado de publicaciones.\n\nPagina 0, 20 elementos por pagina.\n\nEndpoint del OpenAPI: GET /api/comunidad"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:52 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n  {\n    \"postId\": \"05dec9eb-3331-4b83-be34-2138960f73a7\",\n    \"titulo\": \"Que herramienta usas para pruebas de carga\",\n    \"detalle\": \"Encuesta creada por la coleccion automatizada de Postman.\",\n    \"autor\": \"Estudiante de Pruebas 1793426919\",\n    \"fotoUrl\": null,\n    \"esEncuesta\": true,\n    \"imagenUrl\": null,\n    \"esMio\": true,\n    \"fecha\": \"2026-10-31T06:08:53.720442\",\n    \"totalRespuestas\": 0,\n    \"totalVotos\": 0\n  },\n  {\n    \"postId\": \"2c22317b-97e1-440e-ab91-7691fb6e832e\",\n    \"titulo\": \"Como aislar la base de datos en pruebas\",\n    \"detalle\": \"Publicacion creada por la coleccion automatizada de Postman.\",\n    \"autor\": \"Estudiante de Pruebas 1793426919\",\n    \"fotoUrl\": null,\n    \"esEncuesta\": false,\n    \"imagenUrl\": null,\n    \"esMio\": true,\n    \"fecha\": \"2026-10-31T06:08:53.6934688\",\n    \"totalRespuestas\": 0,\n    \"totalVotos\": 0\n  },\n  {\n    \"postId\": \"ca233c6b-2b6c-4f5a-8d98-923e4e75776f\",\n    \"titulo\": \"Que herramienta usas para probar carga\",\n    \"detalle\": \"Encuesta de aceptacion.\",\n    \"autor\": \"UAT uat.encuesta\",\n    \"fotoUrl\": null,\n    \"esEncuesta\": true,\n    \"imagenUrl\": null,\n    \"esMio\": false,\n    \"fecha\": \"2026-10-31T06:06:59.4770855\",\n    \"totalRespuestas\": 0,\n    \"totalVotos\": 1\n  },\n  {\n    \"postId\": \"2f4f8a87-6d32-42cf-8fc9-ce0a7f657ed4\",\n    \"titulo\": \"Como reinicio un contenedor sin perder datos\",\n    \"detalle\": \"Me pasa cada vez que actualizo la imagen.\",\n    \"autor\": \"UAT uat.autor\",\n    \"fotoUrl\": null,\n    \"esEncuesta\": false,\n    \"imagenUrl\": null,\n    \"esMio\": false,\n    \"fecha\": \"2026-10-31T06:06:58.5406529\",\n    \"totalRespuestas\": 1,\n    \"totalVotos\": 0\n  },\n  {\n    \"postId\": \"03f021e5-3f43-4d6d-a498-840b382a7a4a\",\n    \"titulo\": \"Post manual 2\",\n    \"detalle\": \"Prueba de borrado\",\n    \"autor\": \"Manual QA2\",\n    \"fotoUrl\": null,\n    \"esEncuesta\": false,\n    \"imagenUrl\": null,\n    \"esMio\": false,\n    \"fecha\": \"2026-10-31T05:49:08.2523157\",\n    \"totalRespuestas\": 0,\n    \"totalVotos\": 0\n  },\n  {\n    \"postId\": \"f800a4f7-1d64-49c7-9012-e46f82dec399\",\n    \"titulo\": \"Post manual\",\n    \"detalle\": \"Prueba de borrado\",\n    \"autor\": \"Manual QA\",\n    \"fotoUrl\": null,\n    \"esEncuesta\": false,\n    \"imagenUrl\": null,\n    \"esMio\": false,\n    \"fecha\": \"2026-10-31T05:48:43.8648936\",\n    \"totalRespuestas\": 0,\n    \"totalVotos\": 0\n  },\n  {\n    \"postId\": \"ea215a53-d2fb-4cbe-ac90-bc3dd161e205\",\n    \"titulo\": \"Que herramienta usas para pruebas de carga\",\n    \"detalle\": \"Encuesta creada por la coleccion automatizada de Postman.\",\n    \"autor\": \"Estudiante Actualizado 1793425645\",\n    \"fotoUrl\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==\",\n    \"esEncuesta\": true,\n    \"imagenUrl\": null,\n    \"esMio\": false,\n    \"fecha\": \"2026-10-31T05:47:23.1119142\",\n    \"totalRespuestas\": 0,\n    \"totalVotos\": 1\n  },\n  {\n    \"postId\": \"856d173c-3dc4-4288-a256-7f1b8d937723\",\n    \"titulo\": \"Como aislar la base de datos en pruebas\",\n    \"detalle\": \"Publicacion creada por la coleccion automatizada de Postman.\",\n    \"autor\": \"Estudiante Actualizado 1793425645\",\n    \"fotoUrl\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==\",\n    \"esEncuesta\": false,\n    \"imagenUrl\": null,\n    \"esMio\": false,\n    \"fecha\": \"2026-10-31T05:47:22.9392403\",\n    \"totalRespuestas\": 1,\n    \"totalVotos\": 0\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Obtener detalle de la pregunta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Es la publicacion solicitada', () => pm.expect(String(b.postId).toLowerCase()).to.eql(String(pm.collectionVariables.get('postId')).toLowerCase()));",
+                  "pm.test('No es una encuesta', () => pm.expect(b.esEncuesta).to.eql(false));",
+                  "pm.test('Trae el arreglo de respuestas', () => pm.expect(b.respuestas).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/comunidad/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comunidad",
+                "{{postId}}"
+              ]
+            },
+            "description": "Detalle de una publicación con sus respuestas u opciones.\n\nDetalle con respuestas.\n\nEndpoint del OpenAPI: GET /api/comunidad/{id}"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/comunidad/{{postId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "comunidad",
+                    "{{postId}}"
+                  ]
+                },
+                "description": "Detalle de una publicación con sus respuestas u opciones.\n\nDetalle con respuestas.\n\nEndpoint del OpenAPI: GET /api/comunidad/{id}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:52 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"postId\": \"2c22317b-97e1-440e-ab91-7691fb6e832e\",\n  \"titulo\": \"Como aislar la base de datos en pruebas\",\n  \"detalle\": \"Publicacion creada por la coleccion automatizada de Postman.\",\n  \"autor\": \"Estudiante de Pruebas 1793426919\",\n  \"fecha\": \"2026-10-31T06:08:53.6934688\",\n  \"esEncuesta\": false,\n  \"imagenUrl\": null,\n  \"esMio\": true,\n  \"soloUnaOpcion\": true,\n  \"totalVotos\": 0,\n  \"opciones\": [],\n  \"respuestas\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Responder a la publicacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Confirma la respuesta', () => pm.expect(b.ok).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comunidad/{{postId}}/responder",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comunidad",
+                "{{postId}}",
+                "responder"
+              ]
+            },
+            "description": "Responde a una publicación.\n\nAgrega una respuesta a la pregunta creada.\n\nEndpoint del OpenAPI: POST /api/comunidad/{id}/responder",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"texto\": \"Respuesta automatica de la coleccion de pruebas.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/comunidad/{{postId}}/responder",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "comunidad",
+                    "{{postId}}",
+                    "responder"
+                  ]
+                },
+                "description": "Responde a una publicación.\n\nAgrega una respuesta a la pregunta creada.\n\nEndpoint del OpenAPI: POST /api/comunidad/{id}/responder",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"texto\": \"Respuesta automatica de la coleccion de pruebas.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:52 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Obtener detalle de la encuesta (guarda opciones)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Es una encuesta', () => pm.expect(b.esEncuesta).to.eql(true));",
+                  "pm.test('Trae las 3 opciones', () => pm.expect(b.opciones).to.have.lengthOf(3));",
+                  "pm.test('La encuesta admite una sola opcion', () => pm.expect(b.soloUnaOpcion).to.eql(true));",
+                  "pm.collectionVariables.set('opcionIdsJson', JSON.stringify([b.opciones[0].opcionId]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/comunidad/{{encuestaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comunidad",
+                "{{encuestaId}}"
+              ]
+            },
+            "description": "Guarda el identificador de la primera opcion para poder votar.\n\nCaso adicional (no forma parte del contrato OpenAPI)."
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/comunidad/{{encuestaId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "comunidad",
+                    "{{encuestaId}}"
+                  ]
+                },
+                "description": "Guarda el identificador de la primera opcion para poder votar.\n\nCaso adicional (no forma parte del contrato OpenAPI)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"postId\": \"05dec9eb-3331-4b83-be34-2138960f73a7\",\n  \"titulo\": \"Que herramienta usas para pruebas de carga\",\n  \"detalle\": \"Encuesta creada por la coleccion automatizada de Postman.\",\n  \"autor\": \"Estudiante de Pruebas 1793426919\",\n  \"fecha\": \"2026-10-31T06:08:53.720442\",\n  \"esEncuesta\": true,\n  \"imagenUrl\": null,\n  \"esMio\": true,\n  \"soloUnaOpcion\": true,\n  \"totalVotos\": 0,\n  \"opciones\": [\n    {\n      \"opcionId\": \"573bc3e9-7dde-4ed7-8081-e7b81ef536db\",\n      \"texto\": \"k6\",\n      \"totalVotos\": 0,\n      \"seleccionada\": false\n    },\n    {\n      \"opcionId\": \"606744e2-41d9-4a14-b347-fcef53f073bd\",\n      \"texto\": \"JMeter\",\n      \"totalVotos\": 0,\n      \"seleccionada\": false\n    },\n    {\n      \"opcionId\": \"a754e3fa-dd1e-466b-9eaa-c6520bf52346\",\n      \"texto\": \"Locust\",\n      \"totalVotos\": 0,\n      \"seleccionada\": false\n    }\n  ],\n  \"respuestas\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Votar en la encuesta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Confirma el voto', () => pm.expect(b.ok).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comunidad/{{encuestaId}}/votar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comunidad",
+                "{{encuestaId}}",
+                "votar"
+              ]
+            },
+            "description": "Vota en una encuesta.\n\nRegistra un voto en la primera opcion.\n\nEndpoint del OpenAPI: POST /api/comunidad/{id}/votar",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"opcionIds\": {{opcionIdsJson}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/comunidad/{{encuestaId}}/votar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "comunidad",
+                    "{{encuestaId}}",
+                    "votar"
+                  ]
+                },
+                "description": "Vota en una encuesta.\n\nRegistra un voto en la primera opcion.\n\nEndpoint del OpenAPI: POST /api/comunidad/{id}/votar",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"opcionIds\": {{opcionIdsJson}}}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"ok\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verificar el voto registrado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('La encuesta registra al menos un voto', () => pm.expect(b.totalVotos).to.be.at.least(1));",
+                  "pm.test('La opcion elegida aparece como seleccionada', () => pm.expect(b.opciones.filter((o) => o.seleccionada === true)).to.have.lengthOf(1));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/comunidad/{{encuestaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comunidad",
+                "{{encuestaId}}"
+              ]
+            },
+            "description": "La opcion elegida debe aparecer como seleccionada y sumar votos.\n\nCaso adicional (no forma parte del contrato OpenAPI)."
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/comunidad/{{encuestaId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "comunidad",
+                    "{{encuestaId}}"
+                  ]
+                },
+                "description": "La opcion elegida debe aparecer como seleccionada y sumar votos.\n\nCaso adicional (no forma parte del contrato OpenAPI)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"postId\": \"05dec9eb-3331-4b83-be34-2138960f73a7\",\n  \"titulo\": \"Que herramienta usas para pruebas de carga\",\n  \"detalle\": \"Encuesta creada por la coleccion automatizada de Postman.\",\n  \"autor\": \"Estudiante de Pruebas 1793426919\",\n  \"fecha\": \"2026-10-31T06:08:53.720442\",\n  \"esEncuesta\": true,\n  \"imagenUrl\": null,\n  \"esMio\": true,\n  \"soloUnaOpcion\": true,\n  \"totalVotos\": 1,\n  \"opciones\": [\n    {\n      \"opcionId\": \"573bc3e9-7dde-4ed7-8081-e7b81ef536db\",\n      \"texto\": \"k6\",\n      \"totalVotos\": 1,\n      \"seleccionada\": true\n    },\n    {\n      \"opcionId\": \"606744e2-41d9-4a14-b347-fcef53f073bd\",\n      \"texto\": \"JMeter\",\n      \"totalVotos\": 0,\n      \"seleccionada\": false\n    },\n    {\n      \"opcionId\": \"a754e3fa-dd1e-466b-9eaa-c6520bf52346\",\n      \"texto\": \"Locust\",\n      \"totalVotos\": 0,\n      \"seleccionada\": false\n    }\n  ],\n  \"respuestas\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Eliminar la pregunta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Confirma la eliminacion', () => pm.expect(b.eliminado).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/comunidad/{{postId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comunidad",
+                "{{postId}}"
+              ]
+            },
+            "description": "Elimina una publicación propia.\n\nLimpieza de la publicacion creada.\n\nEndpoint del OpenAPI: DELETE /api/comunidad/{id}"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/comunidad/{{postId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "comunidad",
+                    "{{postId}}"
+                  ]
+                },
+                "description": "Elimina una publicación propia.\n\nLimpieza de la publicacion creada.\n\nEndpoint del OpenAPI: DELETE /api/comunidad/{id}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"eliminado\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Eliminar la encuesta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Confirma la eliminacion', () => pm.expect(b.eliminado).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/comunidad/{{encuestaId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comunidad",
+                "{{encuestaId}}"
+              ]
+            },
+            "description": "Limpieza de la encuesta creada.\n\nCaso adicional (no forma parte del contrato OpenAPI)."
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/comunidad/{{encuestaId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "comunidad",
+                    "{{encuestaId}}"
+                  ]
+                },
+                "description": "Limpieza de la encuesta creada.\n\nCaso adicional (no forma parte del contrato OpenAPI)."
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"eliminado\": true\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 · Perfil",
+      "item": [
+        {
+          "name": "Consultar perfil y estadisticas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Devuelve el estudiante de la corrida', () => pm.expect(String(b.estudianteId).toLowerCase()).to.eql(String(pm.collectionVariables.get('estudianteId')).toLowerCase()));",
+                  "pm.test('Cuenta al menos un apunte', () => pm.expect(b.totalApuntes).to.be.at.least(1));",
+                  "pm.test('Cuenta al menos un resumen', () => pm.expect(b.totalResumenes).to.be.at.least(1));",
+                  "pm.test('Cuenta al menos un examen', () => pm.expect(b.totalExamenes).to.be.at.least(1));",
+                  "pm.test('Trae el correo registrado', () => pm.expect(b.correoElectronico).to.eql(pm.collectionVariables.get('correoPrueba')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/perfil",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "perfil"
+              ]
+            },
+            "description": "Datos y estadísticas del estudiante autenticado.\n\nDebe reflejar los datos creados durante la corrida.\n\nEndpoint del OpenAPI: GET /api/perfil"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/perfil",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "perfil"
+                  ]
+                },
+                "description": "Datos y estadísticas del estudiante autenticado.\n\nDebe reflejar los datos creados durante la corrida.\n\nEndpoint del OpenAPI: GET /api/perfil"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"estudianteId\": \"5b43330d-64b7-4874-b2e3-1c480e0a270d\",\n  \"nombreCompleto\": \"Estudiante de Pruebas 1793426919\",\n  \"correoElectronico\": \"qa.1793426918677.58703@sugoinote.test\",\n  \"fotoPerfil\": null,\n  \"fechaCreacion\": \"2026-10-31T06:08:38.9534133\",\n  \"totalApuntes\": 1,\n  \"totalResumenes\": 1,\n  \"totalExamenes\": 1,\n  \"totalPublicaciones\": 0,\n  \"totalMaterias\": 1,\n  \"promedio\": 66.67\n}"
+            }
+          ]
+        },
+        {
+          "name": "Actualizar nombre del perfil",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Confirma la actualizacion', () => pm.expect(b.mensaje).to.be.a('string').and.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/perfil",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "perfil"
+              ]
+            },
+            "description": "Actualiza nombre y correo.\n\nConserva el correo para no invalidar el login de la corrida.\n\nEndpoint del OpenAPI: PUT /api/perfil",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Estudiante Actualizado {{$timestamp}}\",\n  \"correo\": \"{{correoPrueba}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/perfil",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "perfil"
+                  ]
+                },
+                "description": "Actualiza nombre y correo.\n\nConserva el correo para no invalidar el login de la corrida.\n\nEndpoint del OpenAPI: PUT /api/perfil",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombreCompleto\": \"Estudiante Actualizado {{$timestamp}}\",\n  \"correo\": \"{{correoPrueba}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensaje\": \"Perfil actualizado.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Actualizar foto de perfil (data URI)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Confirma el guardado de la foto', () => pm.expect(b.mensaje).to.be.a('string').and.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/perfil/foto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "perfil",
+                "foto"
+              ]
+            },
+            "description": "Actualiza la foto de perfil (data-URI).\n\nEnvia un PNG de 1x1 en data URI.\n\nEndpoint del OpenAPI: PUT /api/perfil/foto",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fotoPerfil\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/perfil/foto",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "perfil",
+                    "foto"
+                  ]
+                },
+                "description": "Actualiza la foto de perfil (data-URI).\n\nEnvia un PNG de 1x1 en data URI.\n\nEndpoint del OpenAPI: PUT /api/perfil/foto",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fotoPerfil\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"mensaje\": \"Foto actualizada.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 · Seguridad",
+      "item": [
+        {
+          "name": "Comunidad sin token responde 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza la peticion sin token (401)', () => pm.response.to.have.status(401));",
+                  "pm.test('No filtra datos de la comunidad', () => pm.expect(pm.response.text()).to.not.include('postId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/comunidad",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "comunidad"
+              ]
+            },
+            "description": "Caso negativo: un endpoint protegido no debe responder sin Bearer.\n\nCaso adicional (no forma parte del contrato OpenAPI).",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (401) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/comunidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "comunidad"
+                  ]
+                },
+                "description": "Caso negativo: un endpoint protegido no debe responder sin Bearer.\n\nCaso adicional (no forma parte del contrato OpenAPI).",
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "html",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/html; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Cache-Control",
+                  "value": "no-cache, no-store"
+                },
+                {
+                  "key": "Pragma",
+                  "value": "no-cache"
+                },
+                {
+                  "key": "Set-Cookie",
+                  "value": ".AspNetCore.Antiforgery.RrEC-Lp7xpk=CfDJ8CAeUd2mN7hJvGGbGEOC48rGjoLIhegZ7ZeZvZySztIYMOJpeVcCpfJtzllsz7iNokn3KcmqYokFg6Y1iioFRaaSGI_mEUutvhjlmL8TuMciE99m2OLqVVIJvSJg-HLgduzOTdt9kewim_nn_gOEbPk; path=/; samesite=strict; httponly"
+                },
+                {
+                  "key": "Set-Cookie",
+                  "value": ".AspNetCore.Mvc.CookieTempDataProvider=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; samesite=lax; httponly"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "<!DOCTYPE html>\r\n<html lang=\"es\">\r\n<head>\r\n    <meta charset=\"utf-8\" />\r\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\r\n    <title>Error - SugoiNote</title>\r\n\r\n    <meta name=\"csrf-token\" content=\"CfDJ8CAeUd2mN7hJvGGbGEOC48rFIleUAhSVBbC8rh8g3qV4Uffa1ooTWSVhB15iF52fM-8t5CC61lYMysiyCpAHT7llDcI4P_CliZZ6Pl-QEXu5835I7zGHV4j3c2I5f2cM-F3cL_iz4_6tppVm_Buv9Ec\" />\r\n\r\n    <script>\r\n        (function () {\r\n            var guardado = localStorage.getItem('sugoi-tema');\r\n            var tema = guardado || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');\r\n            document.documentElement.setAttribute('data-bs-theme', tema);\r\n            document.documentElement.setAttribute('data-sugoi-tema', guardado || 'auto');\r\n\r\n            if (localStorage.getItem('sugoi-sidebar-collapsed') === 'true') {\r\n                document.documentElement.classList.add('sidebar-collapsed-init');\r\n            }\r\n        })();\r\n    </script>\r\n\r\n    <link rel=\"stylesheet\" href=\"/lib/bootstrap/dist/css/bootstrap.min.css\" />\r\n    <link rel=\"stylesheet\" href=\"/css/site.css?v=L--aXKk9FuUsZqt3u3Z1a-w5TSFin-tdOB4fOQQ57UM\" />\r\n    <link href=\"https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap\" rel=\"stylesheet\" />\r\n    <link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css\" />\r\n\r\n    <style>\r\n        [data-bs-theme=\"light\"] select option { background: #ffffff; color: #1c2033; }\r\n    </style>\r\n</head>\r\n<body>\r\n    <a href=\"#mainContent\" class=\"skip-link\">Saltar al contenido</a>\r\n\r\n    <button type=\"button\" class=\"sugoi-nav-toggle\" id=\"navToggle\"\r\n            aria-label=\"Abrir menú\" aria-expanded=\"false\" aria-controls=\"sidebar\">\r\n        <i class=\"bi bi-list\" aria-hidden=\"true\"></i>\r\n    </button>\r\n    <div class=\"sugoi-nav-scrim\" id=\"navScrim\" hidden></div>\r\n\r\n    <aside class=\"sidebar\" id=\"sidebar\">\r\n        <div class=\"sidebar-header\">\r\n            <a class=\"sidebar-brand\" href=\"/Home/Index\" title=\"SugoiNote\">\r\n                <span class=\"brand-icon\" aria-hidden=\"true\">S</span>\r\n                <span class=\"sidebar-brand-text\">SugoiNote</span>\r\n            </a>\r\n            <button type=\"button\" class=\"sidebar-toggle\" id=\"sidebarToggle\"\r\n                    aria-label=\"Colapsar menú\" aria-expanded=\"true\" title=\"Colapsar menú\">\r\n                <i class=\"bi bi-layout-sidebar-inset\" aria-hidden=\"true\"></i>\r\n            </button>\r\n        </div>\r\n\r\n        <nav class=\"sidebar-nav\" aria-label=\"Navegación principal\">\r\n            <a class=\"nav-link-sugoi active\" href=\"/Home/Index\" title=\"Inicio\" aria-current=\"page\">\r\n                <i class=\"bi bi-house-door\" aria-hidden=\"true\"></i>\r\n                <span class=\"nav-label\">Inicio</span>\r\n            </a>\r\n            <a class=\"nav-link-sugoi\" href=\"/Apuntes/Index\" title=\"Mis Apuntes\">\r\n                <i class=\"bi bi-journal-text\" aria-hidden=\"true\"></i>\r\n                <span class=\"nav-label\">Mis Apuntes</span>\r\n            </a>\r\n            <a class=\"nav-link-sugoi\" href=\"/Resumenes/Index\" title=\"Mis Resúmenes\">\r\n                <i class=\"bi bi-file-earmark-text\" aria-hidden=\"true\"></i>\r\n                <span class=\"nav-label\">Mis Resúmenes</span>\r\n            </a>\r\n            <a class=\"nav-link-sugoi\" href=\"/Examenes/Index\" title=\"Exámenes\">\r\n                <i class=\"bi bi-clipboard-check\" aria-hidden=\"true\"></i>\r\n                <span class=\"nav-label\">Exámenes</span>\r\n            </a>\r\n            <a class=\"nav-link-sugoi\" href=\"/Chat/Index\" title=\"Chat IA\">\r\n                <i class=\"bi bi-chat-dots\" aria-hidden=\"true\"></i>\r\n                <span class=\"nav-label\">Chat IA</span>\r\n            </a>\r\n            <a class=\"nav-link-sugoi\" href=\"/Comunidad/Index\" title=\"Comunidad\">\r\n                <i class=\"bi bi-people\" aria-hidden=\"true\"></i>\r\n                <span class=\"nav-label\">Comunidad</span>\r\n            </a>\r\n            <a class=\"nav-link-sugoi\" href=\"/Perfil/Index\" title=\"Perfil\">\r\n                <i class=\"bi bi-person-circle\" aria-hidden=\"true\"></i>\r\n                <span class=\"nav-label\">Perfil</span>\r\n            </a>\r\n        </nav>\r\n\r\n        <div class=\"sidebar-footer\">\r\n            <div class=\"theme-switcher\" role=\"group\" aria-label=\"Tema de color\">\r\n                <button type=\"button\" class=\"theme-btn\" data-tema=\"light\" title=\"Modo claro\">\r\n                    <i class=\"bi bi-sun\" aria-hidden=\"true\"></i><span class=\"visually-hidden\">Modo claro</span>\r\n                </button>\r\n                <button type=\"button\" class=\"theme-btn\" data-tema=\"auto\" title=\"Automático (según el sistema)\">\r\n                    <i class=\"bi bi-circle-half\" aria-hidden=\"true\"></i><span class=\"visually-hidden\">Automático</span>\r\n                </button>\r\n                <button type=\"button\" class=\"theme-btn\" data-tema=\"dark\" title=\"Modo oscuro\">\r\n                    <i class=\"bi bi-moon-stars\" aria-hidden=\"true\"></i><span class=\"visually-hidden\">Modo oscuro</span>\r\n                </button>\r\n            </div>\r\n\r\n            <form action=\"/Auth/Logout\" method=\"post\" class=\"sidebar-logout\">\r\n                <input name=\"__RequestVerificationToken\" type=\"hidden\" value=\"CfDJ8CAeUd2mN7hJvGGbGEOC48rFIleUAhSVBbC8rh8g3qV4Uffa1ooTWSVhB15iF52fM-8t5CC61lYMysiyCpAHT7llDcI4P_CliZZ6Pl-QEXu5835I7zGHV4j3c2I5f2cM-F3cL_iz4_6tppVm_Buv9Ec\" />\r\n                <button type=\"submit\" class=\"logout-btn\" title=\"Cerrar sesión\">\r\n                    <i class=\"bi bi-box-arrow-left\" aria-hidden=\"true\"></i>\r\n                    <span class=\"nav-label\">Cerrar sesión</span>\r\n                </button>\r\n            </form>\r\n        </div>\r\n    </aside>\r\n\r\n    <div class=\"main-content\" id=\"mainContent\">\r\n\r\n        <main>\r\n            \r\n<h1 class=\"text-danger\">Error.</h1>\r\n<h2 class=\"text-danger\">An error occurred while processing your request.</h2>\r\n\r\n    <p>\r\n        <strong>Request ID:</strong> <code>0HNPN2DEULI3B:00000020</code>\r\n    </p>\r\n\r\n<h3>Development Mode</h3>\r\n<p>\r\n    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.\r\n</p>\r\n<p>\r\n    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>\r\n    It can result in displaying sensitive information from exceptions to end users.\r\n    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>\r\n    and restarting the app.\r\n</p>\r\n\r\n        </main>\r\n    </div>\r\n\r\n    <script src=\"/js/sugoi.js?v=glW3jR7HdR0yd_FTKSZurNAK_V8HExhdFINtYCe7AUw\"></script>\r\n    <script src=\"/js/sidebar.js?v=R0VRwwKS2D4e4D6fWTcWF8RftlqejNHnaKC7_5hayG8\"></script>\r\n    \r\n</body>\r\n</html>"
+            }
+          ]
+        },
+        {
+          "name": "Login con clave incorrecta responde 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza la peticion con 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Devuelve un mensaje de error legible', () => { const b = pm.response.json(); pm.expect(b.error).to.be.a('string').and.not.empty; });",
+                  "pm.test('No devuelve ningun token', () => pm.expect(pm.response.text()).to.not.include('token'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Caso negativo: credenciales invalidas no generan token.\n\nCaso adicional (no forma parte del contrato OpenAPI).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correoElectronico\": \"{{correoPrueba}}\",\n  \"claveAcceso\": \"clave-equivocada-2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (400) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "description": "Caso negativo: credenciales invalidas no generan token.\n\nCaso adicional (no forma parte del contrato OpenAPI).",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"correoElectronico\": \"{{correoPrueba}}\",\n  \"claveAcceso\": \"clave-equivocada-2026\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"error\": \"Correo o contraseña incorrectos.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "99 · Limpieza",
+      "item": [
+        {
+          "name": "Eliminar el apunte de la corrida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('El cuerpo es JSON', () => pm.response.to.be.json);",
+                  "const b = pm.response.json();",
+                  "pm.test('Confirma la eliminacion', () => pm.expect(b.eliminado).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/apuntes/{{apunteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "apuntes",
+                "{{apunteId}}"
+              ]
+            },
+            "description": "Elimina un apunte del estudiante.\n\nDeja la base como estaba antes de la ejecucion.\n\nEndpoint del OpenAPI: DELETE /api/apuntes/{id}"
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (200) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/apuntes/{{apunteId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "apuntes",
+                    "{{apunteId}}"
+                  ]
+                },
+                "description": "Elimina un apunte del estudiante.\n\nDeja la base como estaba antes de la ejecucion.\n\nEndpoint del OpenAPI: DELETE /api/apuntes/{id}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"eliminado\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "El apunte eliminado responde 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('El apunte ya no existe (404)', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/apuntes/{{apunteId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "apuntes",
+                "{{apunteId}}"
+              ]
+            },
+            "description": "Verifica que la eliminacion fue efectiva.\n\nCaso adicional (no forma parte del contrato OpenAPI)."
+          },
+          "response": [
+            {
+              "name": "Ejemplo real (404) - corrida 2026-10-31",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/apuntes/{{apunteId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "apuntes",
+                    "{{apunteId}}"
+                  ]
+                },
+                "description": "Verifica que la eliminacion fue efectiva.\n\nCaso adicional (no forma parte del contrato OpenAPI)."
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Date",
+                  "value": "Sat, 31 Oct 2026 06:08:53 GMT"
+                },
+                {
+                  "key": "Server",
+                  "value": "Kestrel"
+                },
+                {
+                  "key": "Transfer-Encoding",
+                  "value": "chunked"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "DENY"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "strict-origin-when-cross-origin"
+                },
+                {
+                  "key": "Permissions-Policy",
+                  "value": "geolocation=(), microphone=(), camera=()"
+                },
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; worker-src 'self' blob:; connect-src 'self' https://generativelanguage.googleapis.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"type\": \"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\n  \"title\": \"Not Found\",\n  \"status\": 404,\n  \"traceId\": \"00-823b3e6df2be593668fe05eebbcb9de2-86edefb96310dd08-00\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
