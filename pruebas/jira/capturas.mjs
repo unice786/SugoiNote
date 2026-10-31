@@ -1,9 +1,9 @@
 // ─────────────────────────────────────────────────────────────
 // Capturas de pantalla de Jira para el informe.
 //
-// Abre Edge con un perfil propio (no toca el perfil normal del usuario) en la
-// lista de casos del proyecto PDPS y espera a que el usuario inicie sesion.
-// Cuando la sesion esta activa guarda las capturas en pruebas/jira/capturas.
+// Abre Edge con un perfil propio (no toca el perfil normal del usuario) en el
+// detalle de un caso y espera a que el usuario inicie sesion. Cuando la sesion
+// esta activa guarda las capturas en pruebas/jira/capturas.
 //
 // Uso:
 //   set PLAYWRIGHT_CORE=C:\...\node_modules\playwright-core
@@ -28,35 +28,69 @@ try {
 }
 
 const BASE = 'https://manuelangelcarias.atlassian.net';
-const PERFIL = join(process.env.TEMP ?? '', 'opencode', 'perfil-jira');
-const lista = `${BASE}/issues/?jql=${encodeURIComponent('project = PDPS ORDER BY key ASC')}`;
+// Se usa Brave porque es el navegador donde el usuario tiene la sesion de
+// Atlassian; la ruta se puede cambiar con la variable NAVEGADOR.
+const RUTA_BRAVE =
+  process.env.NAVEGADOR ??
+  join(process.env.LOCALAPPDATA ?? '', 'BraveSoftware', 'Brave-Browser', 'Application', 'brave.exe');
+const PERFIL = join(process.env.TEMP ?? '', 'opencode', 'perfil-jira-brave');
 
 const contexto = await chromium.launchPersistentContext(PERFIL, {
-  channel: 'msedge',
+  executablePath: process.env.NAVEGADOR ?? RUTA_BRAVE,
   headless: false,
   viewport: { width: 1500, height: 950 },
   deviceScaleFactor: 2,
   locale: 'es-GT',
+  // Atlassian bloquea los navegadores que se anuncian como automatizados. Se
+  // usa la cadencia normal de Brave y se oculta la marca de automatizacion.
+  ignoreDefaultArgs: ['--enable-automation'],
+  userAgent:
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36',
+  args: [
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--disable-brave-update',
+    '--disable-blink-features=AutomationControlled',
+  ],
+});
+
+await contexto.addInitScript(() => {
+  Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
 });
 
 const pagina = contexto.pages()[0] ?? (await contexto.newPage());
-await pagina.goto(lista, { waitUntil: 'domcontentloaded' });
 
-console.log('Esperando la sesion de Jira (inicia sesion en la ventana de Edge)...');
+// Se entra directo al detalle de un caso: si no hay sesion, Jira redirige al
+// formulario de inicio de sesion y al terminar vuelve a esta misma pagina.
+const ancla = `${BASE}/browse/PDPS-26`;
+await pagina.goto(ancla, { waitUntil: 'domcontentloaded' });
+
+console.log('Esperando la sesion de Jira (inicia sesion en la ventana de Brave)...');
 const minutos = Number(process.env.ESPERA_MINUTOS ?? 20);
 const limite = Date.now() + minutos * 60 * 1000;
 let dentro = false;
+
+// La forma segura de saber si hay sesion es preguntarle a la propia API con la
+// cookie del navegador: /rest/api/3/myself solo responde con sesion iniciada.
+async function sesionActiva() {
+  return pagina
+    .evaluate(async () => {
+      try {
+        const respuesta = await fetch('/rest/api/3/myself', { headers: { Accept: 'application/json' } });
+        if (respuesta.status !== 200) return null;
+        const datos = await respuesta.json();
+        return datos.emailAddress ?? datos.displayName ?? '';
+      } catch {
+        return null;
+      }
+    })
+    .catch(() => null);
+}
+
 while (Date.now() < limite) {
-  const url = pagina.url();
-  const estado = await pagina
-    .evaluate(() => ({
-      enLogin: Boolean(document.querySelector('#login-form-username, input[name="username"]')),
-      filas: document.querySelectorAll('a[href^="/browse/"]').length,
-      titulo: document.title,
-    }))
-    .catch(() => ({ enLogin: true, filas: 0, titulo: '' }));
-  const esJira = /\/issues|\/browse|\/jira\//.test(url) && !url.includes('id.atlassian.com');
-  if (!estado.enLogin && esJira && estado.filas > 0) {
+  const usuario = await sesionActiva();
+  if (usuario) {
+    console.log(`Sesion activa: ${usuario}`);
     dentro = true;
     break;
   }
@@ -71,52 +105,49 @@ if (!dentro) {
 }
 
 console.log('Sesion activa, tomando capturas...');
-await pagina.waitForTimeout(3000);
 
-const capturas = [
-  {
-    archivo: '01-lista-casos.png',
-    url: `${BASE}/issues/?jql=${encodeURIComponent('project = PDPS ORDER BY key ASC')}`,
-    espera: 'a[href^="/browse/"]',
-    descripcion: 'Lista de casos de prueba del proyecto PDPS',
-  },
-];
-
-// Detalle de un caso aprobado, un caso fallido, un caso UAT y las incidencias.
 const casos = JSON.parse(readFileSync(join(raiz, 'artifacts', 'pruebas', 'jira', 'casos.json'), 'utf8'));
 const fallido = casos.find((c) => c.resultado === 'FAIL');
 const uat = casos.find((c) => c.tipo === 'UAT');
 const aprobado = casos.find((c) => c.tipo === 'UNITARIA');
 
+const capturas = [];
 for (const [n, caso, etiqueta] of [
-  [2, aprobado, 'detalle-caso-aprobado'],
-  [3, fallido, 'detalle-caso-fallido'],
-  [4, uat, 'detalle-caso-uat'],
+  [1, aprobado, 'detalle-caso-aprobado'],
+  [2, fallido, 'detalle-caso-fallido'],
+  [3, uat, 'detalle-caso-uat'],
 ]) {
   if (!caso) continue;
   capturas.push({
     archivo: `0${n}-${etiqueta}-${caso.clave}.png`,
     url: `${BASE}/browse/${caso.clave}`,
-    espera: '[data-testid="issue.views.issue-base.foundation.summary.heading"], h1',
+    marca: caso.clave,
     descripcion: `${caso.clave} ${caso.numero}`,
   });
 }
 
 capturas.push({
+  archivo: '04-lista-casos.png',
+  url: `${BASE}/issues/?jql=${encodeURIComponent('project = PDPS ORDER BY key ASC')}`,
+  marca: 'PDPS-',
+  descripcion: 'Lista de casos de prueba del proyecto PDPS',
+});
+
+capturas.push({
   archivo: '05-incidencias.png',
-  url: `${BASE}/issues/?jql=${encodeURIComponent('project = PDPS AND issuetype = Error ORDER BY key ASC')}`,
-  espera: 'a[href^="/browse/"]',
+  url: `${BASE}/issues/?jql=${encodeURIComponent('key in (PDPS-44, PDPS-45, PDPS-46, PDPS-47) ORDER BY key ASC')}`,
+  marca: 'PDPS-44',
   descripcion: 'Incidencias registradas durante las pruebas',
 });
 
 for (const c of capturas) {
   await pagina.goto(c.url, { waitUntil: 'domcontentloaded' });
   try {
-    await pagina.waitForSelector(c.espera, { timeout: 30000 });
+    await pagina.waitForFunction((marca) => document.body.innerText.includes(marca), c.marca, { timeout: 45000 });
   } catch {
-    console.warn(`  (sin selector ${c.espera} en ${c.url})`);
+    console.warn(`  (no aparecio ${c.marca} en ${c.url})`);
   }
-  await pagina.waitForTimeout(3500);
+  await pagina.waitForTimeout(4000);
   await pagina.screenshot({ path: join(destino, c.archivo), fullPage: false });
   console.log(`+ ${c.archivo}  ${c.descripcion}`);
 }
