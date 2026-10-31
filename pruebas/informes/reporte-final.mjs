@@ -53,6 +53,13 @@ const altos = alertasZap.filter((a) => riesgo(a).startsWith('alt') || riesgo(a) 
 const medios = alertasZap.filter((a) => riesgo(a).startsWith('med') || riesgo(a) === 'medium').length;
 const bajos = alertasZap.filter((a) => riesgo(a).startsWith('baj') || riesgo(a) === 'low').length;
 
+// El resumen de k6 cambia de formato entre versiones: "values" en las viejas y
+// plano en las nuevas. Este lector acepta los dos.
+const k6 = (metrica, campo) =>
+  carga?.metrics?.[metrica]?.values?.[campo] ?? carga?.metrics?.[metrica]?.[campo] ?? 0;
+const peticionesCarga = k6('http_reqs', 'count');
+const p95Carga = k6('http_req_duration', 'p(95)');
+
 // ── Contenido embebido de los reportes ───────────────────────
 function contenidoReporte(nombre) {
   const ruta = join(artefactos, nombre, 'index.html');
@@ -63,6 +70,32 @@ function contenidoReporte(nombre) {
   return html.slice(inicio + '</header>'.length, fin);
 }
 
+// ── Evidencia nativa de cada herramienta ─────────────────────
+// Se adjunta la captura del reporte que genera la propia herramienta (el HTML
+// original), ademas del resumen armado para este documento.
+function evidenciaNativa(reporte) {
+  if (reporte.nativo === null) {
+    return `<div class="nota"><b>Sobre la evidencia:</b> este tipo de prueba no usa una herramienta externa que exporte su propio reporte: el runner es parte del repositorio (<code>pruebas/${reporte.id}</code>) y el HTML de este apartado es su salida original.</div>`;
+  }
+  if (!reporte.nativo) return '';
+  const lista = [].concat(reporte.nativo);
+  const figuras = lista
+    .map((nativo) => {
+      const ruta = join(artefactos, 'nativos', nativo.archivo);
+      if (!existsSync(ruta)) {
+        return `<div class="nota"><b>Evidencia nativa:</b> falta la captura <code>${escapar(nativo.archivo)}</code>. Ejecuta <code>pruebas/informes/capturar-nativos.mjs</code>.</div>`;
+      }
+      return `<p class="subtitulo">${escapar(nativo.nota)}</p>
+  <figure class="captura">
+    <img src="${pathToFileURL(ruta).href}" alt="${escapar(nativo.titulo)}">
+    <figcaption>${escapar(nativo.titulo)}</figcaption>
+  </figure>`;
+    })
+    .join('\n');
+
+  return `<h2>Evidencia original de la herramienta</h2>\n  ${figuras}`;
+}
+
 const reportes = [
   {
     id: 'unitarias',
@@ -70,6 +103,11 @@ const reportes = [
     resumen: `${pasadasUnit}/${totalUnit} pruebas correctas`,
     estado: pasadasUnit === totalUnit && totalUnit > 0 ? 'ok' : 'fallo',
     html: contenidoReporte('unitarias'),
+    nativo: {
+      archivo: 'unitarias-cobertura.png',
+      titulo: 'ReportGenerator: cobertura de codigo de la API',
+      nota: 'Reporte HTML que genera la herramienta de cobertura a partir del archivo Cobertura que deja dotnet test, sin editar.',
+    },
   },
   {
     id: 'componentes',
@@ -77,6 +115,11 @@ const reportes = [
     resumen: `${jest?.numPassedTests ?? 0}/${jest?.numTotalTests ?? 0} pruebas correctas`,
     estado: jest?.numFailedTests === 0 && jest?.numTotalTests > 0 ? 'ok' : 'fallo',
     html: contenidoReporte('componentes'),
+    nativo: {
+      archivo: 'componentes-cobertura.png',
+      titulo: 'Istanbul (Jest): reporte de cobertura en HTML',
+      nota: 'Reporte que Jest genera con --coverageReporters=html; es el archivo original, abierto tal cual.',
+    },
   },
   {
     id: 'api',
@@ -84,6 +127,11 @@ const reportes = [
     resumen: `${ejecucionesNewman.length} peticiones, ${asercionesNewman - fallosNewman}/${asercionesNewman} aserciones`,
     estado: fallosNewman === 0 ? 'ok' : 'fallo',
     html: contenidoReporte('api'),
+    nativo: {
+      archivo: 'api-newman.png',
+      titulo: 'newman-reporter-htmlextra: reporte de la coleccion',
+      nota: 'Reporte HTML que produce Newman al terminar la corrida de las 35 peticiones.',
+    },
   },
   {
     id: 'e2e',
@@ -91,15 +139,21 @@ const reportes = [
     resumen: `${e2e?.resumen?.flujosOk ?? 0}/${e2e?.resumen?.totalFlujos ?? 0} flujos, ${e2e?.resumen?.pasosOk ?? 0}/${e2e?.resumen?.totalPasos ?? 0} pasos`,
     estado: e2e?.resumen?.flujosOk === e2e?.resumen?.totalFlujos && e2e?.resumen?.totalFlujos > 0 ? 'ok' : 'fallo',
     html: contenidoReporte('e2e'),
+    nativo: null,
   },
   {
     id: 'carga',
     titulo: 'Prueba de carga con 20 usuarios concurrentes',
-    resumen: `${num(carga?.metrics?.http_reqs?.values?.count)} peticiones, p95 ${num(carga?.metrics?.http_req_duration?.values?.['p(95)'])} ms`,
-    estado: (carga?.metrics?.http_req_duration?.values?.['p(95)'] ?? 9999) < 800 ? 'ok' : 'fallo',
+    resumen: `${num(peticionesCarga)} peticiones, p95 ${num(p95Carga)} ms`,
+    estado: p95Carga < 800 ? 'ok' : 'fallo',
     html: contenidoReporte('rendimiento')?.includes('id="carga"')
       ? contenidoReporte('rendimiento')
       : leerHtml('rendimiento', 'carga.html'),
+    nativo: {
+      archivo: 'carga-k6.png',
+      titulo: 'k6: dashboard HTML de la corrida de carga',
+      nota: 'Dashboard que k6 exporta al terminar (K6_WEB_DASHBOARD), con las graficas de usuarios, latencias y errores.',
+    },
   },
   {
     id: 'estres',
@@ -107,6 +161,11 @@ const reportes = [
     resumen: `${readdirNiveles().length} niveles hasta ${Math.max(0, ...readdirNiveles())} usuarios virtuales`,
     estado: 'ok',
     html: leerHtml('rendimiento', 'estres.html'),
+    nativo: {
+      archivo: 'estres-k6.png',
+      titulo: 'k6: dashboard HTML del nivel de 400 usuarios',
+      nota: 'Dashboard nativo del ultimo nivel de estres (400 usuarios virtuales durante 25 s).',
+    },
   },
   {
     id: 'seguridad',
@@ -114,6 +173,18 @@ const reportes = [
     resumen: `${altos} altos, ${medios} medios, ${bajos} bajos`,
     estado: altos === 0 ? 'ok' : 'fallo',
     html: contenidoReporte('seguridad'),
+    nativo: [
+      {
+        archivo: 'seguridad-zap-api.png',
+        titulo: 'OWASP ZAP: reporte del escaneo activo de la API',
+        nota: 'HTML que ZAP escribe al terminar zap-api-scan.py, autenticado con un token real.',
+      },
+      {
+        archivo: 'seguridad-zap-baseline.png',
+        titulo: 'OWASP ZAP: reporte del escaneo pasivo del sitio',
+        nota: 'HTML que ZAP escribe al terminar zap-baseline.py sobre el sitio web.',
+      },
+    ],
   },
   {
     id: 'uat',
@@ -121,6 +192,7 @@ const reportes = [
     resumen: `${uat?.resumen?.aprobados ?? 0}/${uat?.resumen?.total ?? 0} criterios aceptados`,
     estado: uat?.resumen?.aprobados === uat?.resumen?.total && uat?.resumen?.total > 0 ? 'ok' : 'fallo',
     html: contenidoReporte('uat'),
+    nativo: null,
   },
 ];
 
@@ -412,7 +484,9 @@ const html = `<!DOCTYPE html>
   <p>
     Cada reporte se genero automaticamente a partir del archivo de resultados de su herramienta (TRX de .NET,
     JSON de Jest, JSON de Newman, JSON del runner de E2E, resumen de k6, JSON de ZAP y JSON del runner de UAT).
-    Los numeros de este documento salen de esos archivos, no de una planilla aparte.
+    Los numeros de este documento salen de esos archivos, no de una planilla aparte. Al final de cada apartado se
+    adjunta la captura del <b>reporte original que exporta la propia herramienta</b>, para que el resultado se pueda
+    contrastar con la fuente.
   </p>
   ${tabla({
     columnas: ['#', 'Reporte', 'Resumen de la corrida', 'Resultado'],
@@ -438,6 +512,7 @@ ${reportes
   <h2 class="titulo-reporte">3.${i + 1}. ${escapar(r.titulo)}</h2>
   <div class="resumen-reportes"><span class="pastilla ${r.estado}">${r.estado === 'ok' ? 'PASS' : 'FAIL'}</span> ${escapar(r.resumen)}</div>
   ${r.html}
+  ${evidenciaNativa(r)}
 </section>`,
   )
   .join('\n')}
@@ -494,7 +569,7 @@ ${reportes
       [`Componentes (${jest?.numPassedTests ?? 0}/${jest?.numTotalTests ?? 0})`, 'Los componentes reutilizables respetan sus variantes, estados y eventos.'],
       [`API (${asercionesNewman - fallosNewman}/${asercionesNewman})`, 'Las 28 operaciones del contrato responden lo esperado. Se encontró y corrigio un defecto real en el borrado de publicaciones.'],
       [`E2E (${e2e?.resumen?.flujosOk ?? 0}/${e2e?.resumen?.totalFlujos ?? 0})`, 'Los flujos completos de apuntes, comunidad y aislamiento entre estudiantes funcionan de punta a punta.'],
-      [`Carga (p95 ${num(carga?.metrics?.http_req_duration?.values?.['p(95)'])} ms)`, 'El uso normal de 20 estudiantes concurrentes queda muy por debajo de los umbrales de aceptacion.'],
+      [`Carga (p95 ${num(p95Carga)} ms)`, 'El uso normal de 20 estudiantes concurrentes queda muy por debajo de los umbrales de aceptacion.'],
       [`Estres (${readdirNiveles().length} niveles)`, 'La API sostiene la demanda hasta saturar en torno a 2 000 peticiones por segundo; la latencia crece de forma proporcional, sin errores.'],
       [`Seguridad (${altos} altos, ${medios} medios)`, 'No hay vulnerabilidades de riesgo alto. Las brechas son de configuracion de cabeceras y del entorno HTTP de pruebas.'],
       [`UAT (${uat?.resumen?.aprobados ?? 0}/${uat?.resumen?.total ?? 0})`, 'Los nueve criterios de aceptacion se cumplen con datos nuevos en cada corrida.'],

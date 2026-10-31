@@ -23,24 +23,55 @@ const leer = (nombre) => JSON.parse(readFileSync(join(entrada, nombre), 'utf8'))
 const num = (valor, decimales = 0) =>
   Number(valor ?? 0).toLocaleString('es-GT', { minimumFractionDigits: decimales, maximumFractionDigits: decimales });
 
+// k6 entrego dos formatos de resumen segun la version: el clasico anida los
+// valores en "values" y el actual los deja planos en la metrica. Esta funcion
+// lee los dos para que el reporte no dependa de la version de la imagen.
+const valor = (datos, metrica, campo) => datos.metrics[metrica]?.values?.[campo] ?? datos.metrics[metrica]?.[campo] ?? 0;
+
+// En el resumen actual de k6 el booleano de cada umbral no dice si se cumplio,
+// asi que la regla se evalua contra el valor medido (rate, p(95), count...).
+function cumple(regla, metric) {
+  const partes = /^([a-z0-9()]+)\s*(<=|>=|<|>)\s*([\d.]+)$/i.exec(regla);
+  if (!partes) return null;
+  const valorMedido = metric?.values?.[partes[1]] ?? metric?.[partes[1]];
+  if (valorMedido === undefined) return null;
+  const limite = Number(partes[3]);
+  switch (partes[2]) {
+    case '<':
+      return valorMedido < limite;
+    case '<=':
+      return valorMedido <= limite;
+    case '>':
+      return valorMedido > limite;
+    default:
+      return valorMedido >= limite;
+  }
+}
+
 const metricas = (datos) => ({
-  peticiones: datos.metrics.http_reqs?.values.count ?? 0,
-  rps: datos.metrics.http_reqs?.values.rate ?? 0,
-  duracion: (datos.state?.testRunDurationMs ?? 0) / 1000,
-  vus: datos.metrics.vus_max?.values.value ?? datos.metrics.vus?.values.max ?? 0,
-  iteraciones: datos.metrics.iterations?.values.count ?? 0,
-  errorRate: (datos.metrics.http_req_failed?.values.rate ?? 0) * 100,
-  checks: (datos.metrics.checks?.values.rate ?? 0) * 100,
-  p50: datos.metrics.http_req_duration?.values.med ?? 0,
-  p90: datos.metrics.http_req_duration?.values['p(90)'] ?? 0,
-  p95: datos.metrics.http_req_duration?.values['p(95)'] ?? 0,
-  p99: datos.metrics.http_req_duration?.values['p(99)'] ?? 0,
-  promedio: datos.metrics.http_req_duration?.values.avg ?? 0,
-  maximo: datos.metrics.http_req_duration?.values.max ?? 0,
-  recibido: (datos.metrics.data_received?.values.count ?? 0) / 1024 / 1024,
+  peticiones: valor(datos, 'http_reqs', 'count'),
+  rps: valor(datos, 'http_reqs', 'rate'),
+  duracion: datos.state?.testRunDurationMs ? datos.state.testRunDurationMs / 1000 : (datos.duracionMedida ?? 0),
+  vus: valor(datos, 'vus_max', 'value') || valor(datos, 'vus', 'max'),
+  iteraciones: valor(datos, 'iterations', 'count'),
+  errorRate: valor(datos, 'http_req_failed', 'rate') * 100,
+  checks: valor(datos, 'checks', 'rate') * 100,
+  p50: valor(datos, 'http_req_duration', 'med'),
+  p90: valor(datos, 'http_req_duration', 'p(90)'),
+  p95: valor(datos, 'http_req_duration', 'p(95)'),
+  p99: valor(datos, 'http_req_duration', 'p(99)'),
+  promedio: valor(datos, 'http_req_duration', 'avg'),
+  maximo: valor(datos, 'http_req_duration', 'max'),
+  recibido: valor(datos, 'data_received', 'count') / 1024 / 1024,
   umbrales: Object.entries(datos.metrics)
     .filter(([, m]) => m.thresholds && Object.keys(m.thresholds).length)
-    .flatMap(([nombre, m]) => Object.entries(m.thresholds).map(([regla, info]) => ({ metrica: nombre, regla, ok: info.ok !== false }))),
+    .flatMap(([nombre, m]) =>
+      Object.entries(m.thresholds).map(([regla, info]) => ({
+        metrica: nombre,
+        regla,
+        ok: cumple(regla, m) ?? (typeof info === 'object' ? info.ok !== false : true),
+      })),
+    ),
 });
 
 function barraMs(valor, maximo) {
