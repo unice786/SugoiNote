@@ -139,16 +139,27 @@ const html = documento({
       ]),
     }),
     `<h2>Cobertura por archivo</h2>`,
-    `<p class="subtitulo">Se listan solo los archivos del proyecto (sin migraciones ni codigo generado).</p>`,
+    `<p class="subtitulo">Solo se listan las clases que las pruebas unitarias ejercitan. Las clases sin cobertura se resumen abajo.</p>`,
     tabla({
       columnas: ['Clase', 'Archivo', 'Lineas', 'Ramas'],
-      filas: clasesCobertura.map((c) => [
-        `<span class="mono">${escapar(c.clase)}</span>`,
-        `<span class="mono">${escapar(c.archivo)}</span>`,
-        barra(c.lineas),
-        barra(c.ramas),
-      ]),
+      filas: clasesCobertura
+        .filter((c) => c.lineas > 0)
+        .map((c) => [
+          `<span class="mono">${escapar(c.clase)}</span>`,
+          `<span class="mono">${escapar(c.archivo)}</span>`,
+          barra(c.lineas),
+          barra(c.ramas),
+        ]),
     }),
+    (() => {
+      const sinCobertura = clasesCobertura.filter((c) => c.lineas === 0);
+      if (!sinCobertura.length) return '';
+      const ejemplos = sinCobertura
+        .slice(0, 6)
+        .map((c) => escapar(c.clase))
+        .join(', ');
+      return `<div class="nota"><b>${sinCobertura.length} clases sin cobertura unitaria:</b> son DTOs, modelos, vistas y clases de configuracion que no contienen logica de decision (${ejemplos}${sinCobertura.length > 6 ? ' y otras' : ''}). Su comportamiento se valida desde las pruebas de API (Newman) y el E2E, que no cuentan para esta metrica.</div>`;
+    })(),
     `<h2>Detalle de las pruebas ejecutadas</h2>`,
     tabla({
       columnas: ['Prueba', 'Clase', 'Resultado', 'Tiempo'],

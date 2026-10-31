@@ -61,13 +61,31 @@ const peticionesCarga = k6('http_reqs', 'count');
 const p95Carga = k6('http_req_duration', 'p(95)');
 
 // ── Contenido embebido de los reportes ───────────────────────
+// En el documento final no van las tablas gigantes de detalle: el informe
+// resume y deja la evidencia en los reportes HTML originales. Estos bloques
+// se quitan solo al armar el PDF; los archivos de cada herramienta no cambian.
+const SECCIONES_OMITIDAS = [
+  'Detalle de las pruebas ejecutadas',
+  'Detalle de cada peticion',
+  'Detalle y recomendacion',
+];
+
+function recortar(html) {
+  let salida = html;
+  for (const titulo of SECCIONES_OMITIDAS) {
+    const patron = new RegExp(`<h2[^>]*>\\s*${titulo}\\s*</h2>[\\s\\S]*?(?=<h2|</section>|$)`, 'i');
+    salida = salida.replace(patron, '');
+  }
+  return salida;
+}
+
 function contenidoReporte(nombre) {
   const ruta = join(artefactos, nombre, 'index.html');
   if (!existsSync(ruta)) return `<div class="nota">Falta generar el reporte ${nombre}.</div>`;
   const html = readFileSync(ruta, 'utf8');
   const inicio = html.indexOf('</header>');
   const fin = html.lastIndexOf('<footer class="pie">');
-  return html.slice(inicio + '</header>'.length, fin);
+  return recortar(html.slice(inicio + '</header>'.length, fin));
 }
 
 // ── Evidencia nativa de cada herramienta ─────────────────────
@@ -213,7 +231,7 @@ function leerHtml(carpeta, archivo) {
   const html = readFileSync(ruta, 'utf8');
   const inicio = html.indexOf('</header>');
   const fin = html.lastIndexOf('<footer class="pie">');
-  return html.slice(inicio + '</header>'.length, fin);
+  return recortar(html.slice(inicio + '</header>'.length, fin));
 }
 
 // ── Capturas de Jira ─────────────────────────────────────────
@@ -486,7 +504,8 @@ const html = `<!DOCTYPE html>
     JSON de Jest, JSON de Newman, JSON del runner de E2E, resumen de k6, JSON de ZAP y JSON del runner de UAT).
     Los numeros de este documento salen de esos archivos, no de una planilla aparte. Al final de cada apartado se
     adjunta la captura del <b>reporte original que exporta la propia herramienta</b>, para que el resultado se pueda
-    contrastar con la fuente.
+    contrastar con la fuente. Las tablas de detalle prueba por prueba no se reproducen aqui: quedan completas en los
+    HTML de <code>artifacts/pruebas/</code>.
   </p>
   ${tabla({
     columnas: ['#', 'Reporte', 'Resumen de la corrida', 'Resultado'],

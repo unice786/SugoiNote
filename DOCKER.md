@@ -31,13 +31,14 @@ Es el **director de orquesta**. Mientras un `Dockerfile` describe *una* imagen,
 el compose describe *varios* contenedores y, sobre todo, **como se relacionan
 entre si**. Un solo comando levanta todo el conjunto.
 
-Define cuatro servicios:
+Define cinco servicios:
 
 | Servicio | Que hace |
 |---|---|
 | `sqlserver` | Un SQL Server 2022 vacio y desechable, solo para pruebas |
 | `sqlserver-init` | Crea la base `SugoiNote` y termina |
 | `api` | La API de SugoiNote, apuntando al SQL Server del compose |
+| `api-carga` | La misma imagen de la API, con el limitador de peticiones apagado y el perfil `carga` (solo para medir rendimiento con k6) |
 | `tests` | Ejecuta las 159 pruebas unitarias (bajo demanda) |
 
 ### `SUGOINOTE2.Tests/Dockerfile`
@@ -228,3 +229,23 @@ La carpeta `mobile/` (la aplicacion Expo) **no participa** en este entorno:
 
 Asi, la app movil no puede provocar errores en la compilacion ni en la
 ejecucion de las pruebas de la API.
+
+---
+
+## 7. Las ocho estrategias de prueba
+
+Este documento cubre el entorno de Docker y las pruebas unitarias. El resto de
+las pruebas (componentes React Native, API con Newman, E2E, carga, estres,
+seguridad con OWASP ZAP y UAT) tienen su propio instructivo en
+[`pruebas/README.md`](pruebas/README.md), con el comando exacto de cada suite y
+la forma de armar el informe en PDF.
+
+Dos detalles del compose que se usan alli:
+
+- **`api-carga`**: se levanta con `docker compose --profile carga up api-carga`
+  y usa la misma imagen y la misma base de datos que `api`, pero con
+  `App__RateLimiting=false`. Sin eso, los usuarios virtuales de k6 salen todos
+  por la misma IP y solo se medirian respuestas 429.
+- **`IA__Model`**: el entorno de pruebas usa `gemini-3.1-flash-lite` porque el
+  modelo grande devolvio 503 y latencias de mas de dos minutos durante las
+  corridas. Produccion mantiene `gemini-3.8-flash`.
