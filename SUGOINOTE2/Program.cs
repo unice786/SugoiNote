@@ -346,7 +346,15 @@ app.Use(async (ctx, next) =>
 
 app.UseSugoiSwagger();
 
-app.UseRateLimiter();
+// El rate limiting global (120 req/min por IP) frena el abuso en produccion,
+// pero invalida cualquier prueba de carga: todos los usuarios virtuales salen
+// por la misma IP y solo se medirian respuestas 429. En el entorno de pruebas
+// se apaga con App:RateLimiting = false para el contenedor dedicado a k6.
+if (builder.Configuration.GetValue("App:RateLimiting", true))
+{
+    app.UseRateLimiter();
+}
+
 app.UseRouting();
 
 app.UseAuthentication();

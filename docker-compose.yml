@@ -98,10 +98,16 @@ services:
       # "TrustServerCertificate" es necesario: el contenedor usa certificado autofirmado.
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=SugoiNote;User Id=sa;Password=${SQL_SA_PASSWORD:-SugoiNote_Pruebas_2026!};TrustServerCertificate=True;Encrypt=False;MultipleActiveResultSets=True"
 
-      # Valores de relleno: Program.cs los exige al arrancar (ValidateOnStart),
-      # pero las pruebas no usan IA ni envío real de correo.
-      IA__ApiKey: "clave-de-pruebas-no-real"
-      IA__Model: "gemini-3.8-flash"
+      # Program.cs exige las claves al arrancar (ValidateOnStart). La key real de
+      # IA se toma del archivo .env (ignorado por Git); si no existe, se usa un
+      # valor de relleno y los endpoints de IA responderan con error controlado.
+      IA__ApiKey: "${IA_API_KEY:-clave-de-pruebas-no-real}"
+      # El modelo "grande" (gemini-3.8-flash) se satura con frecuencia: en las
+      # corridas de prueba respondio 503 o tardo mas de 2 minutos, lo que hacia
+      # fallar los endpoints de IA por causas ajenas a la aplicacion. El entorno
+      # de pruebas usa el modelo rapido, que responde en segundos. En produccion
+      # se mantiene gemini-3.8-flash (ver appsettings.json).
+      IA__Model: "gemini-3.1-flash-lite"
       IA__ModelFast: "gemini-3.1-flash-lite"
       Jwt__Key: "clave-de-pruebas-sugoinote-32-caracteres-minimo"
 
@@ -119,6 +125,46 @@ services:
       # 5265 en tu PC -> 8080 en el contenedor: la coleccion de Postman
       # (baseUrl = http://localhost:5265) sigue funcionando sin cambios.
       - "127.0.0.1:5265:8080"
+    networks:
+      - red-pruebas
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1g
+    restart: unless-stopped
+
+  # ── API sin rate limiting (solo para las pruebas de carga) ──
+  # El tope global de 120 peticiones/minuto por IP es correcto en produccion,
+  # pero todos los usuarios virtuales de k6 salen por la misma IP: con el
+  # limitador activo solo se medirian respuestas 429. Este contenedor usa la
+  # MISMA imagen y la MISMA base de datos, con el limitador apagado, para medir
+  # el rendimiento real de la aplicacion.
+  api-carga:
+    build:
+      context: .
+      dockerfile: SUGOINOTE2/Dockerfile
+    image: sugoinote-api:pruebas
+    container_name: sugoinote-api-carga
+    profiles:
+      - carga
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=SugoiNote;User Id=sa;Password=${SQL_SA_PASSWORD:-SugoiNote_Pruebas_2026!};TrustServerCertificate=True;Encrypt=False;MultipleActiveResultSets=True"
+      IA__ApiKey: "${IA_API_KEY:-clave-de-pruebas-no-real}"
+      IA__Model: "gemini-3.1-flash-lite"
+      IA__ModelFast: "gemini-3.1-flash-lite"
+      Jwt__Key: "clave-de-pruebas-sugoinote-32-caracteres-minimo"
+      App__HttpsRedirection: "false"
+      App__CrearEsquemaDesdeModelo: "true"
+      App__RateLimiting: "false"
+      Email__SoloLog: "true"
+    ports:
+      - "127.0.0.1:5266:8080"
     networks:
       - red-pruebas
     deploy:
@@ -155,7 +201,7 @@ services:
     environment:
       # Las pruebas unitarias no arrancan la API, pero si alguna dependencia
       # lee configuración, estos valores evitan que falle por falta de clave.
-      IA__ApiKey: "clave-de-pruebas-no-real"
+      IA__ApiKey: "${IA_API_KEY:-clave-de-pruebas-no-real}"
       Jwt__Key: "clave-de-pruebas-sugoinote-32-caracteres-minimo"
 
 networks:

@@ -147,7 +147,10 @@ public class ApiComunidadController(IComunidadService comunidad, ICurrentUser us
     [ProducesResponseType(typeof(ApiError), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Eliminar(Guid id, CancellationToken ct)
     {
-        var (ok, error) = await comunidad.EliminarPostAsync(usuario.RequireId(), id, ct);
+        // El servicio espera (postId, estudianteId). Estaban invertidos: se le
+        // pasaba el id del estudiante como id de la publicacion y por eso
+        // siempre respondia "La publicacion no existe".
+        var (ok, error) = await comunidad.EliminarPostAsync(id, usuario.RequireId(), ct);
         return ok ? Ok(new { eliminado = true }) : BadRequest(new ApiError(error ?? "No se pudo eliminar."));
     }
 }
