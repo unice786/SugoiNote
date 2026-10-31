@@ -104,17 +104,27 @@ const html = documento({
     }),
     cobertura
       ? `<h2>Cobertura de los componentes</h2>
-        <p class="subtitulo">Porcentaje de lineas, ramas, funciones y sentencias cubiertas por las pruebas.</p>
+        <p class="subtitulo">Porcentaje de lineas, ramas, funciones y sentencias cubiertas por las pruebas, solo de los componentes que tienen pruebas.</p>
         ${tabla({
           columnas: ['Archivo', 'Lineas', 'Ramas', 'Funciones', 'Sentencias'],
-          filas: archivosCobertura.map((a) => [
-            `<span class="mono">${escapar(a.archivo)}</span>`,
-            barra(a.lineas),
-            barra(a.ramas),
-            barra(a.funciones),
-            barra(a.sentencias),
-          ]),
-        })}`
+          filas: archivosCobertura
+            .filter((a) => a.lineas > 0)
+            .map((a) => [
+              `<span class="mono">${escapar(a.archivo)}</span>`,
+              barra(a.lineas),
+              barra(a.ramas),
+              barra(a.funciones),
+              barra(a.sentencias),
+            ]),
+        })}
+        ${
+          archivosCobertura.filter((a) => a.lineas === 0).length
+            ? `<div class="nota"><b>${archivosCobertura.filter((a) => a.lineas === 0).length} componentes sin pruebas:</b> ${archivosCobertura
+                .filter((a) => a.lineas === 0)
+                .map((a) => escapar(a.archivo.replace('src/components/ui/', '')))
+                .join(', ')}. Su cobertura es 0 % porque no estan en el alcance de esta entrega; se validan desde las pruebas de API y el E2E.</div>`
+            : ''
+        }`
       : '',
     `<div class="nota"><b>Que se prueba:</b> que el componente muestre lo que recibe, que dispare sus eventos, que respete los estados deshabilitado y de carga, y que aplique las variantes de tamano y color. No se prueba el texto interno de React Native ni las animaciones.</div>`,
   ],
