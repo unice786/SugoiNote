@@ -19,7 +19,7 @@ const artefactos = join(raiz, 'artifacts');
 const rutaModulo = process.env.PDF_LIB ?? join(process.env.TEMP ?? '', 'opencode', 'pdfgen', 'node_modules', 'pdf-lib', 'cjs', 'index.js');
 const { PDFDocument } = await import(pathToFileURL(rutaModulo).href).then((m) => m.default ?? m);
 
-const final = join(artefactos, 'Reporte-Ejecucion-Pruebas-SugoiNote.pdf');
+const final = process.argv[3] ? resolve(process.argv[3]) : join(artefactos, 'Reporte-Ejecucion-Pruebas-SugoiNote.pdf');
 const portada =
   process.argv[2] ??
   join(

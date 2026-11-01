@@ -33,6 +33,16 @@ const ENLACES = {
   movil: `${REPO}/tree/main/mobile`,
 };
 
+const INDICE = [
+  ['#resumen', '1. Resumen del avance'],
+  ['#backend', '2. Backend (API y servicios)'],
+  ['#web', '3. Frontend web'],
+  ['#movil', '4. Aplicacion movil'],
+  ['#repositorios', '5. Repositorios oficiales'],
+  ['#versiones', '6. Control de versiones y aportes'],
+  ['#estado', '7. Estado y proximos pasos'],
+];
+
 const ESTILOS = `
   :root {
     --texto: #1a1a1a; --texto-suave: #52525b; --borde: #cfd6df;
@@ -43,6 +53,11 @@ const ESTILOS = `
     @bottom-center { content: counter(page); font-family: Arial, sans-serif; font-size: 8pt; color: #6b7280; }
     @bottom-right { content: "SugoiNote · ${MODULO} · ${CICLO}"; font-family: Arial, sans-serif; font-size: 7.5pt; color: #9ca3af; }
   }
+  .indice h1 { margin-bottom: 18px; }
+  .indice ol { list-style: none; margin: 0; padding: 0; }
+  .indice li { padding: 8px 0; border-bottom: .5pt dotted var(--borde); }
+  .indice a { color: var(--texto); text-decoration: none; }
+  .indice a .pag { float: right; color: #111; font-weight: 700; }
   html, body { background: #fff; }
   body { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; font-size: 12pt; line-height: 1.45; color: var(--texto); margin: 0; padding: 0; }
   .lienzo { max-width: none; }
@@ -117,6 +132,14 @@ const html = `<!DOCTYPE html>
       <p>Ciclo: ${escapar(CICLO)}</p>
     </div>
   </div>
+</section>
+
+<!-- ================= INDICE ================= -->
+<section class="hoja indice">
+  <h1>Indice</h1>
+  <ol>
+    ${INDICE.map(([href, texto]) => `<li><a href="${escapar(href)}">${escapar(texto)}</a></li>`).join('')}
+  </ol>
 </section>
 
 <!-- ================= 1 ================= -->
