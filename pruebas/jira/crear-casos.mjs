@@ -143,7 +143,7 @@ const casos = [
       objetivo: 'Comprobar que la logica de negocio de la API (autenticacion, apuntes, comunidad, examenes, resumenes y perfil) funciona de forma aislada, sin base de datos real ni red.',
       precondiciones: ['Imagen sugoinote-tests:pruebas construida con el SDK de .NET 10.', 'Pruebas con SQLite en memoria y dobles de los servicios externos.'],
       pasos: ['Construir la imagen de pruebas con docker compose --profile pruebas build tests.', 'Ejecutar la suite completa dentro del contenedor con dotnet test.', 'Exportar el resultado en formato TRX y la cobertura con XPlat Code Coverage.', 'Generar el reporte HTML a partir del TRX.'],
-      esperado: 'Las 159 pruebas terminan en estado correcto y ninguna falla.',
+      esperado: 'Las 238 pruebas terminan en estado correcto y ninguna falla.',
       obtenido: `${pasadasUnit} de ${totalUnit} pruebas correctas, ${fallidasUnit} fallidas.`,
       evidencia: ['artifacts/pruebas/unitarias/resultados.trx', 'artifacts/pruebas/unitarias/index.html', 'Comando: docker compose --profile pruebas build tests && docker run --rm -v "$(pwd)/artifacts/pruebas/unitarias:/resultados" sugoinote-tests:pruebas'],
     },

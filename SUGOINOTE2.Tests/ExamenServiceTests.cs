@@ -337,4 +337,51 @@ public class ExamenServiceTests
         var guardado = await t.Context.Examenes.FindAsync(examen.ExamenId);
         Assert.Equal(100m, guardado!.CalificacionFinal);
     }
+
+    [Fact]
+    public async Task Listar_SoloDevuelveLosExamenesDelEstudiante()
+    {
+        using var t = new TestDb();
+        var yo = Guid.NewGuid();
+        await SembrarExamen(t.Context, yo, correctas: 1, total: 2);
+        await SembrarExamen(t.Context, Guid.NewGuid(), correctas: 1, total: 2);
+
+        var examenes = await Crear(t.Context, new FakeIaClient()).ListarAsync(yo);
+
+        var examen = Assert.Single(examenes);
+        Assert.Equal("Apunte de examen", examen.Titulo);
+        Assert.Equal(2, examen.Total);
+        Assert.Null(examen.Nota);
+    }
+
+    [Fact]
+    public async Task ListarApuntes_DevuelveLosApuntesDelEstudiante()
+    {
+        using var t = new TestDb();
+        var yo = Guid.NewGuid();
+        await SembrarApunte(t.Context, yo);
+        await SembrarApunte(t.Context, Guid.NewGuid());
+
+        var apuntes = await Crear(t.Context, new FakeIaClient()).ListarApuntesAsync(yo);
+
+        Assert.Single(apuntes);
+        Assert.Equal("Apunte de prueba", apuntes[0].NombreMateria);
+    }
+
+    [Fact]
+    public async Task Calificar_ExamenSinPreguntas_DevuelveError()
+    {
+        using var t = new TestDb();
+        var yo = Guid.NewGuid();
+        var apunte = await SembrarApunte(t.Context, yo);
+        var examen = new Examene { ExamenId = Guid.NewGuid(), ApunteId = apunte.ApunteId };
+        t.Context.Examenes.Add(examen);
+        await t.Context.SaveChangesAsync();
+
+        var (ok, _, _, _, error) = await Crear(t.Context, new FakeIaClient())
+            .CalificarAsync(examen.ExamenId, yo, new Dictionary<Guid, Guid>());
+
+        Assert.False(ok);
+        Assert.Contains("no tiene preguntas", error!);
+    }
 }

@@ -74,12 +74,14 @@ function buscarCobertura(dir) {
     const ruta = join(dir, entrada);
     const info = statSync(ruta);
     if (info.isDirectory()) encontrados.push(...buscarCobertura(ruta));
-    else if (entrada === 'coverage.cobertura.xml') encontrados.push({ ruta, tamano: info.size });
+    else if (entrada === 'coverage.cobertura.xml') encontrados.push({ ruta, modificado: info.mtimeMs });
   }
   return encontrados;
 }
 
-const archivos = buscarCobertura(carpeta).sort((a, b) => b.tamano - a.tamano);
+// Se usa la corrida mas reciente: cada ejecucion de dotnet test deja su propio
+// reporte y quedarse con el mas grande leeria una corrida vieja.
+const archivos = buscarCobertura(carpeta).sort((a, b) => b.modificado - a.modificado);
 const cobertura = archivos.length ? readFileSync(archivos[0].ruta, 'utf8') : '';
 
 let lineaRate = 0;
@@ -92,6 +94,20 @@ const ramasCubiertas = Number(/branches-covered="(\d+)"/.exec(cobertura)?.[1] ??
 
 if (lineasValidas > 0) lineaRate = (lineasCubiertas / lineasValidas) * 100;
 if (ramasValidas > 0) ramaRate = (ramasCubiertas / ramasValidas) * 100;
+
+// Cobertura de la capa de servicios: es el codigo que las pruebas unitarias
+// ejercitan de verdad. El porcentaje global incluye vistas, controladores,
+// DTOs y migraciones, que se validan con la API y el E2E.
+let serviciosValidas = 0;
+let serviciosCubiertas = 0;
+for (const [, attrs, cuerpo] of cobertura.matchAll(/<class\b([^>]*)>([\s\S]*?)<\/class>/g)) {
+  const archivo = (/filename="([^"]+)"/.exec(attrs)?.[1] ?? '').replace(/\\/g, '/');
+  if (!archivo.startsWith('Services/')) continue;
+  const hits = [...cuerpo.matchAll(/<line\b[^>]*hits="(\d+)"/g)].map((m) => Number(m[1]));
+  serviciosValidas += hits.length;
+  serviciosCubiertas += hits.filter((h) => h > 0).length;
+}
+const lineaRateServicios = serviciosValidas > 0 ? (serviciosCubiertas / serviciosValidas) * 100 : 0;
 
 for (const m of cobertura.matchAll(/<class\b([^>]*?)\/?>/g)) {
   const a = atributos(m[1]);
@@ -135,8 +151,8 @@ const html = documento({
     { etiqueta: 'Correctas', valor: String(pasadas), tono: 'ok' },
     { etiqueta: 'Fallidas', valor: String(fallidas), tono: fallidas === 0 ? 'ok' : 'fallo' },
     { etiqueta: 'Duracion', valor: `${(msTotal / 1000).toFixed(1)} s`, tono: 'acento' },
-    { etiqueta: 'Lineas cubiertas', valor: `${lineaRate.toFixed(1)} %`, tono: 'acento' },
-    { etiqueta: 'Ramas cubiertas', valor: `${ramaRate.toFixed(1)} %`, tono: 'acento' },
+    { etiqueta: 'Cobertura de servicios', valor: `${lineaRateServicios.toFixed(1)} %`, tono: 'ok' },
+    { etiqueta: 'Cobertura global', valor: `${lineaRate.toFixed(1)} %`, tono: 'acento' },
   ],
   secciones: [
     `<h2>Resultado por clase de prueba</h2>`,
@@ -180,7 +196,7 @@ const html = documento({
     }),
     omitidas ? `<div class="nota">${omitidas} prueba(s) no se ejecutaron en esta corrida.</div>` : '',
     `<div class="nota"><b>Entorno:</b> las pruebas corren en un contenedor Linux porque Smart App Control del equipo anfitrion bloquea los ensamblados no firmados que genera <code>dotnet test</code>. Usan SQLite en memoria: no tocan la base de datos de produccion.</div>`,
-    `<div class="nota"><b>Sobre la cobertura:</b> las 159 pruebas se concentran en la capa de servicios, que es donde vive la logica de negocio. Por eso el porcentaje global (${lineaRate.toFixed(1)} % de lineas) incluye vistas, DTOs y migraciones que no se prueban aqui, mientras que las clases de la tabla, que son las que tienen comportamiento, quedan entre el 63 % y el 100 %. Los controladores y las vistas se validan con las pruebas de API (Newman) y las pruebas end-to-end, que no cuentan para esta metrica.</div>`,
+    `<div class="nota"><b>Sobre la cobertura:</b> las ${total} pruebas cubren la capa de servicios, que es donde vive la logica de negocio: <b>${lineaRateServicios.toFixed(1)} %</b> de sus lineas (${serviciosCubiertas} de ${serviciosValidas}). El porcentaje global (${lineaRate.toFixed(1)} %) es mas bajo porque incluye vistas, controladores, DTOs y migraciones que no se prueban aqui: esas capas se validan con las pruebas de API (Newman) y las pruebas end-to-end. Las ramas de la capa de servicios quedan en ${ramaRate.toFixed(1)} %.</div>`,
   ],
 });
 

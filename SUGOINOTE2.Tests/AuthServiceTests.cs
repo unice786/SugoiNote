@@ -308,4 +308,33 @@ public class AuthServiceTests
         Assert.NotEqual(selloPrevio, actualizado.SecurityStamp);
         Assert.All(t.Context.PasswordResetTokens.ToList(), tok => Assert.NotNull(tok.UsadoUtc));
     }
+
+    [Fact]
+    public async Task Login_HashCorrupto_DevuelveCredencialesInvalidas()
+    {
+        using var t = new TestDb();
+        var e = Datos.Estudiante();
+        e.ClaveAcceso = "$2$hash-incompleto";
+        t.Context.Estudiantes.Add(e);
+        await t.Context.SaveChangesAsync();
+
+        var (resultado, estudiante) = await Crear(t.Context).ValidarCredencialesAsync(e.CorreoElectronico, "Clave123");
+
+        Assert.Equal(ResultadoAuth.CredencialesInvalidas, resultado.Estado);
+        Assert.Null(estudiante);
+    }
+
+    [Fact]
+    public async Task SolicitarReset_SiElCorreoFalla_NoRompeElFlujo()
+    {
+        using var t = new TestDb();
+        var e = await SembrarEstudiante(t.Context);
+        var email = new FakeEmailSender { Resultado = false };
+
+        var r = await Crear(t.Context, email).SolicitarResetAsync(e.CorreoElectronico);
+
+        Assert.True(r.Ok);
+        Assert.Single(email.Enviados);
+        Assert.Single(t.Context.PasswordResetTokens);
+    }
 }

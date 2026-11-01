@@ -218,4 +218,165 @@ public class ApunteServiceTests
 
         Assert.Null(id);
     }
+
+    [Fact]
+    public async Task ListarMaterias_SoloDevuelveLasDelEstudianteOrdenadas()
+    {
+        using var t = new TestDb();
+        var yo = Guid.NewGuid();
+        t.Context.Materias.AddRange(
+            new Materia { MateriaId = Guid.NewGuid(), NombreMateria = "Zoologia", EstudianteId = yo },
+            new Materia { MateriaId = Guid.NewGuid(), NombreMateria = "Algebra", EstudianteId = yo },
+            new Materia { MateriaId = Guid.NewGuid(), NombreMateria = "Ajena", EstudianteId = Guid.NewGuid() });
+        await t.Context.SaveChangesAsync();
+
+        var materias = await Crear(t.Context).ListarMateriasAsync(yo);
+
+        Assert.Equal(["Algebra", "Zoologia"], materias.Select(m => m.NombreMateria).ToArray());
+    }
+
+    [Fact]
+    public async Task ListarRecientes_DevuelveSoloLaCantidadPedida()
+    {
+        using var t = new TestDb();
+        var yo = Guid.NewGuid();
+        for (var i = 0; i < 5; i++)
+        {
+            t.Context.Apuntes.Add(new Apunte
+            {
+                ApunteId = Guid.NewGuid(),
+                TituloNota = $"Apunte {i}",
+                EstudianteId = yo,
+                FechaRegistro = DateTime.UtcNow.AddMinutes(-i),
+            });
+        }
+        await t.Context.SaveChangesAsync();
+
+        var recientes = await Crear(t.Context).ListarRecientesAsync(yo, 2);
+
+        Assert.Equal(2, recientes.Count);
+    }
+
+    [Fact]
+    public async Task Obtener_DeOtroDueno_DevuelveNull()
+    {
+        using var t = new TestDb();
+        var apunte = Datos.Apunte(Guid.NewGuid());
+        t.Context.Apuntes.Add(apunte);
+        await t.Context.SaveChangesAsync();
+
+        Assert.Null(await Crear(t.Context).ObtenerAsync(apunte.ApunteId, Guid.NewGuid()));
+        Assert.NotNull(await Crear(t.Context).ObtenerAsync(apunte.ApunteId, apunte.EstudianteId!.Value));
+    }
+
+    [Fact]
+    public async Task Crear_DatosValidos_GuardaYRecortaElTitulo()
+    {
+        using var t = new TestDb();
+        var apunte = new Apunte
+        {
+            TituloNota = "  " + new string('t', 230) + "  ",
+            EstudianteId = Guid.NewGuid(),
+            ContenidoTexto = "<p>ok</p>",
+        };
+
+        var r = await Crear(t.Context).CrearAsync(apunte);
+
+        Assert.True(r.Ok);
+        var guardado = t.Context.Apuntes.Single();
+        Assert.Equal(200, guardado.TituloNota.Length);
+        Assert.NotEqual(Guid.Empty, guardado.ApunteId);
+        Assert.NotNull(guardado.FechaRegistro);
+    }
+
+    [Fact]
+    public async Task AutoSave_Propio_ActualizaTituloYContenido()
+    {
+        using var t = new TestDb();
+        var apunte = Datos.Apunte(Guid.NewGuid(), titulo: "Viejo");
+        t.Context.Apuntes.Add(apunte);
+        await t.Context.SaveChangesAsync();
+
+        var r = await Crear(t.Context).AutoSaveAsync(
+            apunte.ApunteId, apunte.EstudianteId!.Value, "  Nuevo  ", "<p>ok</p><script>alert(1)</script>");
+
+        Assert.True(r.Ok);
+        var guardado = t.Context.Apuntes.Single();
+        Assert.Equal("Nuevo", guardado.TituloNota);
+        Assert.DoesNotContain("<script", guardado.ContenidoTexto, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task AutoSave_TituloMuyLargo_SeRecortaA200()
+    {
+        using var t = new TestDb();
+        var apunte = Datos.Apunte(Guid.NewGuid());
+        t.Context.Apuntes.Add(apunte);
+        await t.Context.SaveChangesAsync();
+
+        await Crear(t.Context).AutoSaveAsync(apunte.ApunteId, apunte.EstudianteId!.Value, new string('x', 260), null);
+
+        Assert.Equal(200, t.Context.Apuntes.Single().TituloNota.Length);
+    }
+
+    [Fact]
+    public async Task GuardarResumen_DeOtroDueno_Falla()
+    {
+        using var t = new TestDb();
+        var apunte = Datos.Apunte(Guid.NewGuid());
+        t.Context.Apuntes.Add(apunte);
+        await t.Context.SaveChangesAsync();
+
+        var r = await Crear(t.Context).GuardarResumenAsync(apunte.ApunteId, Guid.NewGuid(), "<p>resumen</p>");
+
+        Assert.False(r.Ok);
+        Assert.Null(t.Context.Apuntes.Single().ResumenGeneradoIA);
+    }
+
+    [Fact]
+    public async Task GuardarResumen_Propio_GuardaElHtmlSaneado()
+    {
+        using var t = new TestDb();
+        var apunte = Datos.Apunte(Guid.NewGuid());
+        t.Context.Apuntes.Add(apunte);
+        await t.Context.SaveChangesAsync();
+
+        var r = await Crear(t.Context).GuardarResumenAsync(
+            apunte.ApunteId, apunte.EstudianteId!.Value, "<h2>Resumen</h2><script>alert(1)</script>");
+
+        Assert.True(r.Ok);
+        var guardado = t.Context.Apuntes.Single().ResumenGeneradoIA!;
+        Assert.Contains("Resumen", guardado);
+        Assert.DoesNotContain("<script", guardado, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Eliminar_Inexistente_Falla()
+    {
+        using var t = new TestDb();
+
+        var r = await Crear(t.Context).EliminarAsync(Guid.NewGuid(), Guid.NewGuid());
+
+        Assert.False(r.Ok);
+    }
+
+    [Fact]
+    public async Task ResolverMateria_SinDatos_DevuelveNull()
+    {
+        using var t = new TestDb();
+
+        Assert.Null(await Crear(t.Context).ResolverMateriaAsync(Guid.NewGuid(), null, "   "));
+    }
+
+    [Fact]
+    public async Task ResolverMateria_NombreMuyLargo_SeRecortaA100()
+    {
+        using var t = new TestDb();
+        var yo = Guid.NewGuid();
+
+        var id = await Crear(t.Context).ResolverMateriaAsync(yo, null, new string('m', 130));
+
+        Assert.NotNull(id);
+        Assert.Equal(100, t.Context.Materias.Single().NombreMateria.Length);
+    }
 }
