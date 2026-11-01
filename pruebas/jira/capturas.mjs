@@ -38,9 +38,10 @@ const PERFIL = join(process.env.TEMP ?? '', 'opencode', 'perfil-jira-brave');
 const contexto = await chromium.launchPersistentContext(PERFIL, {
   executablePath: process.env.NAVEGADOR ?? RUTA_BRAVE,
   headless: false,
-  viewport: { width: 1500, height: 1250 },
+  viewport: { width: 1500, height: 1400 },
   deviceScaleFactor: 2,
   locale: 'es-GT',
+  colorScheme: 'light',
   // Atlassian bloquea los navegadores que se anuncian como automatizados. Se
   // usa la cadencia normal de Brave y se oculta la marca de automatizacion.
   ignoreDefaultArgs: ['--enable-automation'],
@@ -163,8 +164,15 @@ for (const c of capturas) {
       break;
     }
   }
-  await pagina.evaluate(() => window.scrollTo(0, 0));
-  await pagina.waitForTimeout(500);
+  // Jira desplaza su propio contenedor, no la ventana: se regresan todos los
+  // scrolls a cero para que la captura empiece por el titulo del caso.
+  await pagina.evaluate(() => {
+    window.scrollTo(0, 0);
+    for (const el of document.querySelectorAll('*')) {
+      if (el.scrollTop > 0) el.scrollTop = 0;
+    }
+  });
+  await pagina.waitForTimeout(700);
   await pagina.screenshot({ path: join(destino, c.archivo), fullPage: false });
   console.log(`+ ${c.archivo}  ${c.descripcion}`);
 }

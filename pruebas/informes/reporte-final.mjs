@@ -99,21 +99,21 @@ function evidenciaNativa(reporte) {
   }
   if (!reporte.nativo) return '';
   const lista = [].concat(reporte.nativo);
-  const figuras = lista
-    .map((nativo) => {
-      const ruta = join(artefactos, 'nativos', nativo.archivo);
-      if (!existsSync(ruta)) {
-        return `<div class="nota"><b>Evidencia nativa:</b> falta la captura <code>${escapar(nativo.archivo)}</code>. Ejecuta <code>pruebas/informes/capturar-nativos.mjs</code>.</div>`;
-      }
-      return `<p class="subtitulo">${escapar(nativo.nota)}</p>
-  <figure class="captura">
+  const figuras = lista.map((nativo) => {
+    const ruta = join(artefactos, 'nativos', nativo.archivo);
+    if (!existsSync(ruta)) {
+      return `<div class="nota"><b>Evidencia nativa:</b> falta la captura <code>${escapar(nativo.archivo)}</code>. Ejecuta <code>pruebas/informes/capturar-nativos.mjs</code>.</div>`;
+    }
+    return `<figure class="captura">
     <img src="${pathToFileURL(ruta).href}" alt="${escapar(nativo.titulo)}">
-    <figcaption>${escapar(nativo.titulo)}</figcaption>
+    <figcaption><b>${escapar(nativo.titulo)}</b><br>${escapar(nativo.nota)}</figcaption>
   </figure>`;
-    })
-    .join('\n');
+  });
 
-  return `<h2>Evidencia original de la herramienta</h2>\n  ${figuras}`;
+  // El titulo viaja con la primera figura para que no quede solo al pie de una
+  // pagina con el resto en blanco.
+  const [primera, ...resto] = figuras;
+  return `<div class="bloque-evidencia"><h2>Evidencia original de la herramienta</h2>\n  ${primera}</div>\n${resto.join('\n')}`;
 }
 
 const reportes = [
@@ -263,8 +263,9 @@ const galeria = capturas.length
           f.replace(/\.(png|jpg|jpeg)$/i, '').replace(/^[0-9]+[-_]/, '').replace(/[-_]/g, ' ');
         return `<figure class="captura jira"><img src="${pathToFileURL(join(carpetaCapturas, f)).href}" alt="${escapar(titulo)}"><figcaption>Captura ${i + 1} · ${escapar(titulo)}</figcaption></figure>`;
       })
-      .join('')
-  : `<div class="nota"><b>Pendiente:</b> las capturas de pantalla de Jira se agregan en <code>pruebas/jira/capturas</code> antes de generar el PDF.</div>`;
+  : [
+      `<div class="nota"><b>Pendiente:</b> las capturas de pantalla de Jira se agregan en <code>pruebas/jira/capturas</code> antes de generar el PDF.</div>`,
+    ];
 
 // ── Tabla de casos de Jira ───────────────────────────────────
 const tablaJira = jira?.length
@@ -344,10 +345,10 @@ const ESTILOS_FINALES = `
   .reporte .tarjeta .valor { font-size: 17pt; }
   .reporte .tarjeta .etiqueta { font-size: 8.5pt; color: #4b5563; }
   .tarjeta { background: #fff; border: .8pt solid #d1d5db; }
-  table { border-collapse: collapse; }
+  table { border-collapse: collapse; font-size: 10pt; }
   thead th {
     background: #eef0f2; color: #3f3f46; border-bottom: .8pt solid #9ca3af;
-    text-transform: uppercase; font-size: 8.6pt; letter-spacing: .04em;
+    text-transform: uppercase; font-size: 8.2pt; letter-spacing: .04em;
   }
   thead { display: table-header-group; }
   a {
@@ -376,7 +377,7 @@ const ESTILOS_FINALES = `
   .resumen-reportes { margin: 14px 0 0; }
   .captura { margin: 0 0 14px; break-inside: avoid; border: .8pt solid #d1d5db; border-radius: 4px; padding: 8px; background: #fff; }
   .captura img { width: 100%; display: block; border-radius: 2px; border: .5pt solid #e5e7eb; }
-  .captura.jira img { max-height: 108mm; width: auto; max-width: 100%; object-fit: contain; margin: 0 auto; }
+  .captura.jira img { max-height: 95mm; width: auto; max-width: 100%; object-fit: contain; margin: 0 auto; }
   .captura figcaption { font-size: 8.8pt; color: var(--texto-suave); margin-top: 6px; font-style: italic; }
   .indice { margin-top: 6mm; }
   .indice ol { list-style: none; margin: 0; padding: 0; }
@@ -386,6 +387,10 @@ const ESTILOS_FINALES = `
   .indice .sub { padding-left: 14px; font-size: 9.8pt; color: var(--texto-suave); }
   .indice .sub a { color: var(--texto-suave); }
   .pie-pagina { font-size: 8pt; color: #64748b; }
+  .salto { break-before: page; height: 0; }
+  .bloque-evidencia { break-inside: avoid; }
+  .tabla-enlaces { table-layout: fixed; }
+  .tabla-enlaces td:nth-child(2) { word-break: break-all; }
   /* Cierre de estilos: cualquier texto secundario queda en gris neutro. */
   .meta, .flujo li, .flujo p, footer.pie, .captura figcaption, .tarjeta .etiqueta { color: #52525b; }
 `;
@@ -455,23 +460,23 @@ const html = `<!DOCTYPE html>
     Todos los artefactos de esta entrega estan publicados. Cada enlace abre el recurso real que se uso durante
     las pruebas.
   </p>
-  <table>
-    <thead><tr><th style="width:24%">Recurso</th><th style="width:40%">Enlace</th><th>Que contiene</th></tr></thead>
+  <table class="tabla-enlaces">
+    <thead><tr><th style="width:20%">Recurso</th><th style="width:46%">Enlace</th><th style="width:34%">Contenido</th></tr></thead>
     <tbody>
       <tr>
         <td><b>Repositorio (rama <code>pruebas</code>)</b></td>
         <td><a href="${escapar(enlaces.repositorio ?? '')}">${escapar(enlaces.repositorio ?? '')}</a></td>
-        <td>Codigo de la aplicacion, scripts de prueba (<code>pruebas/</code>), pruebas de componentes en <code>mobile/__tests__</code> y la configuracion de Docker.</td>
+        <td>Codigo de la aplicacion, scripts de prueba y configuracion de Docker.</td>
       </tr>
       <tr>
         <td><b>Proyecto en Jira</b></td>
         <td><a href="${escapar(enlaces.jira ?? '')}">${escapar(enlaces.jira ?? '')}</a></td>
-        <td>Epicas, historias y los ${conteoJira?.total ?? 26} casos de prueba ejecutados, con su descripcion, resultado y evidencia.</td>
+        <td>Los ${conteoJira?.total ?? 26} casos ejecutados, con su descripcion, resultado y evidencia.</td>
       </tr>
       <tr>
         <td><b>Coleccion Postman publicada</b></td>
         <td><a href="${escapar(enlaces.postman ?? '')}">${escapar(enlaces.postman ?? 'Pendiente de publicar')}</a></td>
-        <td>Documentacion publica de la coleccion: las 35 peticiones con su ejemplo de respuesta real y las aserciones de cada endpoint.</td>
+        <td>Las 35 peticiones con su ejemplo de respuesta y sus aserciones.</td>
       </tr>
       <tr>
         <td><b>Contrato OpenAPI en vivo</b></td>
@@ -551,8 +556,9 @@ const html = `<!DOCTYPE html>
   <h2>Casos registrados</h2>
   ${tablaJira}
 
-  <h2>Capturas del proyecto</h2>
-  ${galeria}
+  <div class="bloque-evidencia"><h2>Capturas del proyecto</h2>
+  ${galeria[0] ?? ''}</div>
+  ${galeria.slice(1).join('')}
 </section>
 
 <!-- ================= 3. REPORTES ================= -->

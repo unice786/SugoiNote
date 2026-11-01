@@ -203,7 +203,7 @@ const html = documento({
 function barra(porcentaje) {
   const valor = Math.max(0, Math.min(100, porcentaje));
   const color = valor >= 70 ? 'var(--ok)' : valor >= 40 ? 'var(--aviso)' : 'var(--fallo)';
-  return `<div style="display:flex;align-items:center;gap:8px"><span style="display:inline-block;width:76px;height:6px;border-radius:3px;background:var(--borde)"><span style="display:block;width:${valor}%;height:6px;border-radius:3px;background:${color}"></span></span><span class="mono">${valor.toFixed(1)} %</span></div>`;
+  return `<div style="display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="display:inline-block;width:58px;height:6px;border-radius:3px;background:var(--borde);flex:none"><span style="display:block;width:${valor}%;height:6px;border-radius:3px;background:${color}"></span></span><span class="mono">${valor.toFixed(1)} %</span></div>`;
 }
 
 writeFileSync(join(carpeta, 'index.html'), html, 'utf8');
