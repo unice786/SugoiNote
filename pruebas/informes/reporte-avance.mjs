@@ -66,11 +66,11 @@ const ESTILOS = `
   body { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; font-size: 12pt; line-height: 1.45; color: var(--texto); margin: 0; padding: 0; }
   .lienzo { max-width: none; }
   .hoja { break-after: page; }
-  h1 { font-family: Georgia, "Times New Roman", serif; font-size: 17pt; font-weight: 700; color: #111; border-bottom: 1.2pt solid #9ca3af; padding-bottom: 6px; margin: 0 0 14px; }
+  h1 { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; font-size: 15pt; font-weight: 700; color: #111; border-bottom: 1.2pt solid #9ca3af; padding-bottom: 6px; margin: 0 0 14px; }
   p { margin: 8px 0; }
   .capa { border: .8pt solid #d1d5db; padding: 12px 14px; margin: 14px 0; break-inside: avoid; }
   .capa .cabecera { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-  .capa .nombre { font-family: Georgia, "Times New Roman", serif; font-size: 13.5pt; font-weight: 700; color: #111; }
+  .capa .nombre { font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; font-size: 13pt; font-weight: 700; color: #111; }
   .capa .estado { font-size: 9pt; font-weight: 700; color: var(--ok); border: .5pt solid #b7d7c1; background: #e9f3ec; padding: 1px 8px; }
   .capa p { margin: 6px 0 8px; }
   .capa .enlace { font-size: 9pt; overflow-wrap: break-word; }
@@ -103,7 +103,7 @@ const html = `<!DOCTYPE html>
     </div>
     <div>
       <div style="font-size:10.5pt;text-transform:uppercase;letter-spacing:1px;color:#52525b;margin-bottom:6px">Título</div>
-      <div style="font-family:Georgia,'Times New Roman',serif;font-size:22pt;font-weight:700;line-height:1.25">Reporte de Avance de Proyecto Integrador</div>
+      <div style="font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;font-size:20pt;font-weight:700;line-height:1.25">Reporte de Avance de Proyecto Integrador</div>
       <div style="margin-top:8px;font-size:12.5pt;color:#52525b">Backend, Frontend Web y Aplicación Móvil</div>
     </div>
     <div>

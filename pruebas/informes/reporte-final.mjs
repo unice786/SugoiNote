@@ -324,12 +324,12 @@ const ESTILOS_FINALES = `
   .seccion { break-before: page; }
   .reporte { break-before: page; }
   h1, .titulo-reporte {
-    font-family: Georgia, "Times New Roman", serif;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
     color: #111111; font-weight: 700; letter-spacing: .2px;
     border-bottom: 1.2pt solid #9ca3af; padding-bottom: 6px;
   }
-  h1 { font-size: 17pt; }
-  .titulo-reporte { font-size: 15.5pt; margin: 0 0 8px; }
+  h1 { font-size: 16pt; }
+  .titulo-reporte { font-size: 15pt; margin: 0 0 8px; }
   h2 {
     color: #111111; font-size: 12.5pt; margin: 18px 0 8px;
     border-bottom: .6pt solid #d1d5db; padding-bottom: 4px;
