@@ -38,7 +38,7 @@ const PERFIL = join(process.env.TEMP ?? '', 'opencode', 'perfil-jira-brave');
 const contexto = await chromium.launchPersistentContext(PERFIL, {
   executablePath: process.env.NAVEGADOR ?? RUTA_BRAVE,
   headless: false,
-  viewport: { width: 1500, height: 950 },
+  viewport: { width: 1500, height: 1250 },
   deviceScaleFactor: 2,
   locale: 'es-GT',
   // Atlassian bloquea los navegadores que se anuncian como automatizados. Se
@@ -147,7 +147,24 @@ for (const c of capturas) {
   } catch {
     console.warn(`  (no aparecio ${c.marca} en ${c.url})`);
   }
-  await pagina.waitForTimeout(4000);
+  await pagina.waitForTimeout(5000);
+  // La descripcion larga llega colapsada: se despliega para que se vea el
+  // contenido real del caso y no un recuadro vacio.
+  if (c.url.includes('/browse/')) {
+    await pagina
+      .waitForFunction(() => /Objetivo|Descripci[oó]n/.test(document.body.innerText), { timeout: 20000 })
+      .catch(() => console.warn(`  (la descripcion de ${c.marca} no aparecio)`));
+  }
+  for (const texto of ['Show more', 'Ver más', 'Ver mas', 'Mostrar más']) {
+    const boton = pagina.getByRole('button', { name: texto, exact: false }).first();
+    if (await boton.count()) {
+      await boton.click({ timeout: 2000 }).catch(() => {});
+      await pagina.waitForTimeout(800);
+      break;
+    }
+  }
+  await pagina.evaluate(() => window.scrollTo(0, 0));
+  await pagina.waitForTimeout(500);
   await pagina.screenshot({ path: join(destino, c.archivo), fullPage: false });
   console.log(`+ ${c.archivo}  ${c.descripcion}`);
 }

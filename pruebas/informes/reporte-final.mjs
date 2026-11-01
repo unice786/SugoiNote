@@ -246,10 +246,21 @@ const capturas = carpetaCapturas
       .sort()
   : [];
 
+const descripcionCaptura = {
+  '01': 'Detalle del caso UNI-01 en Jira (PDPS-21)',
+  '02': 'Detalle del caso API-02 con resultado FAIL (PDPS-26)',
+  '03': 'Detalle del caso UAT-01 (PDPS-35)',
+  '04': 'Listado de los 26 casos del proyecto PDPS',
+  '05': 'Incidencias registradas en Jira (PDPS-44 a PDPS-47)',
+};
+
 const galeria = capturas.length
   ? capturas
       .map((f, i) => {
-        const titulo = f.replace(/\.(png|jpg|jpeg)$/i, '').replace(/^[0-9]+[-_]/, '').replace(/[-_]/g, ' ');
+        const numero = f.slice(0, 2);
+        const titulo =
+          descripcionCaptura[numero] ??
+          f.replace(/\.(png|jpg|jpeg)$/i, '').replace(/^[0-9]+[-_]/, '').replace(/[-_]/g, ' ');
         return `<figure class="captura jira"><img src="${pathToFileURL(join(carpetaCapturas, f)).href}" alt="${escapar(titulo)}"><figcaption>Captura ${i + 1} · ${escapar(titulo)}</figcaption></figure>`;
       })
       .join('')
@@ -279,7 +290,7 @@ const conteoJira = jira
 
 // ── Indice ───────────────────────────────────────────────────
 const indice = [
-  ['#enlaces', '1. Enlaces de la entrega'],
+  ['#enlaces', '1. Repositorio, tablero y coleccion'],
   ['#jira', '2. Documentacion de los casos en Jira'],
   ['#reportes', '3. Reportes de ejecucion'],
   ...reportes.map((r, i) => [`#reporte-${r.id}`, `3.${i + 1}. ${r.titulo}`]),
@@ -306,7 +317,7 @@ const ESTILOS_FINALES = `
     }
   }
   html, body { background: #fff; }
-  body { padding: 0; font-size: 10.5pt; line-height: 1.55; color: var(--texto); }
+  body { padding: 0; font-family: Arial, "Helvetica Neue", Helvetica, sans-serif; font-size: 12pt; line-height: 1.45; color: var(--texto); }
   .lienzo { max-width: none; }
   .hoja { break-after: page; }
   .seccion { break-before: page; }
@@ -319,12 +330,11 @@ const ESTILOS_FINALES = `
   h1 { font-size: 17pt; }
   .titulo-reporte { font-size: 15.5pt; margin: 0 0 8px; }
   h2 {
-    font-family: Georgia, "Times New Roman", serif;
-    color: #111111; font-size: 12.5pt; margin: 20px 0 8px;
+    color: #111111; font-size: 12.5pt; margin: 18px 0 8px;
     border-bottom: .6pt solid #d1d5db; padding-bottom: 4px;
   }
   h3 { color: #111111; font-size: 11pt; }
-  .reporte h2 { font-size: 12.5pt; margin: 20px 0 8px; }
+  .reporte h2 { font-size: 12.5pt; margin: 18px 0 8px; }
   .reporte h3 { font-size: 11pt; }
   .reporte p { margin: 6px 0; }
   .subtitulo { color: var(--texto-suave); }
@@ -436,16 +446,15 @@ const html = `<!DOCTYPE html>
       )
       .join('')}
   </ol>
-  <div class="nota" style="margin-top:26px">
-    <b>Como leer este documento:</b> cada capitulo resume un tipo de prueba, con la herramienta usada, el
-    entorno, las cifras de la corrida y las tablas de resultados. Todo lo que aparece se ejecuto en contenedores
-    Docker contra el mismo entorno de pruebas; no hay resultados simulados.
-  </div>
 </section>
 
 <!-- ================= 1. ENLACES ================= -->
 <section class="seccion" id="enlaces">
-  <h1>1. Enlaces de la entrega</h1>
+  <h1>1. Repositorio, tablero y coleccion</h1>
+  <p style="margin-top:0">
+    Todos los artefactos de esta entrega estan publicados. Cada enlace abre el recurso real que se uso durante
+    las pruebas.
+  </p>
   <table>
     <thead><tr><th style="width:24%">Recurso</th><th style="width:40%">Enlace</th><th>Que contiene</th></tr></thead>
     <tbody>
@@ -472,7 +481,7 @@ const html = `<!DOCTYPE html>
     </tbody>
   </table>
 
-  <h2>Que se ejecuto</h2>
+  <h2>Resultado general</h2>
   ${tabla({
     columnas: ['Tipo de prueba', 'Herramienta', 'Resultado', 'Estado'],
     filas: [
