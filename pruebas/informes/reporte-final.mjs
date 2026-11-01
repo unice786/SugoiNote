@@ -469,9 +469,9 @@ const html = `<!DOCTYPE html>
         <td>Epicas, historias y los ${conteoJira?.total ?? 26} casos de prueba ejecutados, con su descripcion, resultado y evidencia.</td>
       </tr>
       <tr>
-        <td><b>Coleccion Postman</b></td>
+        <td><b>Coleccion Postman publicada</b></td>
         <td><a href="${escapar(enlaces.postman ?? '')}">${escapar(enlaces.postman ?? 'Pendiente de publicar')}</a></td>
-        <td>Las 35 peticiones de la coleccion, con ejemplos de respuesta reales y las aserciones de cada endpoint. Se importa en Postman con <i>Import</i>.</td>
+        <td>Documentacion publica de la coleccion: las 35 peticiones con su ejemplo de respuesta real y las aserciones de cada endpoint.</td>
       </tr>
       <tr>
         <td><b>Contrato OpenAPI en vivo</b></td>
