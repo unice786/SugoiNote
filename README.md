@@ -479,6 +479,8 @@ SugoiNote/
 |---|---|---|
 | **`README.md`** | Usuarios y revisores | Visión general, arquitectura, diagramas y puesta en marcha |
 | [`DESARROLLO.md`](DESARROLLO.md) | Equipo de desarrollo | Informe técnico: qué se hizo, decisiones, despliegue y pendientes |
+| [`DOCKER.md`](DOCKER.md) | Quien ejecute pruebas | Entorno de Docker: servicios, límites y pruebas unitarias |
+| [`pruebas/README.md`](pruebas/README.md) | Quien ejecute pruebas | Las ocho estrategias de prueba, comando de cada una y cómo se arma el informe en PDF |
 | [`mobile/README.md`](mobile/README.md) | Equipo móvil | Detalle de las fases de la app Expo |
 
 ---
