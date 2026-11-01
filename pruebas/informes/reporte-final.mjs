@@ -291,7 +291,7 @@ const indice = [
 const ESTILOS_FINALES = `
   :root {
     --fondo: #ffffff; --panel: #ffffff; --panel-2: #f7f7f8; --borde: #cfd6df;
-    --texto: #1a1a1a; --texto-suave: #4b5563; --acento: #1f2937;
+    --texto: #1a1a1a; --texto-suave: #52525b; --acento: #1f2937;
     --ok: #166534; --fallo: #9f1239; --aviso: #92400e;
   }
   @page {
@@ -336,7 +336,7 @@ const ESTILOS_FINALES = `
   .tarjeta { background: #fff; border: .8pt solid #d1d5db; }
   table { border-collapse: collapse; }
   thead th {
-    background: #eef1f4; color: #374151; border-bottom: .8pt solid #9ca3af;
+    background: #eef0f2; color: #3f3f46; border-bottom: .8pt solid #9ca3af;
     text-transform: uppercase; font-size: 8.6pt; letter-spacing: .04em;
   }
   thead { display: table-header-group; }
@@ -376,6 +376,8 @@ const ESTILOS_FINALES = `
   .indice .sub { padding-left: 14px; font-size: 9.8pt; color: var(--texto-suave); }
   .indice .sub a { color: var(--texto-suave); }
   .pie-pagina { font-size: 8pt; color: #64748b; }
+  /* Cierre de estilos: cualquier texto secundario queda en gris neutro. */
+  .meta, .flujo li, .flujo p, footer.pie, .captura figcaption, .tarjeta .etiqueta { color: #52525b; }
 `;
 
 // ── Documento ────────────────────────────────────────────────
