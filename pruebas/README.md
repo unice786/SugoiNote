@@ -74,6 +74,7 @@ node pruebas/informes/capturar-nativos.mjs
 # Documento final + PDF
 node pruebas/informes/reporte-final.mjs
 node pruebas/informes/generar-pdf.mjs
+node pruebas/informes/unir-portada.mjs   # pone la portada oficial del equipo
 ```
 
 El PDF queda en `artifacts/Reporte-Ejecucion-Pruebas-SugoiNote.pdf` y lleva portada, indice con numeracion real, enlaces, casos de Jira con sus capturas, los ocho reportes (cada uno con la captura de su reporte nativo), hallazgos y conclusiones.

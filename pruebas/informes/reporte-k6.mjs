@@ -28,6 +28,11 @@ const num = (valor, decimales = 0) =>
 // lee los dos para que el reporte no dependa de la version de la imagen.
 const valor = (datos, metrica, campo) => datos.metrics[metrica]?.values?.[campo] ?? datos.metrics[metrica]?.[campo] ?? 0;
 
+// En el resumen nuevo las metricas de tasa guardan el valor en "value" y no en
+// "rate"; sin este respaldo los checks salian en 0 %.
+const tasa = (datos, metrica) =>
+  datos.metrics[metrica]?.values?.rate ?? datos.metrics[metrica]?.rate ?? datos.metrics[metrica]?.value ?? 0;
+
 // En el resumen actual de k6 el booleano de cada umbral no dice si se cumplio,
 // asi que la regla se evalua contra el valor medido (rate, p(95), count...).
 function cumple(regla, metric) {
@@ -54,8 +59,8 @@ const metricas = (datos) => ({
   duracion: datos.state?.testRunDurationMs ? datos.state.testRunDurationMs / 1000 : (datos.duracionMedida ?? 0),
   vus: valor(datos, 'vus_max', 'value') || valor(datos, 'vus', 'max'),
   iteraciones: valor(datos, 'iterations', 'count'),
-  errorRate: valor(datos, 'http_req_failed', 'rate') * 100,
-  checks: valor(datos, 'checks', 'rate') * 100,
+  errorRate: tasa(datos, 'http_req_failed') * 100,
+  checks: tasa(datos, 'checks') * 100,
   p50: valor(datos, 'http_req_duration', 'med'),
   p90: valor(datos, 'http_req_duration', 'p(90)'),
   p95: valor(datos, 'http_req_duration', 'p(95)'),

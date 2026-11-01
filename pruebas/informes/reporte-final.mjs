@@ -49,9 +49,11 @@ const segNewman = newman ? ((newman.run.timings.completed - newman.run.timings.s
 
 const alertasZap = [...(zapBaseline?.site ?? []), ...(zapApi?.site ?? [])].flatMap((s) => s.alerts ?? []);
 const riesgo = (a) => (a.riskdesc ?? a.risk ?? '').toLowerCase();
-const altos = alertasZap.filter((a) => riesgo(a).startsWith('alt') || riesgo(a) === 'high').length;
-const medios = alertasZap.filter((a) => riesgo(a).startsWith('med') || riesgo(a) === 'medium').length;
-const bajos = alertasZap.filter((a) => riesgo(a).startsWith('baj') || riesgo(a) === 'low').length;
+// ZAP escribe el riesgo en ingles ("Medium (High)"); se aceptan las dos formas.
+const esRiesgo = (a, ...claves) => claves.some((clave) => riesgo(a).startsWith(clave));
+const altos = alertasZap.filter((a) => esRiesgo(a, 'alt', 'high')).length;
+const medios = alertasZap.filter((a) => esRiesgo(a, 'med', 'medium')).length;
+const bajos = alertasZap.filter((a) => esRiesgo(a, 'baj', 'low')).length;
 
 // El resumen de k6 cambia de formato entre versiones: "values" en las viejas y
 // plano en las nuevas. Este lector acepta los dos.
@@ -246,9 +248,9 @@ const capturas = carpetaCapturas
 
 const galeria = capturas.length
   ? capturas
-      .map((f) => {
-        const titulo = f.replace(/\.(png|jpg|jpeg)$/i, '').replace(/[-_]/g, ' ');
-        return `<figure class="captura"><img src="${pathToFileURL(join(carpetaCapturas, f)).href}" alt="${escapar(titulo)}"><figcaption>${escapar(titulo)}</figcaption></figure>`;
+      .map((f, i) => {
+        const titulo = f.replace(/\.(png|jpg|jpeg)$/i, '').replace(/^[0-9]+[-_]/, '').replace(/[-_]/g, ' ');
+        return `<figure class="captura jira"><img src="${pathToFileURL(join(carpetaCapturas, f)).href}" alt="${escapar(titulo)}"><figcaption>Captura ${i + 1} · ${escapar(titulo)}</figcaption></figure>`;
       })
       .join('')
   : `<div class="nota"><b>Pendiente:</b> las capturas de pantalla de Jira se agregan en <code>pruebas/jira/capturas</code> antes de generar el PDF.</div>`;
@@ -288,46 +290,92 @@ const indice = [
 // ── Estilos ──────────────────────────────────────────────────
 const ESTILOS_FINALES = `
   :root {
-    --fondo: #ffffff; --panel: #f8fafc; --panel-2: #f1f5f9; --borde: #d7dee9;
-    --texto: #111827; --texto-suave: #475569; --acento: #2b6cb0;
-    --ok: #15803d; --fallo: #b91c1c; --aviso: #b45309;
+    --fondo: #ffffff; --panel: #ffffff; --panel-2: #f7f7f8; --borde: #cfd6df;
+    --texto: #1a1a1a; --texto-suave: #4b5563; --acento: #1f2937;
+    --ok: #166534; --fallo: #9f1239; --aviso: #92400e;
   }
-  @page { size: A4; margin: 18mm 16mm 20mm; }
+  @page {
+    size: A4; margin: 20mm 18mm 22mm;
+    @bottom-center {
+      content: counter(page);
+      font-family: "Segoe UI", Arial, sans-serif; font-size: 8pt; color: #6b7280;
+    }
+    @bottom-right {
+      content: "SugoiNote · PDCE · 02/2026";
+      font-family: "Segoe UI", Arial, sans-serif; font-size: 7.5pt; color: #9ca3af;
+    }
+  }
   html, body { background: #fff; }
-  body { padding: 0; font-size: 10.5pt; line-height: 1.5; }
+  body { padding: 0; font-size: 10.5pt; line-height: 1.55; color: var(--texto); }
   .lienzo { max-width: none; }
   .hoja { break-after: page; }
   .seccion { break-before: page; }
   .reporte { break-before: page; }
-  h1 { font-size: 17pt; color: var(--acento); border-bottom: 2px solid var(--borde); padding-bottom: 6px; }
-  .titulo-reporte { font-size: 16pt; color: var(--acento); border-bottom: 2px solid var(--borde); padding-bottom: 6px; margin: 0 0 6px; }
+  h1, .titulo-reporte {
+    font-family: Georgia, "Times New Roman", serif;
+    color: #111111; font-weight: 700; letter-spacing: .2px;
+    border-bottom: 1.2pt solid #9ca3af; padding-bottom: 6px;
+  }
+  h1 { font-size: 17pt; }
+  .titulo-reporte { font-size: 15.5pt; margin: 0 0 8px; }
+  h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    color: #111111; font-size: 12.5pt; margin: 20px 0 8px;
+    border-bottom: .6pt solid #d1d5db; padding-bottom: 4px;
+  }
+  h3 { color: #111111; font-size: 11pt; }
   .reporte h2 { font-size: 12.5pt; margin: 20px 0 8px; }
   .reporte h3 { font-size: 11pt; }
   .reporte p { margin: 6px 0; }
+  .subtitulo { color: var(--texto-suave); }
+  .acento, .valor.acento { color: #111111 !important; }
   .reporte .tarjetas { grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 18px; }
-  .reporte .tarjeta { padding: 10px 12px; border-radius: 8px; break-inside: avoid; }
+  .reporte .tarjeta { padding: 10px 12px; border-radius: 4px; break-inside: avoid; }
   .reporte .tarjeta .valor { font-size: 17pt; }
-  .reporte .tarjeta .etiqueta { font-size: 8.5pt; }
+  .reporte .tarjeta .etiqueta { font-size: 8.5pt; color: #4b5563; }
+  .tarjeta { background: #fff; border: .8pt solid #d1d5db; }
+  table { border-collapse: collapse; }
+  thead th {
+    background: #eef1f4; color: #374151; border-bottom: .8pt solid #9ca3af;
+    text-transform: uppercase; font-size: 8.6pt; letter-spacing: .04em;
+  }
+  thead { display: table-header-group; }
+  a {
+    color: #1f2937; text-decoration: underline;
+    text-decoration-color: #9ca3af; text-underline-offset: 1.5px;
+  }
+  a .pag { text-decoration: none; }
+  td { border-bottom: .5pt solid #dfe3e8; }
   .reporte table { font-size: 9.5pt; margin: 8px 0 14px; }
   .reporte th, .reporte td { padding: 5px 7px; }
-  .reporte .flujo { padding: 10px 12px; margin: 10px 0; break-inside: avoid; }
-  .reporte .nota { font-size: 9.5pt; padding: 9px 11px; break-inside: avoid; }
+  .reporte .flujo { padding: 10px 12px; margin: 10px 0; break-inside: avoid; background: #fff; border: .8pt solid #d7dde3; border-radius: 4px; }
+  .reporte .nota { font-size: 9.4pt; padding: 9px 11px; break-inside: avoid; }
+  .nota {
+    background: #f7f7f8; border-left: 2.5pt solid #9ca3af; border-radius: 0;
+    color: #374151;
+  }
+  .nota b { color: #111111; }
   .reporte code, .reporte .mono { font-size: 8.8pt; }
-  .reporte .pastilla { font-size: 8.5pt; }
+  .reporte .pastilla { font-size: 8.4pt; }
+  .pastilla { border-radius: 3px; font-weight: 600; }
+  .pastilla.ok { background: #e9f3ec; color: #14532d; border: .5pt solid #b7d7c1; }
+  .pastilla.fallo { background: #fbeaea; color: #7f1d1d; border: .5pt solid #e8bcbc; }
+  .pastilla.aviso { background: #fdf4e5; color: #78350f; border: .5pt solid #ecd3a8; }
+  .pastilla.neutra { background: #f1f3f5; color: #4b5563; border: .5pt solid #d7dde3; }
   .reporte img { max-width: 100%; }
   .resumen-reportes { margin: 14px 0 0; }
-  .captura { margin: 0 0 14px; break-inside: avoid; border: 1px solid var(--borde); border-radius: 8px; padding: 8px; background: var(--panel); }
-  .captura img { width: 100%; display: block; border-radius: 4px; }
-  .captura figcaption { font-size: 9pt; color: var(--texto-suave); margin-top: 6px; }
+  .captura { margin: 0 0 14px; break-inside: avoid; border: .8pt solid #d1d5db; border-radius: 4px; padding: 8px; background: #fff; }
+  .captura img { width: 100%; display: block; border-radius: 2px; border: .5pt solid #e5e7eb; }
+  .captura.jira img { max-height: 108mm; width: auto; max-width: 100%; object-fit: contain; margin: 0 auto; }
+  .captura figcaption { font-size: 8.8pt; color: var(--texto-suave); margin-top: 6px; font-style: italic; }
   .indice { margin-top: 6mm; }
   .indice ol { list-style: none; margin: 0; padding: 0; }
-  .indice li { margin: 0; padding: 7px 0; border-bottom: 1px dotted var(--borde); }
+  .indice li { margin: 0; padding: 7px 0; border-bottom: .5pt dotted var(--borde); }
   .indice a { color: var(--texto); text-decoration: none; }
-  .indice a .pag { float: right; color: var(--acento); font-weight: 700; }
+  .indice a .pag { float: right; color: #111111; font-weight: 700; }
   .indice .sub { padding-left: 14px; font-size: 9.8pt; color: var(--texto-suave); }
   .indice .sub a { color: var(--texto-suave); }
   .pie-pagina { font-size: 8pt; color: #64748b; }
-  .tarjeta { background: #fff; }
 `;
 
 // ── Documento ────────────────────────────────────────────────
@@ -448,7 +496,7 @@ const html = `<!DOCTYPE html>
       [
         'Carga',
         'k6',
-        `p95 ${num(carga?.metrics?.http_req_duration?.values?.['p(95)'])} ms`,
+        `p95 ${num(p95Carga)} ms`,
         `<span class="pastilla ok">PASS</span>`,
       ],
       ['Estres', 'k6', `${readdirNiveles().length} niveles`, `<span class="pastilla ok">PASS</span>`],
@@ -605,6 +653,11 @@ ${reportes
     <b>Nota de honestidad:</b> los resultados de este documento son los que produjeron las herramientas. Los casos
     con hallazgo se registraron como <code>FAIL</code> o como incidencia en Jira y se explican en el capitulo 4; no
     se oculto ningun resultado.
+  </div>
+  <div class="nota">
+    <b>Equipo:</b> Michael Stanley Sanchez Menendez, Samuel Alonso Mendoza Calzadilla, Iliana Berenice Melgar Rosa,
+    Manuel Angel Carias Juares y Maria Guadalupe Sion Perez.<br>
+    <b>Modulo:</b> Testeo de Software (PDCE) · Ciclo 02/2026 · Docente: Marvin Antonio Barrera Trigueros.
   </div>
 </section>
 
