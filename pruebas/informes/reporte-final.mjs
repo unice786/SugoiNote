@@ -390,7 +390,9 @@ const ESTILOS_FINALES = `
   .salto { break-before: page; height: 0; }
   .bloque-evidencia { break-inside: avoid; }
   .tabla-enlaces { table-layout: fixed; }
-  .tabla-enlaces td:nth-child(2) { word-break: break-all; }
+  .tabla-enlaces td:nth-child(2) { word-break: normal; overflow-wrap: break-word; }
+  .tabla-enlaces td:nth-child(2) a { font-size: 9.5pt; }
+  .tabla-enlaces td:nth-child(2) { word-break: normal; overflow-wrap: break-word; }
   /* Cierre de estilos: cualquier texto secundario queda en gris neutro. */
   .meta, .flujo li, .flujo p, footer.pie, .captura figcaption, .tarjeta .etiqueta { color: #52525b; }
 `;
@@ -461,7 +463,7 @@ const html = `<!DOCTYPE html>
     las pruebas.
   </p>
   <table class="tabla-enlaces">
-    <thead><tr><th style="width:20%">Recurso</th><th style="width:46%">Enlace</th><th style="width:34%">Contenido</th></tr></thead>
+    <thead><tr><th style="width:20%">Recurso</th><th style="width:50%">Enlace</th><th style="width:30%">Contenido</th></tr></thead>
     <tbody>
       <tr>
         <td><b>Repositorio (rama <code>pruebas</code>)</b></td>
@@ -475,7 +477,7 @@ const html = `<!DOCTYPE html>
       </tr>
       <tr>
         <td><b>Coleccion Postman publicada</b></td>
-        <td><a href="${escapar(enlaces.postman ?? '')}">${escapar(enlaces.postman ?? 'Pendiente de publicar')}</a></td>
+        <td><a href="${escapar(enlaces.postman ?? '')}">${escapar(enlaces.postman ?? 'Pendiente de publicar').replace(/\/([^/]+)$/, '/<wbr>$1')}</a></td>
         <td>Las 35 peticiones con su ejemplo de respuesta y sus aserciones.</td>
       </tr>
       <tr>
