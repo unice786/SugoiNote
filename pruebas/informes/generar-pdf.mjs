@@ -28,8 +28,8 @@ try {
   chromium = modulo.chromium ?? modulo.default?.chromium;
 }
 
-const html = join(raiz, 'artifacts', 'Reporte-Ejecucion-Pruebas-SugoiNote.html');
-const pdf = join(raiz, 'artifacts', 'Reporte-Ejecucion-Pruebas-SugoiNote.pdf');
+const html = process.argv[2] ? resolve(process.argv[2]) : join(raiz, 'artifacts', 'Reporte-Ejecucion-Pruebas-SugoiNote.html');
+const pdf = process.argv[3] ? resolve(process.argv[3]) : join(raiz, 'artifacts', 'Reporte-Ejecucion-Pruebas-SugoiNote.pdf');
 
 if (!existsSync(html)) {
   console.error(`No existe ${html}. Ejecuta primero reporte-final.mjs.`);
@@ -82,7 +82,7 @@ if (sinNumero.length) {
   process.exit(1);
 }
 
-await pagina.locator('.indice').first().screenshot({ path: join(raiz, 'artifacts', 'pruebas', 'indice-preview.png') });
+await pagina.locator('.indice').first().screenshot({ path: join(raiz, 'artifacts', 'pruebas', 'indice-preview.png') }).catch(() => {});
 
 await pagina.pdf({
   path: pdf,
