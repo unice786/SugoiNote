@@ -51,11 +51,11 @@ if (string.IsNullOrWhiteSpace(connStr))
     return 1;
 }
 
-// La clave de IA NO se valida al arrancar: si falta, la aplicacion debe seguir
-// funcionando y solo los endpoints de IA responden con un error controlado.
-// (Antes ValidateOnStart tumbaba todo el sitio por una clave vacia.)
 builder.Services.AddOptions<IaOptions>()
-    .Bind(builder.Configuration.GetSection(IaOptions.SectionName));
+    .Bind(builder.Configuration.GetSection(IaOptions.SectionName))
+    .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey),
+              "IA:ApiKey no está configurada. Las funciones de IA quedarán deshabilitadas.")
+    .ValidateOnStart();
 
 builder.Services.AddOptions<EmailOptions>()
     .Bind(builder.Configuration.GetSection(EmailOptions.SectionName));
@@ -104,15 +104,17 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
-// Cliente de IA con timeout, reintentos y circuit breaker (Polly).
-//   IA:Proveedor = "gemini"  -> Google AI Studio (protocolo nativo de Gemini).
-//   IA:Proveedor = "openai"  -> cualquier API compatible con OpenAI
-//                               (DeepSeek, ModelScope, AIML API, Groq…).
-var proveedorIa = builder.Configuration["IA:Proveedor"] ?? "gemini";
-var usaProveedorOpenAi = proveedorIa.Equals("openai", StringComparison.OrdinalIgnoreCase)
-                      || proveedorIa.Equals("openai-compatible", StringComparison.OrdinalIgnoreCase);
-
-void ConfigurarResilienciaIa(Microsoft.Extensions.Http.Resilience.HttpStandardResilienceOptions o)
+// Cliente de Google Gemini (Google AI Studio) con timeout, reintentos y circuit
+// breaker (Polly). Sustituye a la capa de Anthropic, que quedó sin saldo y dejaba
+// los resúmenes, exámenes y el chat sin IA.
+builder.Services.AddHttpClient<IIaClient, GeminiClient>((sp, http) =>
+{
+    var opt = sp.GetRequiredService<IOptions<IaOptions>>().Value;
+    http.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
+    http.Timeout = opt.Timeout;
+    http.DefaultRequestHeaders.UserAgent.ParseAdd("SugoiNote/1.0");
+})
+.AddStandardResilienceHandler(o =>
 {
     o.Retry.MaxRetryAttempts = 2;
     o.Retry.Delay = TimeSpan.FromSeconds(2);
@@ -140,25 +142,7 @@ void ConfigurarResilienciaIa(Microsoft.Extensions.Http.Resilience.HttpStandardRe
     o.CircuitBreaker.MinimumThroughput = 8;
     o.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(240);
     o.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(30);
-}
-
-var clienteIa = usaProveedorOpenAi
-    ? builder.Services.AddHttpClient<IIaClient, OpenAiCompatClient>((sp, http) =>
-    {
-        var opt = sp.GetRequiredService<IOptions<IaOptions>>().Value;
-        http.BaseAddress = new Uri(opt.BaseUrl.TrimEnd('/') + "/");
-        http.Timeout = opt.Timeout;
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("SugoiNote/1.0");
-    })
-    : builder.Services.AddHttpClient<IIaClient, GeminiClient>((sp, http) =>
-    {
-        var opt = sp.GetRequiredService<IOptions<IaOptions>>().Value;
-        http.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
-        http.Timeout = opt.Timeout;
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("SugoiNote/1.0");
-    });
-
-clienteIa.AddStandardResilienceHandler(ConfigurarResilienciaIa);
+});
 
 // ─────────────────────────────────────────────────────────────
 // MVC + global antiforgery
@@ -309,22 +293,6 @@ builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-// Aviso temprano si la IA quedo sin clave: el sitio arranca igual y los
-// endpoints de IA devuelven un mensaje claro al usuario.
-var _iaArranque = app.Services.GetRequiredService<IOptions<IaOptions>>().Value;
-if (string.IsNullOrWhiteSpace(_iaArranque.ApiKey))
-{
-    app.Logger.LogWarning(
-        "IA sin clave configurada (IA__ApiKey). Los endpoints de IA responderan con error controlado. Proveedor: {Proveedor}, modelo: {Modelo}.",
-        _iaArranque.Proveedor, _iaArranque.Model);
-}
-else
-{
-    app.Logger.LogInformation(
-        "IA configurada: proveedor {Proveedor}, modelo {Modelo}, clave de {Largo} caracteres.",
-        _iaArranque.Proveedor, _iaArranque.Model, _iaArranque.ApiKey.Length);
-}
-
 // ─────────────────────────────────────────────────────────────
 // Pipeline
 // ─────────────────────────────────────────────────────────────
@@ -434,39 +402,10 @@ try
 catch (Exception ex)
 {
     Log.Fatal(ex, "No se pudo preparar la base de datos. Revisa la cadena de conexión.");
-    try
-    {
-        File.WriteAllText(
-            Path.Combine(AppContext.BaseDirectory, "error-inicio.txt"),
-            $"{DateTime.UtcNow:O}  No se pudo preparar la base de datos:\n{ex}");
-    }
-    catch
-    {
-        // Si tampoco se puede escribir el archivo, el log ya quedo en stdout.
-    }
     return 1;
 }
 
 Log.Information("SugoiNote iniciado en {Entorno}", app.Environment.EnvironmentName);
-
-try
-{
-    app.Run();
-}
-catch (Exception ex)
-{
-    Log.Fatal(ex, "La aplicacion no pudo arrancar.");
-    try
-    {
-        File.WriteAllText(
-            Path.Combine(AppContext.BaseDirectory, "error-inicio.txt"),
-            $"{DateTime.UtcNow:O}  Fallo al arrancar:\n{ex}");
-    }
-    catch
-    {
-        // Si tampoco se puede escribir el archivo, el log ya quedo en stdout.
-    }
-    return 1;
-}
+app.Run();
 
 return 0;

@@ -19,16 +19,6 @@ public class IaOptions
 {
     public const string SectionName = "IA";
 
-    /// <summary>
-    /// Proveedor de IA: <c>gemini</c> (Google AI Studio, protocolo nativo) u
-    /// <c>openai</c> (cualquier servicio compatible con la API de OpenAI:
-    /// DeepSeek, ModelScope, AIML API, Groq…). Default: gemini.
-    /// </summary>
-    public string Proveedor { get; set; } = "gemini";
-
-    /// <summary>URL base del proveedor cuando <see cref="Proveedor"/> es <c>openai</c>.</summary>
-    public string BaseUrl { get; set; } = "https://api.deepseek.com/v1";
-
     public string ApiKey { get; set; } = string.Empty;
 
     // Modelos validados contra GET /v1beta/models de Google AI Studio (plan gratuito).
