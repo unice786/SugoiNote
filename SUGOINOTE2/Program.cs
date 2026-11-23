@@ -104,17 +104,15 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 
-// Cliente de Google Gemini (Google AI Studio) con timeout, reintentos y circuit
-// breaker (Polly). Sustituye a la capa de Anthropic, que quedó sin saldo y dejaba
-// los resúmenes, exámenes y el chat sin IA.
-builder.Services.AddHttpClient<IIaClient, GeminiClient>((sp, http) =>
-{
-    var opt = sp.GetRequiredService<IOptions<IaOptions>>().Value;
-    http.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
-    http.Timeout = opt.Timeout;
-    http.DefaultRequestHeaders.UserAgent.ParseAdd("SugoiNote/1.0");
-})
-.AddStandardResilienceHandler(o =>
+// Cliente de IA con timeout, reintentos y circuit breaker (Polly).
+//   IA:Proveedor = "gemini"  -> Google AI Studio (protocolo nativo de Gemini).
+//   IA:Proveedor = "openai"  -> cualquier API compatible con OpenAI
+//                               (DeepSeek, ModelScope, AIML API, Groq…).
+var proveedorIa = builder.Configuration["IA:Proveedor"] ?? "gemini";
+var usaProveedorOpenAi = proveedorIa.Equals("openai", StringComparison.OrdinalIgnoreCase)
+                      || proveedorIa.Equals("openai-compatible", StringComparison.OrdinalIgnoreCase);
+
+void ConfigurarResilienciaIa(Microsoft.Extensions.Http.Resilience.HttpStandardResilienceOptions o)
 {
     o.Retry.MaxRetryAttempts = 2;
     o.Retry.Delay = TimeSpan.FromSeconds(2);
@@ -142,7 +140,25 @@ builder.Services.AddHttpClient<IIaClient, GeminiClient>((sp, http) =>
     o.CircuitBreaker.MinimumThroughput = 8;
     o.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(240);
     o.CircuitBreaker.BreakDuration = TimeSpan.FromSeconds(30);
-});
+}
+
+var clienteIa = usaProveedorOpenAi
+    ? builder.Services.AddHttpClient<IIaClient, OpenAiCompatClient>((sp, http) =>
+    {
+        var opt = sp.GetRequiredService<IOptions<IaOptions>>().Value;
+        http.BaseAddress = new Uri(opt.BaseUrl.TrimEnd('/') + "/");
+        http.Timeout = opt.Timeout;
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("SugoiNote/1.0");
+    })
+    : builder.Services.AddHttpClient<IIaClient, GeminiClient>((sp, http) =>
+    {
+        var opt = sp.GetRequiredService<IOptions<IaOptions>>().Value;
+        http.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
+        http.Timeout = opt.Timeout;
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("SugoiNote/1.0");
+    });
+
+clienteIa.AddStandardResilienceHandler(ConfigurarResilienciaIa);
 
 // ─────────────────────────────────────────────────────────────
 // MVC + global antiforgery

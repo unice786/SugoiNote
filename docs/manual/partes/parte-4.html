@@ -1,0 +1,228 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SugoiNote Manual - Part 4: Chat IA and the Community</title>
+<style>
+:root{--purple:#5b3df5;--purple-dark:#3f27b8;--ink:#20263a;--muted:#5d6478;--line:#e6e2f2;--soft:#f5f2ff;--green:#0f7b53;--red:#b42318;}
+@page{size:A4;margin:16mm 15mm 16mm 15mm;}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;font-size:10.3pt;line-height:1.48;color:var(--ink);}
+h1,h2,h3{font-family:"Segoe UI Semibold","Segoe UI",Arial,sans-serif;}
+p{margin:5px 0;}
+ul,ol{margin:5px 0 5px 18px;padding:0;}
+li{margin:2px 0;}
+code{font-family:Consolas,"Courier New",monospace;background:#f2f0fa;border:1px solid #e6e2f2;border-radius:3px;padding:0 4px;font-size:9.2pt;}
+table{width:100%;border-collapse:collapse;margin:6px 0 8px;font-size:9.3pt;}
+th{background:var(--soft);color:#33228f;text-align:left;padding:5px 7px;border:1px solid #ded7fb;font-weight:600;}
+td{padding:4px 7px;border:1px solid var(--line);vertical-align:top;}
+.cover{height:258mm;display:flex;flex-direction:column;page-break-after:always;border-top:10mm solid var(--purple);}
+.cover-band{background:var(--purple);color:#fff;padding:10mm 12mm;display:flex;justify-content:space-between;align-items:flex-end;}
+.cover-logo{font-size:22pt;font-weight:700;letter-spacing:.5px;}
+.cover-tag{font-size:9.5pt;letter-spacing:2px;text-transform:uppercase;opacity:.9;}
+.cover-main{flex:1;padding:22mm 12mm 0;}
+.cover-kicker{font-size:9pt;letter-spacing:2px;text-transform:uppercase;color:var(--purple);font-weight:700;margin-bottom:8px;}
+.cover h1{font-size:31pt;line-height:1.12;margin:0 0 10px;color:var(--ink);}
+.cover-sub{font-size:12.5pt;color:var(--muted);max-width:135mm;line-height:1.45;}
+.cover-pills{margin-top:18mm;display:flex;flex-wrap:wrap;gap:6px;}
+.cover-pills span{border:1px solid #cfc6f7;background:var(--soft);color:#3f27b8;border-radius:20px;padding:5px 11px;font-size:8.8pt;font-weight:600;}
+.cover-foot{padding:0 12mm 12mm;display:flex;justify-content:space-between;color:var(--muted);font-size:9pt;border-bottom:4mm solid var(--purple);}
+.toc{padding-top:4mm;}
+.toc-title{font-size:20pt;color:var(--ink);margin:0 0 4mm;}
+.toc-table td:first-child{width:18mm;color:var(--purple);font-weight:700;}
+.toc-table td:nth-child(2){font-weight:600;}
+.toc-table td:last-child{width:36mm;color:var(--muted);text-align:right;}
+.toc-note{margin-top:8mm;background:var(--soft);border:1px solid #ded7fb;border-radius:8px;padding:8px 11px;font-size:9.4pt;}
+.part{page-break-before:always;}
+.part-standalone{page-break-before:auto;}
+.part-head{border-left:6px solid var(--purple);padding:0 0 0 9px;margin-bottom:5mm;}
+.part-kicker{font-size:8.8pt;letter-spacing:1.6px;text-transform:uppercase;color:var(--purple);font-weight:700;}
+.part-head h1{font-size:23pt;line-height:1.15;margin:2px 0 4px;}
+.lead{color:var(--muted);font-size:10.6pt;margin:0;}
+h2{font-size:13pt;color:#3f27b8;margin:7mm 0 2mm;padding-bottom:1.5mm;border-bottom:1.6px solid #e8e3fb;page-break-after:avoid;}
+h3{font-size:10.4pt;margin:0 0 2mm;color:var(--ink);}
+.note{background:#fbfaff;border-left:3px solid #b9abf8;padding:5px 9px;color:#3b3f52;font-size:9.5pt;margin:4px 0 6px;}
+.box{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:4mm 0;break-inside:avoid;page-break-inside:avoid;}
+.box h3{color:#3f27b8;}
+.box.goals{background:var(--soft);border-color:#ded7fb;}
+.box.vocab{background:#fcfbff;}
+.box.steps{background:#f8fbff;border-color:#d8e6f6;}
+.box.wh{background:#f6fffb;border-color:#cdebdf;}
+.box.did{background:#fffaf2;border-color:#f3e2c4;}
+.box.advice{background:#f7fdf9;border-color:#d3ecdd;}
+.box.grammar{background:#fff9f5;border-color:#f3ddcf;}
+.box.review{background:#faf9ff;border-color:#e2dcfa;}
+.box.wh h3{color:#0f7b53;}
+.box.did h3{color:#9a6a00;}
+.box.grammar h3{color:#b45309;}
+.grid2{display:flex;gap:4mm;}
+.grid2>.box{flex:1;margin:2mm 0;}
+.yes{color:var(--green);font-weight:700;margin-right:4px;}
+.no{color:var(--red);font-weight:700;margin-right:4px;}
+.answers{font-size:8.9pt;color:var(--muted);border-top:1px dashed var(--line);padding-top:5px;margin-top:6px;}
+.mini-cover{page-break-after:always;border-top:8mm solid var(--purple);padding:14mm 0 0;}
+.mini-cover h1{font-size:27pt;margin:3px 0 6px;line-height:1.12;}
+.mini-cover .lead{font-size:11.5pt;}
+.mini-cover .who{margin-top:6mm;font-size:9.5pt;color:var(--muted);}
+.mini-cover .who strong{color:var(--ink);}
+.mini-badge{display:inline-block;background:var(--soft);border:1px solid #d8d0f8;color:#3f27b8;border-radius:16px;padding:3px 10px;font-size:8.6pt;font-weight:700;margin-top:4mm;}
+@media print{.box{box-shadow:none;}a{color:inherit;text-decoration:none;}}
+</style>
+</head>
+<body>
+<div class="mini-cover">
+  <div class="part-kicker">SugoiNote Web System &middot; User Manual (English B1)</div>
+  <h1>Chat IA and the Community</h1>
+  <p class="lead">This part explains how to talk with the AI tutor, how to send images, and how to ask questions, create polls, answer, and vote in the community.</p>
+  <div class="mini-badge">Part 4 of 5 &middot; Person 4</div>
+  <div class="who">This part is self-contained. It includes learning goals, key vocabulary, step-by-step instructions, review questions, and an answer key.</div>
+</div>
+
+<section class="part part-standalone" id="part4">
+  <div class="box goals">
+    <h3>In this part you will learn</h3>
+    <ul>
+      <li>How to use the AI chat and send an image.</li>
+      <li>How to search and filter the community.</li>
+      <li>How to ask a question, create a poll, answer, vote, and delete your own post.</li>
+    </ul>
+  </div>
+
+  <h2>1. Chat IA</h2>
+  <p><strong>Chat IA</strong> is your AI tutor. You can ask about a topic, request an explanation, or paste a photo of your notes. The AI remembers the <strong>context</strong> of the conversation, so you can ask follow-up questions.</p>
+
+  <h2>2. Send a message and send an image</h2>
+  <div class="box steps">
+    <h3>Step by step</h3>
+    <ol class="flow">
+      <li><strong>First,</strong> open <em>“Chat IA”</em>.</li>
+      <li><strong>Next,</strong> write your question in the message box.</li>
+      <li><strong>Then,</strong> press <strong>Enter</strong> to send it. Use <strong>Shift + Enter</strong> to start a new line.</li>
+      <li><strong>After that,</strong> read the answer of the AI.</li>
+      <li><strong>Finally,</strong> continue the conversation with a new question.</li>
+    </ol>
+  </div>
+  <p>To send an image, click the <strong>image icon</strong> and choose a file, or <strong>paste</strong> an image with <strong>Ctrl + V</strong>. The maximum size is <strong>5 MB</strong>. A preview appears before you send it; click the <strong>X</strong> to remove it. The AI can analyse images (<strong>vision</strong>), for example a photo of an exercise.</p>
+
+  <h2>3. Clear the chat</h2>
+  <p>Click <em>“Limpiar”</em> to delete the conversation and start again. The AI will not remember the old messages.</p>
+
+  <h2>4. The community feed</h2>
+  <p><strong>Comunidad</strong> is a <strong>feed</strong> of posts from other students. Each card shows the author, the date, a badge (<em>Pregunta</em> or <em>Encuesta</em>), the title, a short preview, and the number of answers or votes. Click a card to open it.</p>
+
+  <h2>5. Search and filters</h2>
+  <p>Write a word in the search box to find a post. Use the tabs <em>“Todos”</em>, <em>“Preguntas”</em>, and <em>“Encuestas”</em> to <strong>filter</strong> the feed by type. The list is <strong>paginated</strong>: it loads in pages, not all at once.</p>
+
+  <h2>6. Ask a question</h2>
+  <div class="box steps">
+    <h3>Step by step</h3>
+    <ol class="flow">
+      <li><strong>First,</strong> click <em>“Nueva Pregunta”</em>.</li>
+      <li><strong>Next,</strong> write a clear title.</li>
+      <li><strong>Then,</strong> write a description with more details.</li>
+      <li><strong>After that,</strong> add an image if you need it (optional).</li>
+      <li><strong>Finally,</strong> click <em>“Publicar”</em>.</li>
+    </ol>
+  </div>
+
+  <h2>7. Create a poll</h2>
+  <div class="box steps">
+    <h3>Step by step</h3>
+    <ol class="flow">
+      <li><strong>First,</strong> click <em>“Nueva Encuesta”</em>.</li>
+      <li><strong>Next,</strong> write the theme and the question.</li>
+      <li><strong>Then,</strong> add two or more options. Click <em>“Agregar opción”</em> for more options.</li>
+      <li><strong>After that,</strong> check <em>“Solo se puede elegir una opción”</em> if you want one answer per student.</li>
+      <li><strong>Finally,</strong> click <em>“Publicar encuesta”</em>.</li>
+    </ol>
+  </div>
+
+  <h2>8. Answer and vote</h2>
+  <p>Open a <strong>question</strong>, write your answer in <em>“Tu respuesta”</em>, and click <em>“Publicar respuesta”</em>. Open a <strong>poll</strong>, select one option (or more, if the poll allows it), and click <em>“Enviar voto”</em>. After you vote, you see the percentage and the bars. You can vote <strong>only one time</strong>; the system shows <em>“Ya participaste en esta encuesta”</em>.</p>
+
+  <h2>9. Delete your own post</h2>
+  <div class="box steps">
+    <h3>Step by step</h3>
+    <ol class="flow">
+      <li><strong>First,</strong> click the trash icon at the top of the community.</li>
+      <li><strong>Next,</strong> the system shows only your posts.</li>
+      <li><strong>Then,</strong> click <em>“Eliminar”</em> on the post you want to remove.</li>
+      <li><strong>Finally,</strong> confirm the action. You cannot delete the posts of other students.</li>
+    </ol>
+  </div>
+
+  <div class="box vocab">
+    <h3>Key vocabulary</h3>
+    <table>
+      <thead><tr><th>Term</th><th>Simple definition</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Chat</strong></td><td>A conversation with short messages.</td></tr>
+        <tr><td><strong>Context</strong></td><td>The information before the current message.</td></tr>
+        <tr><td><strong>Vision</strong></td><td>The ability of the AI to understand images.</td></tr>
+        <tr><td><strong>Feed</strong></td><td>A list of posts that updates with new content.</td></tr>
+        <tr><td><strong>Post</strong></td><td>A publication in the community.</td></tr>
+        <tr><td><strong>Poll</strong></td><td>A question with options that students can vote on.</td></tr>
+        <tr><td><strong>Vote</strong></td><td>Choose an option in a poll.</td></tr>
+        <tr><td><strong>Reply</strong></td><td>An answer to a question or a post.</td></tr>
+        <tr><td><strong>Filter</strong></td><td>Show only some posts, for example only polls.</td></tr>
+        <tr><td><strong>Pagination</strong></td><td>Load the content in pages.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2">
+    <div class="box wh">
+      <h3>WH- questions</h3>
+      <ul>
+        <li><strong>Who</strong> can answer a question?</li>
+        <li><strong>When</strong> can you delete a post?</li>
+        <li><strong>Why</strong> can you vote only one time?</li>
+        <li><strong>How</strong> do you attach an image?</li>
+        <li><strong>What</strong> is a poll?</li>
+        <li><strong>Where</strong> do you write your answer?</li>
+      </ul>
+    </div>
+    <div class="box did">
+      <h3>Did you…?</h3>
+      <ul>
+        <li><strong>Did</strong> you paste an image in the chat?</li>
+        <li><strong>Did</strong> you publish your question?</li>
+        <li><strong>Did</strong> you create the poll options?</li>
+        <li><strong>Did</strong> you vote in the poll?</li>
+        <li><strong>Did</strong> you answer another student?</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="box advice">
+    <h3>You should / You shouldn’t</h3>
+    <ul>
+      <li><span class="yes">✓</span> You <strong>should</strong> write a clear title for your question.</li>
+      <li><span class="yes">✓</span> You <strong>should</strong> be respectful with other students.</li>
+      <li><span class="yes">✓</span> You <strong>should</strong> read the previous answers before you reply.</li>
+      <li><span class="no">✕</span> You <strong>shouldn’t</strong> share personal data in the community.</li>
+      <li><span class="no">✕</span> You <strong>shouldn’t</strong> vote two times or write bad words.</li>
+    </ul>
+  </div>
+
+  <div class="box grammar">
+    <h3>Grammar tip (B1): can / can’t for ability and permission</h3>
+    <p>Use <strong>can</strong> for ability and permission, and <strong>can’t</strong> for prohibition: <em>“You can paste an image.”</em> · <em>“You can vote only once.”</em> · <em>“You can’t delete another student’s post.”</em></p>
+  </div>
+
+  <div class="box review">
+    <h3>Quick review</h3>
+    <ol>
+      <li>What is the maximum image size in the chat?</li>
+      <li>How do you start a new line without sending the message?</li>
+      <li>What are the three community tabs?</li>
+      <li>How many times can you vote in a poll?</li>
+      <li>Who can delete a post?</li>
+    </ol>
+    <p class="answers"><strong>Answer key:</strong> 1. 5 MB. 2. Press Shift + Enter to start a new line. 3. Todos, Preguntas, and Encuestas. 4. One time. 5. Only the student who created it.</p>
+  </div>
+</section>
+
+</body>
+</html>

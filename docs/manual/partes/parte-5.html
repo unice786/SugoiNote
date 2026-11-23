@@ -1,0 +1,266 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SugoiNote Manual - Part 5: Profile, Progress, and Help</title>
+<style>
+:root{--purple:#5b3df5;--purple-dark:#3f27b8;--ink:#20263a;--muted:#5d6478;--line:#e6e2f2;--soft:#f5f2ff;--green:#0f7b53;--red:#b42318;}
+@page{size:A4;margin:16mm 15mm 16mm 15mm;}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;font-size:10.3pt;line-height:1.48;color:var(--ink);}
+h1,h2,h3{font-family:"Segoe UI Semibold","Segoe UI",Arial,sans-serif;}
+p{margin:5px 0;}
+ul,ol{margin:5px 0 5px 18px;padding:0;}
+li{margin:2px 0;}
+code{font-family:Consolas,"Courier New",monospace;background:#f2f0fa;border:1px solid #e6e2f2;border-radius:3px;padding:0 4px;font-size:9.2pt;}
+table{width:100%;border-collapse:collapse;margin:6px 0 8px;font-size:9.3pt;}
+th{background:var(--soft);color:#33228f;text-align:left;padding:5px 7px;border:1px solid #ded7fb;font-weight:600;}
+td{padding:4px 7px;border:1px solid var(--line);vertical-align:top;}
+.cover{height:258mm;display:flex;flex-direction:column;page-break-after:always;border-top:10mm solid var(--purple);}
+.cover-band{background:var(--purple);color:#fff;padding:10mm 12mm;display:flex;justify-content:space-between;align-items:flex-end;}
+.cover-logo{font-size:22pt;font-weight:700;letter-spacing:.5px;}
+.cover-tag{font-size:9.5pt;letter-spacing:2px;text-transform:uppercase;opacity:.9;}
+.cover-main{flex:1;padding:22mm 12mm 0;}
+.cover-kicker{font-size:9pt;letter-spacing:2px;text-transform:uppercase;color:var(--purple);font-weight:700;margin-bottom:8px;}
+.cover h1{font-size:31pt;line-height:1.12;margin:0 0 10px;color:var(--ink);}
+.cover-sub{font-size:12.5pt;color:var(--muted);max-width:135mm;line-height:1.45;}
+.cover-pills{margin-top:18mm;display:flex;flex-wrap:wrap;gap:6px;}
+.cover-pills span{border:1px solid #cfc6f7;background:var(--soft);color:#3f27b8;border-radius:20px;padding:5px 11px;font-size:8.8pt;font-weight:600;}
+.cover-foot{padding:0 12mm 12mm;display:flex;justify-content:space-between;color:var(--muted);font-size:9pt;border-bottom:4mm solid var(--purple);}
+.toc{padding-top:4mm;}
+.toc-title{font-size:20pt;color:var(--ink);margin:0 0 4mm;}
+.toc-table td:first-child{width:18mm;color:var(--purple);font-weight:700;}
+.toc-table td:nth-child(2){font-weight:600;}
+.toc-table td:last-child{width:36mm;color:var(--muted);text-align:right;}
+.toc-note{margin-top:8mm;background:var(--soft);border:1px solid #ded7fb;border-radius:8px;padding:8px 11px;font-size:9.4pt;}
+.part{page-break-before:always;}
+.part-standalone{page-break-before:auto;}
+.part-head{border-left:6px solid var(--purple);padding:0 0 0 9px;margin-bottom:5mm;}
+.part-kicker{font-size:8.8pt;letter-spacing:1.6px;text-transform:uppercase;color:var(--purple);font-weight:700;}
+.part-head h1{font-size:23pt;line-height:1.15;margin:2px 0 4px;}
+.lead{color:var(--muted);font-size:10.6pt;margin:0;}
+h2{font-size:13pt;color:#3f27b8;margin:7mm 0 2mm;padding-bottom:1.5mm;border-bottom:1.6px solid #e8e3fb;page-break-after:avoid;}
+h3{font-size:10.4pt;margin:0 0 2mm;color:var(--ink);}
+.note{background:#fbfaff;border-left:3px solid #b9abf8;padding:5px 9px;color:#3b3f52;font-size:9.5pt;margin:4px 0 6px;}
+.box{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:4mm 0;break-inside:avoid;page-break-inside:avoid;}
+.box h3{color:#3f27b8;}
+.box.goals{background:var(--soft);border-color:#ded7fb;}
+.box.vocab{background:#fcfbff;}
+.box.steps{background:#f8fbff;border-color:#d8e6f6;}
+.box.wh{background:#f6fffb;border-color:#cdebdf;}
+.box.did{background:#fffaf2;border-color:#f3e2c4;}
+.box.advice{background:#f7fdf9;border-color:#d3ecdd;}
+.box.grammar{background:#fff9f5;border-color:#f3ddcf;}
+.box.review{background:#faf9ff;border-color:#e2dcfa;}
+.box.wh h3{color:#0f7b53;}
+.box.did h3{color:#9a6a00;}
+.box.grammar h3{color:#b45309;}
+.grid2{display:flex;gap:4mm;}
+.grid2>.box{flex:1;margin:2mm 0;}
+.yes{color:var(--green);font-weight:700;margin-right:4px;}
+.no{color:var(--red);font-weight:700;margin-right:4px;}
+.answers{font-size:8.9pt;color:var(--muted);border-top:1px dashed var(--line);padding-top:5px;margin-top:6px;}
+.mini-cover{page-break-after:always;border-top:8mm solid var(--purple);padding:14mm 0 0;}
+.mini-cover h1{font-size:27pt;margin:3px 0 6px;line-height:1.12;}
+.mini-cover .lead{font-size:11.5pt;}
+.mini-cover .who{margin-top:6mm;font-size:9.5pt;color:var(--muted);}
+.mini-cover .who strong{color:var(--ink);}
+.mini-badge{display:inline-block;background:var(--soft);border:1px solid #d8d0f8;color:#3f27b8;border-radius:16px;padding:3px 10px;font-size:8.6pt;font-weight:700;margin-top:4mm;}
+@media print{.box{box-shadow:none;}a{color:inherit;text-decoration:none;}}
+</style>
+</head>
+<body>
+<div class="mini-cover">
+  <div class="part-kicker">SugoiNote Web System &middot; User Manual (English B1)</div>
+  <h1>Profile, Progress, and Help</h1>
+  <p class="lead">This part explains how to manage your profile and photo, how to read your statistics, how to use the mobile app, and what to do when there is a problem.</p>
+  <div class="mini-badge">Part 5 of 5 &middot; Person 5</div>
+  <div class="who">This part is self-contained. It includes learning goals, key vocabulary, step-by-step instructions, review questions, and an answer key.</div>
+</div>
+
+<section class="part part-standalone" id="part5">
+  <div class="box goals">
+    <h3>In this part you will learn</h3>
+    <ul>
+      <li>How to change your personal data and your photo.</li>
+      <li>How to read your study statistics.</li>
+      <li>How to solve common problems and review the glossary.</li>
+    </ul>
+  </div>
+
+  <h2>1. Your profile</h2>
+  <div class="box steps">
+    <h3>Step by step</h3>
+    <ol class="flow">
+      <li><strong>First,</strong> open <em>“Perfil”</em> in the side menu.</li>
+      <li><strong>Next,</strong> change your name or your email in <em>“Información Personal”</em>.</li>
+      <li><strong>Then,</strong> click <em>“Guardar Cambios”</em>.</li>
+      <li><strong>Finally,</strong> check the message <em>“Cambios guardados”</em>.</li>
+    </ol>
+  </div>
+
+  <h2>2. Change your photo</h2>
+  <p>Click the <strong>camera icon</strong> on your photo and choose an image from your computer. If you want to remove it, click <em>“Quitar foto”</em>. When you do not have a photo, the system shows your <strong>initials</strong>.</p>
+
+  <h2>3. Your statistics</h2>
+  <table>
+    <thead><tr><th>Statistic</th><th>What it shows</th></tr></thead>
+    <tbody>
+      <tr><td>Apuntes este mes</td><td>How many notes you created this month.</td></tr>
+      <tr><td>vs mes anterior</td><td>The change in percentage compared with last month.</td></tr>
+      <tr><td>Días activos (30d)</td><td>How many days you used the system in the last 30 days.</td></tr>
+      <tr><td>Exámenes generados</td><td>How many exams you created with the AI.</td></tr>
+      <tr><td>Actividad mensual</td><td>A chart of your notes and exams in the last 6 months.</td></tr>
+      <tr><td>Distribución total</td><td>A chart of your total notes and exams.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. The mobile app</h2>
+  <p>The mobile app uses the same account and the same backend. It has seven tabs: <strong>Inicio, Apuntes, Resúmenes, Exámenes, Chat, Comunidad, and Perfil</strong>. The app saves your session in a secure place on the phone. In production, the app needs the API address in the variable <code>EXPO_PUBLIC_API_URL</code>.</p>
+
+  <h2>5. Troubleshooting</h2>
+  <table>
+    <thead><tr><th>Problem</th><th>Why it happens</th><th>What should you do?</th></tr></thead>
+    <tbody>
+      <tr><td>My account is locked.</td><td>You wrote a wrong password five times.</td><td>Wait 10 minutes and try again.</td></tr>
+      <tr><td>The AI says “limit reached” (429).</td><td>You used all the AI quota for now.</td><td>Wait and try later.</td></tr>
+      <tr><td>My image is not accepted.</td><td>The image is bigger than 5 MB.</td><td>Use a smaller image.</td></tr>
+      <tr><td>My PDF does not open in the editor.</td><td>The format is not supported.</td><td>Use PDF, DOCX, HTML, or TXT.</td></tr>
+      <tr><td>I see 404 on another note.</td><td>The note belongs to another student.</td><td>Nothing. Notes are private.</td></tr>
+      <tr><td>My session expired.</td><td>The system closed the session for security.</td><td>Log in again.</td></tr>
+      <tr><td>My summary is empty.</td><td>The note has little or no content.</td><td>Write more content and generate again.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>6. Glossary</h2>
+  <table>
+    <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+    <tbody>
+      <tr><td><strong>AI</strong></td><td>Artificial intelligence: software that reads, writes, and answers.</td></tr>
+      <tr><td><strong>API</strong></td><td>The door that lets one program talk to another program.</td></tr>
+      <tr><td><strong>Authentication</strong></td><td>The process of checking who you are.</td></tr>
+      <tr><td><strong>Autosave</strong></td><td>The system saves your work automatically.</td></tr>
+      <tr><td><strong>Backend</strong></td><td>The part of the system that works on the server.</td></tr>
+      <tr><td><strong>Cookie</strong></td><td>A small file that remembers your session in the browser.</td></tr>
+      <tr><td><strong>Database</strong></td><td>The place where the system saves all the data.</td></tr>
+      <tr><td><strong>Export</strong></td><td>Create a file from your content and download it.</td></tr>
+      <tr><td><strong>Feed</strong></td><td>A list of posts that updates with new content.</td></tr>
+      <tr><td><strong>Frontend</strong></td><td>The part of the system that you see and click.</td></tr>
+      <tr><td><strong>Grade</strong></td><td>The score that you get in an exam.</td></tr>
+      <tr><td><strong>HTML</strong></td><td>The language that describes the structure of a web page.</td></tr>
+      <tr><td><strong>Import</strong></td><td>Bring a file from your computer into the system.</td></tr>
+      <tr><td><strong>JWT</strong></td><td>A secure token that the mobile app uses to identify you.</td></tr>
+      <tr><td><strong>Lockout</strong></td><td>A temporary block after many wrong passwords.</td></tr>
+      <tr><td><strong>Model</strong></td><td>The AI engine that produces the answer.</td></tr>
+      <tr><td><strong>Poll</strong></td><td>A question with options that students can vote on.</td></tr>
+      <tr><td><strong>Prompt</strong></td><td>The instruction that you send to the AI.</td></tr>
+      <tr><td><strong>Quota</strong></td><td>The maximum number of AI requests that you can use.</td></tr>
+      <tr><td><strong>Rate limit</strong></td><td>A maximum number of requests in a period of time.</td></tr>
+      <tr><td><strong>Sanitize</strong></td><td>Remove dangerous code from the HTML.</td></tr>
+      <tr><td><strong>Subject</strong></td><td>A group of notes, for example a school subject.</td></tr>
+      <tr><td><strong>Summary</strong></td><td>A short text with the main ideas of a note.</td></tr>
+      <tr><td><strong>Troubleshooting</strong></td><td>The process of finding and solving a problem.</td></tr>
+      <tr><td><strong>Vote</strong></td><td>Choose an option in a poll.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>7. A recommended daily routine</h2>
+  <div class="box steps">
+    <h3>Step by step</h3>
+    <ol class="flow">
+      <li><strong>First,</strong> log in and open <em>“Inicio”</em>.</li>
+      <li><strong>Next,</strong> open a note or create a new one.</li>
+      <li><strong>Then,</strong> write the main ideas of your class.</li>
+      <li><strong>After that,</strong> generate a summary and read it.</li>
+      <li><strong>Then,</strong> generate a short exam (5 or 8 questions) and answer it.</li>
+      <li><strong>After that,</strong> review the incorrect answers and the explanations.</li>
+      <li><strong>Then,</strong> ask the chat if you still have a doubt.</li>
+      <li><strong>Finally,</strong> check the community and your profile statistics.</li>
+    </ol>
+  </div>
+
+  <div class="box vocab">
+    <h3>Key vocabulary</h3>
+    <table>
+      <thead><tr><th>Term</th><th>Simple definition</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Profile</strong></td><td>Your personal page with your name, email, and photo.</td></tr>
+        <tr><td><strong>Statistics</strong></td><td>Numbers that show your activity and progress.</td></tr>
+        <tr><td><strong>Chart</strong></td><td>A drawing that shows data, for example bars or a circle.</td></tr>
+        <tr><td><strong>Troubleshooting</strong></td><td>Finding and solving a problem.</td></tr>
+        <tr><td><strong>Error code</strong></td><td>A number that identifies a problem, for example 429.</td></tr>
+        <tr><td><strong>Glossary</strong></td><td>A list of important words and their definitions.</td></tr>
+        <tr><td><strong>Active day</strong></td><td>A day when you used the system.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2">
+    <div class="box wh">
+      <h3>WH- questions</h3>
+      <ul>
+        <li><strong>What</strong> do the statistics show?</li>
+        <li><strong>Where</strong> do you change your photo?</li>
+        <li><strong>Why</strong> is a note private?</li>
+        <li><strong>How</strong> do you fix a locked account?</li>
+        <li><strong>What</strong> should you do after error 429?</li>
+        <li><strong>When</strong> should you check your progress?</li>
+      </ul>
+    </div>
+    <div class="box did">
+      <h3>Did you…?</h3>
+      <ul>
+        <li><strong>Did</strong> you save your profile changes?</li>
+        <li><strong>Did</strong> you upload or remove your photo?</li>
+        <li><strong>Did</strong> you check your statistics this week?</li>
+        <li><strong>Did</strong> you read the error message before you tried again?</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="box advice">
+    <h3>You should / You shouldn’t</h3>
+    <ul>
+      <li><span class="yes">✓</span> You <strong>should</strong> keep your name and email updated.</li>
+      <li><span class="yes">✓</span> You <strong>should</strong> check your statistics every week.</li>
+      <li><span class="yes">✓</span> You <strong>should</strong> read the error message before you try again.</li>
+      <li><span class="no">✕</span> You <strong>shouldn’t</strong> ignore a security message.</li>
+      <li><span class="no">✕</span> You <strong>shouldn’t</strong> use another student’s account.</li>
+    </ul>
+  </div>
+
+  <div class="box grammar">
+    <h3>Grammar tip (B1): should for advice</h3>
+    <p>Use <strong>should + infinitive</strong> to give advice: <em>“You should wait ten minutes.”</em> · <em>“You shouldn’t share your password.”</em></p>
+    <p>For a problem, ask: <em>“What should I do if my account is locked?”</em></p>
+  </div>
+
+  <div class="box review">
+    <h3>Quick review</h3>
+    <ol>
+      <li>How long do you wait when your account is locked?</li>
+      <li>What does error 429 mean?</li>
+      <li>What is the maximum image size?</li>
+      <li>What does “Días activos (30d)” show?</li>
+      <li>What should you do if your summary is empty?</li>
+    </ol>
+    <p class="answers"><strong>Answer key:</strong> 1. Ten minutes. 2. The AI reached its request limit. 3. 5 MB. 4. The days you used the system in the last 30 days. 5. Write more content in the note and generate again.</p>
+  </div>
+
+  <div class="box goals" style="margin-top:6mm;">
+    <h3>Final checklist</h3>
+    <ul>
+      <li>I can create an account and log in safely.</li>
+      <li>I can create a note, choose a subject, and use the editor.</li>
+      <li>I can generate a summary and an exam with the AI.</li>
+      <li>I can read my grade and my feedback.</li>
+      <li>I can chat with the AI and participate in the community.</li>
+      <li>I can update my profile and read my statistics.</li>
+      <li>I know what to do when there is a problem.</li>
+    </ul>
+  </div>
+</section>
+
+</body>
+</html>

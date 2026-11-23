@@ -1,0 +1,217 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SugoiNote Manual - Part 2: Notes and the Editor</title>
+<style>
+:root{--purple:#5b3df5;--purple-dark:#3f27b8;--ink:#20263a;--muted:#5d6478;--line:#e6e2f2;--soft:#f5f2ff;--green:#0f7b53;--red:#b42318;}
+@page{size:A4;margin:16mm 15mm 16mm 15mm;}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;font-size:10.3pt;line-height:1.48;color:var(--ink);}
+h1,h2,h3{font-family:"Segoe UI Semibold","Segoe UI",Arial,sans-serif;}
+p{margin:5px 0;}
+ul,ol{margin:5px 0 5px 18px;padding:0;}
+li{margin:2px 0;}
+code{font-family:Consolas,"Courier New",monospace;background:#f2f0fa;border:1px solid #e6e2f2;border-radius:3px;padding:0 4px;font-size:9.2pt;}
+table{width:100%;border-collapse:collapse;margin:6px 0 8px;font-size:9.3pt;}
+th{background:var(--soft);color:#33228f;text-align:left;padding:5px 7px;border:1px solid #ded7fb;font-weight:600;}
+td{padding:4px 7px;border:1px solid var(--line);vertical-align:top;}
+.cover{height:258mm;display:flex;flex-direction:column;page-break-after:always;border-top:10mm solid var(--purple);}
+.cover-band{background:var(--purple);color:#fff;padding:10mm 12mm;display:flex;justify-content:space-between;align-items:flex-end;}
+.cover-logo{font-size:22pt;font-weight:700;letter-spacing:.5px;}
+.cover-tag{font-size:9.5pt;letter-spacing:2px;text-transform:uppercase;opacity:.9;}
+.cover-main{flex:1;padding:22mm 12mm 0;}
+.cover-kicker{font-size:9pt;letter-spacing:2px;text-transform:uppercase;color:var(--purple);font-weight:700;margin-bottom:8px;}
+.cover h1{font-size:31pt;line-height:1.12;margin:0 0 10px;color:var(--ink);}
+.cover-sub{font-size:12.5pt;color:var(--muted);max-width:135mm;line-height:1.45;}
+.cover-pills{margin-top:18mm;display:flex;flex-wrap:wrap;gap:6px;}
+.cover-pills span{border:1px solid #cfc6f7;background:var(--soft);color:#3f27b8;border-radius:20px;padding:5px 11px;font-size:8.8pt;font-weight:600;}
+.cover-foot{padding:0 12mm 12mm;display:flex;justify-content:space-between;color:var(--muted);font-size:9pt;border-bottom:4mm solid var(--purple);}
+.toc{padding-top:4mm;}
+.toc-title{font-size:20pt;color:var(--ink);margin:0 0 4mm;}
+.toc-table td:first-child{width:18mm;color:var(--purple);font-weight:700;}
+.toc-table td:nth-child(2){font-weight:600;}
+.toc-table td:last-child{width:36mm;color:var(--muted);text-align:right;}
+.toc-note{margin-top:8mm;background:var(--soft);border:1px solid #ded7fb;border-radius:8px;padding:8px 11px;font-size:9.4pt;}
+.part{page-break-before:always;}
+.part-standalone{page-break-before:auto;}
+.part-head{border-left:6px solid var(--purple);padding:0 0 0 9px;margin-bottom:5mm;}
+.part-kicker{font-size:8.8pt;letter-spacing:1.6px;text-transform:uppercase;color:var(--purple);font-weight:700;}
+.part-head h1{font-size:23pt;line-height:1.15;margin:2px 0 4px;}
+.lead{color:var(--muted);font-size:10.6pt;margin:0;}
+h2{font-size:13pt;color:#3f27b8;margin:7mm 0 2mm;padding-bottom:1.5mm;border-bottom:1.6px solid #e8e3fb;page-break-after:avoid;}
+h3{font-size:10.4pt;margin:0 0 2mm;color:var(--ink);}
+.note{background:#fbfaff;border-left:3px solid #b9abf8;padding:5px 9px;color:#3b3f52;font-size:9.5pt;margin:4px 0 6px;}
+.box{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:4mm 0;break-inside:avoid;page-break-inside:avoid;}
+.box h3{color:#3f27b8;}
+.box.goals{background:var(--soft);border-color:#ded7fb;}
+.box.vocab{background:#fcfbff;}
+.box.steps{background:#f8fbff;border-color:#d8e6f6;}
+.box.wh{background:#f6fffb;border-color:#cdebdf;}
+.box.did{background:#fffaf2;border-color:#f3e2c4;}
+.box.advice{background:#f7fdf9;border-color:#d3ecdd;}
+.box.grammar{background:#fff9f5;border-color:#f3ddcf;}
+.box.review{background:#faf9ff;border-color:#e2dcfa;}
+.box.wh h3{color:#0f7b53;}
+.box.did h3{color:#9a6a00;}
+.box.grammar h3{color:#b45309;}
+.grid2{display:flex;gap:4mm;}
+.grid2>.box{flex:1;margin:2mm 0;}
+.yes{color:var(--green);font-weight:700;margin-right:4px;}
+.no{color:var(--red);font-weight:700;margin-right:4px;}
+.answers{font-size:8.9pt;color:var(--muted);border-top:1px dashed var(--line);padding-top:5px;margin-top:6px;}
+.mini-cover{page-break-after:always;border-top:8mm solid var(--purple);padding:14mm 0 0;}
+.mini-cover h1{font-size:27pt;margin:3px 0 6px;line-height:1.12;}
+.mini-cover .lead{font-size:11.5pt;}
+.mini-cover .who{margin-top:6mm;font-size:9.5pt;color:var(--muted);}
+.mini-cover .who strong{color:var(--ink);}
+.mini-badge{display:inline-block;background:var(--soft);border:1px solid #d8d0f8;color:#3f27b8;border-radius:16px;padding:3px 10px;font-size:8.6pt;font-weight:700;margin-top:4mm;}
+@media print{.box{box-shadow:none;}a{color:inherit;text-decoration:none;}}
+</style>
+</head>
+<body>
+<div class="mini-cover">
+  <div class="part-kicker">SugoiNote Web System &middot; User Manual (English B1)</div>
+  <h1>Notes and the Editor</h1>
+  <p class="lead">This part explains how to create, write, organize, import, export, and delete your notes in the SugoiNote editor.</p>
+  <div class="mini-badge">Part 2 of 5 &middot; Person 2</div>
+  <div class="who">This part is self-contained. It includes learning goals, key vocabulary, step-by-step instructions, review questions, and an answer key.</div>
+</div>
+
+<section class="part part-standalone" id="part2">
+  <div class="box goals">
+    <h3>In this part you will learn</h3>
+    <ul>
+      <li>Where your notes are and how to create a new one.</li>
+      <li>How to use the editor toolbar and the autosave.</li>
+      <li>How to import a document, export a copy, and delete a note.</li>
+    </ul>
+  </div>
+
+  <h2>1. Home and “Mis Apuntes”</h2>
+  <p>On <strong>Inicio</strong> you see your name and your <strong>recent notes</strong> (maximum 8). Click a card to open it, or click <em>“Nueva Nota”</em> to start. The page <strong>Mis Apuntes</strong> shows all your notes. You can filter them by <strong>subject</strong> with the pills at the top: <em>“Todas”</em> and one pill for each subject.</p>
+
+  <h2>2. Create a note</h2>
+  <div class="box steps">
+    <h3>Step by step</h3>
+    <ol class="flow">
+      <li><strong>First,</strong> click <em>“Nueva Nota”</em>.</li>
+      <li><strong>Next,</strong> write a title for the note.</li>
+      <li><strong>Then,</strong> choose a <strong>subject</strong> from the list, or write a new subject name in <em>“O crea una nueva materia”</em>.</li>
+      <li><strong>After that,</strong> click <em>“Crear nota”</em>.</li>
+      <li><strong>Finally,</strong> the editor opens and you can write your content.</li>
+    </ol>
+  </div>
+  <p class="note">A <strong>subject</strong> (in Spanish, <em>materia</em>) is a group of notes, for example “Cálculo” or “Historia”. The system can create the subject at the same time as the note.</p>
+
+  <h2>3. The editor toolbar</h2>
+  <table>
+    <thead><tr><th>Tool</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>Undo / Redo</td><td>Go back or repeat your last change.</td></tr>
+      <tr><td>Bold / Italic / Underline</td><td>Change the style of the selected text.</td></tr>
+      <tr><td>H2 / H3</td><td>Create headings to organize the note.</td></tr>
+      <tr><td>Lists</td><td>Create a bullet list or a numbered list.</td></tr>
+      <tr><td>Link</td><td>Add a web link to the text.</td></tr>
+      <tr><td>“Insertar” menu</td><td>Add a table, an image, two or three columns, a checklist, a code block, a date, a horizontal rule, or a page break.</td></tr>
+      <tr><td>“Subir documento”</td><td>Import a PDF, DOCX, HTML, or TXT file.</td></tr>
+      <tr><td>“Descargar”</td><td>Export the note as TXT, PDF, or Word.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. Autosave and “Guardar”</h2>
+  <p>The editor <strong>saves your work automatically</strong> while you write. The small badge at the top shows the state: <em>“Sin cambios”</em> means there is nothing new to save. You can also click <em>“Guardar”</em> to save immediately. Always check the badge before you close the page.</p>
+
+  <h2>5. Import and export</h2>
+  <p>Use <em>“Subir documento”</em> to bring a file into the editor. The system accepts <strong>PDF, DOCX, HTML, and TXT</strong>. For images, open the <em>“Insertar”</em> menu and choose <em>“Imagen”</em>; the accepted formats are <strong>PNG, JPEG, GIF, and WEBP</strong>.</p>
+  <p>Use <em>“Descargar”</em> to keep a copy of your note. You can choose <strong>TXT</strong> (plain text), <strong>PDF</strong> (to print or save), or <strong>Word</strong> (a .doc file).</p>
+
+  <h2>6. Delete a note</h2>
+  <div class="box steps">
+    <h3>Step by step</h3>
+    <ol class="flow">
+      <li><strong>First,</strong> open <em>“Mis Apuntes”</em>.</li>
+      <li><strong>Next,</strong> click <em>“Eliminar”</em> to activate the delete mode.</li>
+      <li><strong>Then,</strong> click the trash icon on the note you want to remove.</li>
+      <li><strong>After that,</strong> read the confirmation message.</li>
+      <li><strong>Finally,</strong> click <em>“Sí, eliminar”</em>. This action cannot be undone.</li>
+    </ol>
+  </div>
+  <p class="note">Before the system saves the note, it <strong>sanitizes</strong> the HTML. This means it removes dangerous code, such as <code>&lt;script&gt;</code>, to protect all users.</p>
+
+  <div class="box vocab">
+    <h3>Key vocabulary</h3>
+    <table>
+      <thead><tr><th>Term</th><th>Simple definition</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Note</strong></td><td>A text that you write and save in the system.</td></tr>
+        <tr><td><strong>Subject</strong></td><td>A group of notes, for example a school subject.</td></tr>
+        <tr><td><strong>Rich text</strong></td><td>Text with format: bold, colours, lists, links.</td></tr>
+        <tr><td><strong>Block editor</strong></td><td>An editor that works with blocks such as tables and lists.</td></tr>
+        <tr><td><strong>Autosave</strong></td><td>The system saves your work automatically.</td></tr>
+        <tr><td><strong>Import</strong></td><td>Bring a file from your computer into the system.</td></tr>
+        <tr><td><strong>Export</strong></td><td>Create a file from your note and download it.</td></tr>
+        <tr><td><strong>Sanitize</strong></td><td>Remove dangerous code from the HTML.</td></tr>
+        <tr><td><strong>HTML</strong></td><td>The language that describes the structure of a web page.</td></tr>
+        <tr><td><strong>PDF / DOCX</strong></td><td>Common formats for documents.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2">
+    <div class="box wh">
+      <h3>WH- questions</h3>
+      <ul>
+        <li><strong>Where</strong> are all your notes?</li>
+        <li><strong>How</strong> do you create a new subject?</li>
+        <li><strong>What</strong> does autosave do?</li>
+        <li><strong>Why</strong> does the server sanitize the HTML?</li>
+        <li><strong>Which</strong> formats can you import?</li>
+        <li><strong>How</strong> do you export a PDF?</li>
+      </ul>
+    </div>
+    <div class="box did">
+      <h3>Did you…?</h3>
+      <ul>
+        <li><strong>Did</strong> you write a title for the note?</li>
+        <li><strong>Did</strong> you choose a subject?</li>
+        <li><strong>Did</strong> you import a PDF or DOCX file?</li>
+        <li><strong>Did</strong> you click “Guardar” before you closed the page?</li>
+        <li><strong>Did</strong> you download a copy?</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="box advice">
+    <h3>You should / You shouldn’t</h3>
+    <ul>
+      <li><span class="yes">✓</span> You <strong>should</strong> organize your notes by subject.</li>
+      <li><span class="yes">✓</span> You <strong>should</strong> check the autosave badge before you leave.</li>
+      <li><span class="yes">✓</span> You <strong>should</strong> download important notes as PDF or Word.</li>
+      <li><span class="no">✕</span> You <strong>shouldn’t</strong> paste code from unknown websites.</li>
+      <li><span class="no">✕</span> You <strong>shouldn’t</strong> delete a note before you read the confirmation.</li>
+    </ul>
+  </div>
+
+  <div class="box grammar">
+    <h3>Grammar tip (B1): imperatives and sequence words</h3>
+    <p>Use the <strong>imperative</strong> for instructions: <em>“Click Guardar.”</em> · <em>“Write a title.”</em> · <em>“Do not close the page.”</em></p>
+    <p>Use <strong>sequence words</strong> to explain a process: <em>First… Next… Then… After that… Finally…</em></p>
+  </div>
+
+  <div class="box review">
+    <h3>Quick review</h3>
+    <ol>
+      <li>How many recent notes can you see on Inicio?</li>
+      <li>What is a “materia”?</li>
+      <li>Which four document formats can you import?</li>
+      <li>What does “Sin cambios” mean?</li>
+      <li>Why is the HTML sanitized?</li>
+    </ol>
+    <p class="answers"><strong>Answer key:</strong> 1. Eight. 2. A subject or group of notes. 3. PDF, DOCX, HTML, and TXT. 4. There is nothing new to save. 5. To remove dangerous code and protect users.</p>
+  </div>
+</section>
+
+</body>
+</html>
