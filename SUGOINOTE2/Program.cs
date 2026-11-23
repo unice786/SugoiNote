@@ -51,11 +51,10 @@ if (string.IsNullOrWhiteSpace(connStr))
     return 1;
 }
 
+// La clave de IA no se valida al arrancar: si falta, el sitio igual arranca y
+// solo los endpoints de IA responden con un error controlado.
 builder.Services.AddOptions<IaOptions>()
-    .Bind(builder.Configuration.GetSection(IaOptions.SectionName))
-    .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey),
-              "IA:ApiKey no está configurada. Las funciones de IA quedarán deshabilitadas.")
-    .ValidateOnStart();
+    .Bind(builder.Configuration.GetSection(IaOptions.SectionName));
 
 builder.Services.AddOptions<EmailOptions>()
     .Bind(builder.Configuration.GetSection(EmailOptions.SectionName));
@@ -64,12 +63,9 @@ builder.Services.AddOptions<LimitesOptions>()
     .Bind(builder.Configuration.GetSection(LimitesOptions.SectionName));
 
 // La app movil no puede manejar cookies, asi que tambien emitimos JWT.
+// La clave se revisa al arrancar con un aviso, sin tumbar la aplicacion.
 builder.Services.AddOptions<JwtOptions>()
-    .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
-    .Validate(o => !string.IsNullOrWhiteSpace(o.Key) && o.Key.Length >= 32,
-              "Jwt:Key debe estar configurada y tener al menos 32 caracteres. "
-            + "Configúrala con 'dotnet user-secrets set \"Jwt:Key\" \"...\"' o la variable Jwt__Key.")
-    .ValidateOnStart();
+    .Bind(builder.Configuration.GetSection(JwtOptions.SectionName));
 
 Configuracion.UrlBase = builder.Configuration["App:UrlBase"]
     ?? $"{builder.Configuration["ASPNETCORE_URLS"]?.Split(';')[0]}"
@@ -293,6 +289,23 @@ builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
+// Diagnostico de configuracion: se registra sin tumbar el arranque.
+var _iaArranque = app.Services.GetRequiredService<IOptions<IaOptions>>().Value;
+if (string.IsNullOrWhiteSpace(_iaArranque.ApiKey))
+{
+    app.Logger.LogWarning("IA sin clave (IA__ApiKey): los endpoints de IA responderan con error controlado.");
+}
+else
+{
+    app.Logger.LogInformation("IA configurada con {Largo} caracteres (modelo {Modelo}).", _iaArranque.ApiKey.Length, _iaArranque.Model);
+}
+
+var _jwtArranque = app.Services.GetRequiredService<IOptions<JwtOptions>>().Value;
+if (string.IsNullOrWhiteSpace(_jwtArranque.Key) || _jwtArranque.Key.Length < 32)
+{
+    app.Logger.LogError("Jwt:Key ausente o con menos de 32 caracteres: el login movil fallara.");
+}
+
 // ─────────────────────────────────────────────────────────────
 // Pipeline
 // ─────────────────────────────────────────────────────────────
@@ -401,11 +414,34 @@ try
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "No se pudo preparar la base de datos. Revisa la cadena de conexión.");
-    return 1;
+    // La base de datos no tumba el sitio: se registra y la app arranca igual.
+    Log.Error(ex, "No se pudo preparar la base de datos. El sitio arranca sin migrar.");
+    try
+    {
+        File.WriteAllText(
+            Path.Combine(AppContext.BaseDirectory, "error-inicio.txt"),
+            $"{DateTime.UtcNow:O}  Base de datos:\n{ex}");
+    }
+    catch { }
 }
 
 Log.Information("SugoiNote iniciado en {Entorno}", app.Environment.EnvironmentName);
-app.Run();
+
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "La aplicacion no pudo arrancar.");
+    try
+    {
+        File.WriteAllText(
+            Path.Combine(AppContext.BaseDirectory, "error-inicio.txt"),
+            $"{DateTime.UtcNow:O}  Arranque:\n{ex}");
+    }
+    catch { }
+    return 1;
+}
 
 return 0;
