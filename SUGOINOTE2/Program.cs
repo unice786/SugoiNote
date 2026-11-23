@@ -51,11 +51,11 @@ if (string.IsNullOrWhiteSpace(connStr))
     return 1;
 }
 
+// La clave de IA NO se valida al arrancar: si falta, la aplicacion debe seguir
+// funcionando y solo los endpoints de IA responden con un error controlado.
+// (Antes ValidateOnStart tumbaba todo el sitio por una clave vacia.)
 builder.Services.AddOptions<IaOptions>()
-    .Bind(builder.Configuration.GetSection(IaOptions.SectionName))
-    .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey),
-              "IA:ApiKey no está configurada. Las funciones de IA quedarán deshabilitadas.")
-    .ValidateOnStart();
+    .Bind(builder.Configuration.GetSection(IaOptions.SectionName));
 
 builder.Services.AddOptions<EmailOptions>()
     .Bind(builder.Configuration.GetSection(EmailOptions.SectionName));
@@ -308,6 +308,22 @@ builder.Services.AddHealthChecks()
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
+
+// Aviso temprano si la IA quedo sin clave: el sitio arranca igual y los
+// endpoints de IA devuelven un mensaje claro al usuario.
+var _iaArranque = app.Services.GetRequiredService<IOptions<IaOptions>>().Value;
+if (string.IsNullOrWhiteSpace(_iaArranque.ApiKey))
+{
+    app.Logger.LogWarning(
+        "IA sin clave configurada (IA__ApiKey). Los endpoints de IA responderan con error controlado. Proveedor: {Proveedor}, modelo: {Modelo}.",
+        _iaArranque.Proveedor, _iaArranque.Model);
+}
+else
+{
+    app.Logger.LogInformation(
+        "IA configurada: proveedor {Proveedor}, modelo {Modelo}, clave de {Largo} caracteres.",
+        _iaArranque.Proveedor, _iaArranque.Model, _iaArranque.ApiKey.Length);
+}
 
 // ─────────────────────────────────────────────────────────────
 // Pipeline
