@@ -434,10 +434,39 @@ try
 catch (Exception ex)
 {
     Log.Fatal(ex, "No se pudo preparar la base de datos. Revisa la cadena de conexión.");
+    try
+    {
+        File.WriteAllText(
+            Path.Combine(AppContext.BaseDirectory, "error-inicio.txt"),
+            $"{DateTime.UtcNow:O}  No se pudo preparar la base de datos:\n{ex}");
+    }
+    catch
+    {
+        // Si tampoco se puede escribir el archivo, el log ya quedo en stdout.
+    }
     return 1;
 }
 
 Log.Information("SugoiNote iniciado en {Entorno}", app.Environment.EnvironmentName);
-app.Run();
+
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "La aplicacion no pudo arrancar.");
+    try
+    {
+        File.WriteAllText(
+            Path.Combine(AppContext.BaseDirectory, "error-inicio.txt"),
+            $"{DateTime.UtcNow:O}  Fallo al arrancar:\n{ex}");
+    }
+    catch
+    {
+        // Si tampoco se puede escribir el archivo, el log ya quedo en stdout.
+    }
+    return 1;
+}
 
 return 0;
